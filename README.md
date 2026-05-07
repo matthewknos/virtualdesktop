@@ -1,4 +1,6 @@
-# Niokas CoE — Prototype Gallery
+# CoE Testing — Prototype Gallery
+
+> **No PII.** All data in every prototype is entirely fictional — made-up names, dates, and commentary. No real employee records, customer data, or personally identifiable information is used anywhere in this repository or in any API call made from it.
 
 Static + serverless host for AI prototypes built by the Centre of Excellence.
 

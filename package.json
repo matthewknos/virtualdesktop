@@ -2,7 +2,7 @@
   "name": "coe-prototypes",
   "version": "0.1.0",
   "private": true,
-  "description": "Niokas CoE of AI — prototype demos",
+  "description": "CoE Testing — prototype demos",
   "engines": {
     "node": ">=18"
   }
