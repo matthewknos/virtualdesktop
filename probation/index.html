@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Probation Review Orchestrator — Live Prototype</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: Arial, sans-serif;
+    background: #f8f9fa;
+    color: #202124;
+    font-size: 14px;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: #fff;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 48px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-logo { display: flex; align-items: center; gap: 8px; }
+  .header-logo svg { width: 28px; height: 28px; }
+  .header-title { font-size: 16px; color: #202124; }
+  .header-subtitle { font-size: 12px; color: #80868b; margin-left: auto; }
+  .badge {
+    background: #e8f5e9;
+    color: #2e7d32;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+    border: 1px solid #a5d6a7;
+  }
+  .badge.idle  { background: #f1f3f4; color: #5f6368; border-color: #dadce0; }
+  .badge.busy  { background: #e8f0fe; color: #1a73e8; border-color: #aecbfa; }
+  .badge.error { background: #fce8e6; color: #c5221f; border-color: #f28b82; }
+
+  /* ── Run bar ── */
+  .runbar {
+    background: #fff;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 12px 16px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    position: sticky;
+    top: 48px;
+    z-index: 99;
+  }
+  .runbar input {
+    flex: 1;
+    padding: 8px 10px;
+    border: 1px solid #dadce0;
+    border-radius: 4px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 13px;
+  }
+  .runbar input:focus { outline: 2px solid #1a73e8; border-color: transparent; }
+  .runbar button {
+    padding: 8px 18px;
+    background: #1a73e8;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .runbar button:hover  { background: #1557b0; }
+  .runbar button:disabled { background: #c6dafc; cursor: not-allowed; }
+  .runbar-note { font-size: 11px; color: #5f6368; padding: 0 16px 10px; }
+
+  /* ── Layout ── */
+  .notebook {
+    max-width: 900px;
+    margin: 24px auto;
+    padding: 0 16px 80px;
+  }
+
+  /* ── Cells ── */
+  .cell {
+    display: flex;
+    gap: 0;
+    margin-bottom: 4px;
+    position: relative;
+  }
+  .cell-gutter {
+    width: 56px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    padding-top: 10px;
+    padding-right: 8px;
+    gap: 4px;
+  }
+  .run-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #1a73e8;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+  .run-btn.executed { background: #34a853; }
+  .run-btn.running  { background: #fbbc04; animation: spin 1s linear infinite; }
+  .run-btn svg { width: 12px; height: 12px; fill: white; margin-left: 2px; }
+  @keyframes spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+
+  .exec-count {
+    font-size: 11px;
+    color: #80868b;
+    min-width: 20px;
+    text-align: right;
+    padding-top: 2px;
+  }
+
+  .cell-body { flex: 1; min-width: 0; }
+
+  /* ── Markdown cells ── */
+  .md-cell { padding: 8px 16px 8px 0; }
+  .md-cell h1 { font-size: 22px; font-weight: 600; margin-bottom: 8px; color: #202124; }
+  .md-cell h2 { font-size: 16px; font-weight: 600; margin: 16px 0 6px; color: #202124; }
+  .md-cell p  { color: #444; line-height: 1.6; margin-bottom: 6px; }
+  .md-cell ul { padding-left: 20px; color: #444; line-height: 1.8; }
+  .md-cell .chip {
+    display: inline-block;
+    background: #e8f0fe;
+    color: #1a73e8;
+    font-size: 12px;
+    padding: 2px 10px;
+    border-radius: 12px;
+    margin: 2px 4px 2px 0;
+    font-family: monospace;
+  }
+
+  /* ── Code cells ── */
+  .code-cell {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .code-cell pre {
+    padding: 12px 16px;
+    font-family: 'Roboto Mono', 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    overflow-x: auto;
+    background: #fff;
+  }
+
+  /* ── Output ── */
+  .output {
+    border-top: 1px solid #e8eaed;
+    background: #fff;
+    display: none;
+  }
+  .output.active { display: block; }
+  .output pre {
+    padding: 10px 16px;
+    font-family: 'Roboto Mono', 'Courier New', monospace;
+    font-size: 12.5px;
+    line-height: 1.65;
+    white-space: pre-wrap;
+    color: #202124;
+  }
+  .output-warn  { color: #e37400 !important; }
+  .output-ok    { color: #188038 !important; }
+  .output-info  { color: #1a73e8 !important; }
+  .output-label { color: #80868b !important; }
+  .output-error { color: #c5221f !important; }
+  .output-head  { color: #202124; font-weight: bold; }
+
+  /* ── Review pack ── */
+  .review-pack {
+    border-top: 1px solid #e8eaed;
+    background: #fafafa;
+    padding: 20px 24px;
+    font-family: Arial, sans-serif;
+    display: none;
+  }
+  .review-pack.active { display: block; }
+  .review-pack h2 { font-size: 17px; font-weight: 700; margin-bottom: 16px; color: #202124; border-bottom: 2px solid #1a73e8; padding-bottom: 8px; }
+  .review-pack h3 { font-size: 13px; font-weight: 700; margin: 16px 0 6px; color: #444; text-transform: uppercase; letter-spacing: 0.5px; }
+  .review-pack p  { font-size: 13.5px; line-height: 1.7; color: #202124; margin-bottom: 8px; }
+  .review-pack ul { padding-left: 18px; }
+  .review-pack li { font-size: 13.5px; line-height: 1.7; color: #202124; margin-bottom: 4px; }
+  .review-pack strong { font-weight: 700; }
+  .outcome-badge {
+    display: inline-block;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 4px 14px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+  }
+  .outcome-escalate { background: #fce8e6; color: #c5221f; border: 1px solid #f28b82; }
+  .outcome-extend   { background: #fef7e0; color: #b06000; border: 1px solid #fdd663; }
+  .outcome-pass     { background: #e6f4ea; color: #137333; border: 1px solid #81c995; }
+
+  /* ── Summary bar ── */
+  .summary-bar {
+    display: none;
+    gap: 12px;
+    padding: 12px 16px;
+    background: #e8f0fe;
+    border-top: 1px solid #c5d9f7;
+    border-radius: 0 0 4px 4px;
+    font-size: 12.5px;
+    flex-wrap: wrap;
+  }
+  .summary-bar.active { display: flex; }
+  .summary-item { display: flex; align-items: center; gap: 6px; color: #1a73e8; font-weight: 600; }
+  .summary-item span { background: #1a73e8; color: white; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 10px; }
+
+  /* ── Section label ── */
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #80868b;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 28px 0 8px 56px;
+  }
+
+  /* Syntax */
+  .kw { color: #9900ab; }
+  .fn { color: #1a73e8; }
+  .st { color: #188038; }
+  .cm { color: #80868b; font-style: italic; }
+  .nm { color: #c5221f; }
+
+  .spinner {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid #e0e0e0;
+    border-top-color: #1a73e8;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+
+  /* ── Show full code toggle ── */
+  .toggle-row {
+    border-top: 1px dashed #e0e0e0;
+    padding: 6px 16px;
+    background: #fafafa;
+  }
+  .toggle-btn {
+    background: none;
+    border: none;
+    color: #1a73e8;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 2px 0;
+    font-family: Arial, sans-serif;
+  }
+  .toggle-btn:hover { text-decoration: underline; }
+  .full-code {
+    display: none;
+    border-top: 1px solid #e8eaed;
+    background: #fafbfc;
+  }
+  .full-code.open { display: block; }
+  .full-code pre {
+    background: #fafbfc;
+    color: #24292e;
+    font-size: 12.5px;
+    line-height: 1.55;
+  }
+
+  /* ── Tabs ── */
+  .tabs {
+    max-width: 900px;
+    margin: 24px auto 0;
+    padding: 0 16px;
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  .tab-btn {
+    background: none;
+    border: none;
+    padding: 10px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #5f6368;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+  .tab-btn:hover { color: #1a73e8; }
+  .tab-btn.active { color: #1a73e8; border-bottom-color: #1a73e8; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ── Diagram ── */
+  .diagram-wrap {
+    max-width: 980px;
+    margin: 32px auto;
+    padding: 0 16px 80px;
+  }
+  .diagram-title {
+    font-size: 22px;
+    font-weight: 600;
+    color: #202124;
+    margin-bottom: 6px;
+  }
+  .diagram-sub {
+    font-size: 13px;
+    color: #5f6368;
+    margin-bottom: 32px;
+  }
+  .timeline {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-top: 16px;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    top: 24px;
+    left: 6%;
+    right: 6%;
+    height: 2px;
+    background: #1a73e8;
+    z-index: 0;
+  }
+  .stage {
+    position: relative;
+    text-align: center;
+    z-index: 1;
+  }
+  .stage-marker {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid #1a73e8;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1a73e8;
+    font-weight: 700;
+    font-size: 14px;
+  }
+  .stage-day {
+    font-size: 11px;
+    font-weight: 600;
+    color: #80868b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 10px;
+  }
+  .stage-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #202124;
+    margin: 2px 0 12px;
+  }
+  .stage-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 14px;
+    text-align: left;
+  }
+  .stage-card ul {
+    list-style: none;
+    padding: 0;
+  }
+  .stage-card li {
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: #444;
+    padding: 4px 0 4px 16px;
+    position: relative;
+  }
+  .stage-card li::before {
+    content: '•';
+    color: #1a73e8;
+    position: absolute;
+    left: 4px;
+    font-weight: 700;
+  }
+  .stage-card .actor {
+    font-size: 11px;
+    font-weight: 700;
+    color: #80868b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 8px;
+    margin-bottom: 2px;
+  }
+  .stage-card .actor:first-child { margin-top: 0; }
+
+  .legend {
+    display: flex;
+    gap: 18px;
+    margin-top: 32px;
+    padding: 14px 16px;
+    background: #f1f3f4;
+    border-radius: 6px;
+    font-size: 12px;
+    color: #5f6368;
+    flex-wrap: wrap;
+  }
+  .legend strong { color: #202124; }
+
+  @media (max-width: 800px) {
+    .timeline { grid-template-columns: 1fr; gap: 24px; }
+    .timeline::before { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">
+    <svg viewBox="0 0 24 24" fill="none">
+      <rect width="24" height="24" rx="4" fill="#F9AB00"/>
+      <rect x="4" y="11" width="16" height="2" rx="1" fill="white"/>
+      <rect x="11" y="4" width="2" height="16" rx="1" fill="white"/>
+    </svg>
+    <span class="header-title">Probation Review Orchestrator</span>
+  </div>
+  <div class="header-subtitle"></div>
+  <div class="badge idle" id="status-badge">Idle</div>
+</div>
+
+<div class="runbar">
+  <button id="run-btn" onclick="runAll()">▶ Run All</button>
+  <button onclick="logout()" style="background:#fff;color:#5f6368;border:1px solid #dadce0;padding:8px 14px;border-radius:4px;font-size:13px;font-weight:600;cursor:pointer;">Sign out</button>
+</div>
+<div class="runbar-note">
+  LLM calls go through the site's proxy. The Anthropic API key is held server-side and never exposed to your browser.
+</div>
+
+<!-- ── Password gate ── -->
+<div id="password-gate" style="position:fixed;inset:0;background:rgba(248,249,250,0.97);z-index:200;display:flex;align-items:center;justify-content:center;">
+  <div style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:32px;max-width:380px;width:90%;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+    <h2 style="font-size:18px;margin-bottom:8px;">Niokas CoE — Prototype Access</h2>
+    <p style="font-size:13px;color:#5f6368;margin-bottom:20px;line-height:1.5;">This prototype is internal. Enter the access password to continue.</p>
+    <input type="password" id="gate-pw" placeholder="Access password" style="width:100%;padding:10px;border:1px solid #dadce0;border-radius:4px;font-size:14px;margin-bottom:12px;" onkeydown="if(event.key==='Enter')checkPassword()">
+    <button onclick="checkPassword()" style="width:100%;padding:10px;background:#1a73e8;color:white;border:none;border-radius:4px;font-size:14px;font-weight:600;cursor:pointer;">Continue</button>
+    <div id="gate-error" style="color:#c5221f;font-size:12px;margin-top:10px;display:none;">Incorrect password.</div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="showTab('demo', this)">Live demo</button>
+  <button class="tab-btn" onclick="showTab('diagram', this)">How it works</button>
+</div>
+
+<!-- ═══════════ HOW IT WORKS TAB ═══════════ -->
+<div id="tab-diagram" class="tab-content">
+  <div class="diagram-wrap">
+    <div class="diagram-title">How it works</div>
+    <div class="diagram-sub">Each new joiner moves through four stages from hire date to outcome. The orchestrator runs daily and routes each worker to the right stage based on days remaining.</div>
+
+    <div class="timeline">
+      <div class="stage">
+        <div class="stage-marker">1</div>
+        <div class="stage-day">Day 0</div>
+        <div class="stage-name">Hire</div>
+        <div class="stage-card">
+          <div class="actor">Orchestrator</div>
+          <ul>
+            <li>Pulls hire date and probation length from Workday</li>
+            <li>Calculates probation end date</li>
+            <li>Stores worker in tracking table</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="stage">
+        <div class="stage-marker">2</div>
+        <div class="stage-day">T-30 (30 days before end)</div>
+        <div class="stage-name">Kick-off</div>
+        <div class="stage-card">
+          <div class="actor">Manager</div>
+          <ul>
+            <li>Inbox task: confirm goals, schedule meeting, gather notes</li>
+            <li>If no goals exist, goal-setting task fires automatically</li>
+          </ul>
+          <div class="actor">People Partner</div>
+          <ul><li>Inbox task: confirm awareness, flag concerns</li></ul>
+          <div class="actor">Employee</div>
+          <ul><li>Self-assessment form sent via Workday Extend</li></ul>
+        </div>
+      </div>
+
+      <div class="stage">
+        <div class="stage-marker">3</div>
+        <div class="stage-day">T-7 (7 days before end)</div>
+        <div class="stage-name">Draft Review</div>
+        <div class="stage-card">
+          <div class="actor">Orchestrator</div>
+          <ul>
+            <li>Chases anyone with outstanding tasks</li>
+            <li>Compiles goals + feedback + self-assessment</li>
+          </ul>
+          <div class="actor">LLM</div>
+          <ul>
+            <li>Drafts the review pack</li>
+            <li>Recommends outcome: Pass / Extend / Escalate</li>
+          </ul>
+          <div class="actor">Manager</div>
+          <ul><li>Receives drafted pack as inbox task</li></ul>
+        </div>
+      </div>
+
+      <div class="stage">
+        <div class="stage-marker">4</div>
+        <div class="stage-day">Day 90</div>
+        <div class="stage-name">Outcome</div>
+        <div class="stage-card">
+          <div class="actor">Manager</div>
+          <ul><li>Reviews pack, confirms or adjusts the outcome</li></ul>
+          <div class="actor">Orchestrator</div>
+          <ul>
+            <li>Writes outcome back to Workday worker record</li>
+            <li>Closes the business process</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <div><strong>Daily check:</strong> the orchestrator runs every morning and routes each worker into whichever stage their days-remaining count puts them in.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ LIVE DEMO TAB ═══════════ -->
+<div id="tab-demo" class="tab-content active">
+<div class="notebook">
+
+  <!-- ── INTRO ─────────────────────────────────────────────────────────── -->
+  <div class="cell">
+    <div class="cell-gutter"></div>
+    <div class="cell-body md-cell">
+      <h1>Probation Review Orchestrator</h1>
+      <p>Automated pipeline that tracks every new joiner's probation clock, fires the right tasks to the right people at the right time, and uses an LLM to draft the review pack so managers aren't starting from scratch.</p>
+    </div>
+  </div>
+
+  <div class="section-label">Step 1 — Setup</div>
+
+  <div class="cell">
+    <div class="cell-gutter">
+      <div class="run-btn" id="btn-1"><svg viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9"/></svg></div>
+      <div class="exec-count" id="cnt-1">[ ]</div>
+    </div>
+    <div class="cell-body">
+      <div class="code-cell">
+        <pre><span class="cm"># Install dependencies</span>
+!pip install anthropic requests -q</pre>
+        <div class="output" id="out-1"><pre></pre></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cell">
+    <div class="cell-gutter">
+      <div class="run-btn" id="btn-2"><svg viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9"/></svg></div>
+      <div class="exec-count" id="cnt-2">[ ]</div>
+    </div>
+    <div class="cell-body">
+      <div class="code-cell">
+        <pre>USE_MOCK_WORKDAY   = <span class="nm">True</span>
+T30_DAYS, T7_DAYS  = <span class="nm">30</span>, <span class="nm">7</span></pre>
+        <div class="output" id="out-2"><pre></pre></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">Step 2 — Workday data modules (mocked)</div>
+
+  <div class="cell">
+    <div class="cell-gutter">
+      <div class="run-btn" id="btn-3"><svg viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9"/></svg></div>
+      <div class="exec-count" id="cnt-3">[ ]</div>
+    </div>
+    <div class="cell-body">
+      <div class="code-cell">
+        <pre><span class="cm"># Workers — pulls hire date + probation length from Workday
+# Mock returns 4 workers at different probation stages</span>
+<span class="kw">def</span> <span class="fn">get_workers</span>(today): ...</pre>
+        <div class="toggle-row"><button class="toggle-btn" onclick="toggleCode(this)">▸ Show full code</button></div>
+        <div class="full-code">
+<pre><span class="kw">from</span> datetime <span class="kw">import</span> date, timedelta
+
+<span class="kw">class</span> <span class="fn">Worker</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, worker_id, name, hire_date, probation_days):
+        self.worker_id      = worker_id
+        self.name           = name
+        self.hire_date      = hire_date
+        self.probation_days = probation_days
+        self.probation_end  = hire_date + timedelta(days=probation_days)
+
+    <span class="kw">def</span> <span class="fn">days_until_end</span>(self, today=<span class="nm">None</span>):
+        <span class="kw">return</span> (self.probation_end - (today <span class="kw">or</span> date.today())).days
+
+<span class="cm"># Mock fixtures — 4 workers at different probation stages</span>
+<span class="kw">def</span> <span class="fn">_mock_workers</span>(today):
+    <span class="kw">return</span> [
+        Worker(<span class="st">"W001"</span>, <span class="st">"Alice Johnson"</span>, today - timedelta(days=<span class="nm">60</span>), <span class="nm">90</span>),  <span class="cm"># T-30</span>
+        Worker(<span class="st">"W002"</span>, <span class="st">"Ben Carter"</span>,    today - timedelta(days=<span class="nm">83</span>), <span class="nm">90</span>),  <span class="cm"># T-7</span>
+        Worker(<span class="st">"W003"</span>, <span class="st">"Carol Smith"</span>,   today - timedelta(days=<span class="nm">10</span>), <span class="nm">90</span>),  <span class="cm"># too early</span>
+        Worker(<span class="st">"W004"</span>, <span class="st">"David Lee"</span>,     today - timedelta(days=<span class="nm">95</span>), <span class="nm">90</span>),  <span class="cm"># ended</span>
+    ]
+
+<span class="cm"># Live Workers API — paged GET request</span>
+<span class="kw">def</span> <span class="fn">_live_workers</span>():
+    client, workers, offset, limit = get_wd_client(), [], <span class="nm">0</span>, <span class="nm">100</span>
+    <span class="kw">while</span> <span class="nm">True</span>:
+        data = client.get(<span class="st">f"</span>{WORKDAY_API_BASE}/workers<span class="st">"</span>,
+                          params={<span class="st">"limit"</span>: limit, <span class="st">"offset"</span>: offset})
+        <span class="kw">for</span> w <span class="kw">in</span> data.get(<span class="st">"data"</span>, []):
+            workers.append(Worker(
+                w[<span class="st">"id"</span>],
+                w.get(<span class="st">"descriptor"</span>, <span class="st">"Unknown"</span>),
+                date.fromisoformat(w[<span class="st">"hireDate"</span>]),
+                <span class="kw">int</span>(w.get(<span class="st">"probationPeriodDays"</span>) <span class="kw">or</span> <span class="nm">90</span>),
+            ))
+        <span class="kw">if</span> offset + limit >= data.get(<span class="st">"total"</span>, <span class="nm">0</span>):
+            <span class="kw">break</span>
+        offset += limit
+    <span class="kw">return</span> workers
+
+<span class="kw">def</span> <span class="fn">get_workers</span>(today=<span class="nm">None</span>):
+    today = today <span class="kw">or</span> date.today()
+    <span class="kw">return</span> _mock_workers(today) <span class="kw">if</span> USE_MOCK_WORKDAY <span class="kw">else</span> _live_workers()</pre>
+        </div>
+        <div class="output" id="out-3"><pre></pre></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cell">
+    <div class="cell-gutter">
+      <div class="run-btn" id="btn-4"><svg viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9"/></svg></div>
+      <div class="exec-count" id="cnt-4">[ ]</div>
+    </div>
+    <div class="cell-body">
+      <div class="code-cell">
+        <pre><span class="cm"># Goals — empty list triggers an automatic "set goals" task</span>
+<span class="kw">def</span> <span class="fn">get_goals</span>(worker_id): ...</pre>
+        <div class="toggle-row"><button class="toggle-btn" onclick="toggleCode(this)">▸ Show full code</button></div>
+        <div class="full-code">
+<pre><span class="kw">class</span> <span class="fn">Goal</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, goal_id, title, status, due_date=<span class="nm">None</span>):
+        self.goal_id, self.title, self.status, self.due_date = goal_id, title, status, due_date
+
+<span class="cm"># Mock fixtures — Ben (W002) has no goals so the orchestrator
+# triggers an automatic "set goals" task to his manager</span>
+MOCK_GOALS = {
+    <span class="st">"W001"</span>: [
+        Goal(<span class="st">"G001"</span>, <span class="st">"Complete onboarding training modules"</span>,        <span class="st">"Completed"</span>,   <span class="st">"2025-03-31"</span>),
+        Goal(<span class="st">"G002"</span>, <span class="st">"Shadow three client discovery calls"</span>,         <span class="st">"In Progress"</span>, <span class="st">"2025-04-30"</span>),
+        Goal(<span class="st">"G003"</span>, <span class="st">"Deliver first solo sprint planning session"</span>,  <span class="st">"Not Started"</span>, <span class="st">"2025-05-15"</span>),
+    ],
+    <span class="st">"W002"</span>: [],
+    <span class="st">"W003"</span>: [Goal(<span class="st">"G010"</span>, <span class="st">"Complete security awareness training"</span>, <span class="st">"In Progress"</span>, <span class="st">"2025-06-01"</span>)],
+}
+
+<span class="cm"># Live Goals API — GET /api/v1/{tenant}/workers/{id}/goals</span>
+<span class="kw">def</span> <span class="fn">_live_goals</span>(worker_id):
+    data = get_wd_client().get(<span class="st">f"</span>{WORKDAY_API_BASE}/workers/{worker_id}/goals<span class="st">"</span>)
+    <span class="kw">return</span> [Goal(g[<span class="st">"id"</span>],
+                 g.get(<span class="st">"descriptor"</span>, <span class="st">""</span>),
+                 g.get(<span class="st">"status"</span>, {}).get(<span class="st">"descriptor"</span>, <span class="st">""</span>),
+                 g.get(<span class="st">"dueDate"</span>))
+            <span class="kw">for</span> g <span class="kw">in</span> data.get(<span class="st">"data"</span>, [])]
+
+<span class="kw">def</span> <span class="fn">get_goals</span>(worker_id):
+    <span class="kw">return</span> MOCK_GOALS.get(worker_id, []) <span class="kw">if</span> USE_MOCK_WORKDAY <span class="kw">else</span> _live_goals(worker_id)</pre>
+        </div>
+        <div class="output" id="out-4"><pre></pre></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cell">
+    <div class="cell-gutter">
+      <div class="run-btn" id="btn-5"><svg viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9"/></svg></div>
+      <div class="exec-count" id="cnt-5">[ ]</div>
+    </div>
+    <div class="cell-body">
+      <div class="code-cell">
+        <pre><span class="cm"># Feedback — Workday Feedback as temporary unstructured data store</span>
+<span class="kw">def</span> <span class="fn">get_feedback</span>(worker_id): ...</pre>
+        <div class="toggle-row"><button class="toggle-btn" onclick="toggleCode(this)">▸ Show full code</button></div>
+        <div class="full-code">
+<pre><span class="kw">class</span> <span class="fn">FeedbackEntry</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, date_str, from_name, comment, badge=<span class="nm">None</span>):
+        self.date, self.from_name, self.comment, self.badge = date_str, from_name, comment, badge
+
+    <span class="kw">def</span> <span class="fn">to_text</span>(self):
+        badge = <span class="st">f" [</span>{self.badge}<span class="st">]"</span> <span class="kw">if</span> self.badge <span class="kw">else</span> <span class="st">""</span>
+        <span class="kw">return</span> <span class="st">f"[</span>{self.date}<span class="st">] </span>{self.from_name}{badge}<span class="st">: </span>{self.comment}<span class="st">"</span>
+
+<span class="cm"># Mock fixtures — Ben (W002) has concerning feedback that the LLM
+# will pick up on when generating his review pack</span>
+MOCK_FEEDBACK = {
+    <span class="st">"W001"</span>: [
+        FeedbackEntry(<span class="st">"2025-02-15"</span>, <span class="st">"Sarah Malik (People Partner)"</span>,
+            <span class="st">"Alice has settled in well. She picked up the internal tools quickly..."</span>),
+        FeedbackEntry(<span class="st">"2025-03-10"</span>, <span class="st">"James Owen (Line Manager)"</span>,
+            <span class="st">"1:1 notes: Alice delivered the onboarding training on schedule..."</span>,
+            badge=<span class="st">"Great Initiative"</span>),
+    ],
+    <span class="st">"W002"</span>: [
+        FeedbackEntry(<span class="st">"2025-02-01"</span>, <span class="st">"James Owen (Line Manager)"</span>,
+            <span class="st">"Ben has struggled to integrate with the team. Attendance has been inconsistent..."</span>),
+        FeedbackEntry(<span class="st">"2025-03-20"</span>, <span class="st">"Sarah Malik (People Partner)"</span>,
+            <span class="st">"Concern raised: Ben's manager flagged that goals still haven't been set..."</span>),
+    ],
+    <span class="st">"W003"</span>: [
+        FeedbackEntry(<span class="st">"2025-04-20"</span>, <span class="st">"James Owen (Line Manager)"</span>,
+            <span class="st">"Carol is very early in her role. No concerns yet."</span>),
+    ],
+}
+
+<span class="cm"># Live Feedback API — GET /api/v1/{tenant}/workers/{id}/anytimeFeedbackReceived</span>
+<span class="kw">def</span> <span class="fn">_live_feedback</span>(worker_id):
+    data = get_wd_client().get(<span class="st">f"</span>{WORKDAY_API_BASE}/workers/{worker_id}/anytimeFeedbackReceived<span class="st">"</span>)
+    <span class="kw">return</span> [FeedbackEntry(
+                e.get(<span class="st">"feedbackDate"</span>, <span class="st">""</span>),
+                e.get(<span class="st">"fromWorker"</span>, {}).get(<span class="st">"descriptor"</span>, <span class="st">"Unknown"</span>),
+                e.get(<span class="st">"comment"</span>, <span class="st">""</span>),
+                e.get(<span class="st">"badge"</span>, {}).get(<span class="st">"descriptor"</span>) <span class="kw">if</span> e.get(<span class="st">"badge"</span>) <span class="kw">else</span> <span class="nm">None</span>)
+            <span class="kw">for</span> e <span class="kw">in</span> data.get(<span class="st">"data"</span>, [])]
+
+<span class="kw">def</span> <span class="fn">get_feedback</span>(worker_id):
+    <span class="kw">return</span> MOCK_FEEDBACK.get(worker_id, []) <span class="kw">if</span> USE_MOCK_WORKDAY <span class="kw">else</span> _live_feedback(worker_id)</pre>
+        </div>
+        <div class="output" id="out-5"><pre></pre></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">Step 3 — Orchestrator + LLM</div>
+
+  <div class="cell">
+    <div class="cell-gutter">
+      <div class="run-btn" id="btn-6"><svg viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9"/></svg></div>
+      <div class="exec-count" id="cnt-6">[ ]</div>
+    </div>
+    <div class="cell-body">
+      <div class="code-cell">
+        <pre><span class="cm"># LLM module — calls Claude Sonnet with goals + feedback
+# Returns review pack + recommended outcome</span>
+<span class="kw">def</span> <span class="fn">generate_review_pack</span>(worker, goals, feedback): ...</pre>
+        <div class="toggle-row"><button class="toggle-btn" onclick="toggleCode(this)">▸ Show full code</button></div>
+        <div class="full-code">
+<pre><span class="kw">import</span> re, anthropic
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
+
+<span class="nm">@dataclass</span>
+<span class="kw">class</span> <span class="fn">ReviewPackResult</span>:
+    review_pack:         <span class="kw">str</span>
+    recommended_outcome: <span class="kw">str</span>
+    raw_response:        <span class="kw">str</span>
+
+<span class="kw">def</span> <span class="fn">generate_review_pack</span>(worker_name, probation_end_date, goals, feedback_entries):
+    goals_section = (
+        <span class="st">"\n"</span>.join(<span class="st">f"  - </span>{g.title}<span class="st"> | Status: </span>{g.status}<span class="st">"</span>
+                  + (<span class="st">f" | Due: </span>{g.due_date}<span class="st">"</span> <span class="kw">if</span> g.due_date <span class="kw">else</span> <span class="st">""</span>)
+                  <span class="kw">for</span> g <span class="kw">in</span> goals)
+        <span class="kw">if</span> goals <span class="kw">else</span> <span class="st">"  No goals have been set."</span>
+    )
+    feedback_section = (
+        <span class="st">"\n"</span>.join(<span class="st">f"  </span>{e.to_text()}<span class="st">"</span> <span class="kw">for</span> e <span class="kw">in</span> feedback_entries)
+        <span class="kw">if</span> feedback_entries <span class="kw">else</span> <span class="st">"  No feedback entries found."</span>
+    )
+
+    prompt = <span class="st">f"""You are an experienced HR business partner preparing a probation review pack.
+Your output will be sent directly to the line manager. Write clearly and professionally. Be specific.
+
+EMPLOYEE: </span>{worker_name}<span class="st">
+PROBATION END DATE: </span>{probation_end_date}<span class="st">
+
+GOALS SET DURING PROBATION:
+</span>{goals_section}<span class="st">
+
+MANAGER AND PEER FEEDBACK (from Workday Feedback):
+</span>{feedback_section}<span class="st">
+
+Produce a probation review pack with these exact sections:
+
+## Probation Review Pack — </span>{worker_name}<span class="st">
+
+### 1. Summary
+A 2-3 sentence executive summary of this employee's probation performance.
+
+### 2. Goals Assessment
+For each goal: state whether it was met, partially met, or not met, and briefly explain why.
+If no goals were set, flag this as a significant concern.
+
+### 3. Key Observations
+3-5 bullet points drawing on the feedback. Be specific.
+
+### 4. Areas of Concern (if any)
+State concerns plainly, or write "No material concerns identified."
+
+### 5. Recommended Outcome
+State one of: PASS | EXTEND | ESCALATE
+Then give a one-paragraph justification.
+
+End your response with this exact line:
+OUTCOME: &lt;PASS|EXTEND|ESCALATE&gt;"""</span>
+
+    client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+    message = client.messages.create(
+        model=<span class="st">"claude-sonnet-4-6"</span>,
+        max_tokens=<span class="nm">2048</span>,
+        messages=[{<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>: prompt}],
+    )
+    raw = message.content[<span class="nm">0</span>].text
+
+    match   = re.search(<span class="st">r"OUTCOME:\s*(PASS|EXTEND|ESCALATE)"</span>, raw, re.IGNORECASE)
+    outcome = match.group(<span class="nm">1</span>).lower() <span class="kw">if</span> match <span class="kw">else</span> <span class="st">"unknown"</span>
+    pack    = re.sub(<span class="st">r"\nOUTCOME:.*$"</span>, <span class="st">""</span>, raw, flags=re.IGNORECASE).strip()
+
+    <span class="kw">return</span> ReviewPackResult(review_pack=pack, recommended_outcome=outcome, raw_response=raw)</pre>
+        </div>
+        <div class="output" id="out-6"><pre></pre></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cell">
+    <div class="cell-gutter">
+      <div class="run-btn" id="btn-7"><svg viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9"/></svg></div>
+      <div class="exec-count" id="cnt-7">[ ]</div>
+    </div>
+    <div class="cell-body">
+      <div class="code-cell">
+        <pre><span class="kw">from</span> datetime <span class="kw">import</span> date
+run(today=date.today())</pre>
+        <div class="output" id="out-7"><pre id="run-output"></pre>
+          <div class="review-pack" id="review-pack"></div>
+          <div class="summary-bar" id="summary-bar"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cell" style="margin-top:32px;">
+    <div class="cell-gutter"></div>
+    <div class="cell-body md-cell">
+      <h2>What's live vs. mocked</h2>
+      <ul>
+        <li><strong>Live:</strong> hire date + probation calculation, T-30/T-7 logic, goals check, feedback retrieval, LLM review pack generation</li>
+        <li><strong>Mocked:</strong> Workday inbox task creation (logs the action — real BP trigger needs Workday admin config)</li>
+        <li><strong>Mocked:</strong> Self-assessment form </li>
+        <li><strong>Not yet built:</strong> Outcome write-back to Workday worker record</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────
+// Password gate + LLM proxy
+// The Anthropic key lives in Vercel env vars (server-side). The browser
+// authenticates with a site-wide password validated by /api/claude.
+// ─────────────────────────────────────────────────────────────────────────
+const PW_KEY = 'coe_site_pw';
+
+function getStoredPassword() {
+  return sessionStorage.getItem(PW_KEY) || '';
+}
+
+async function checkPassword() {
+  const pw = document.getElementById('gate-pw').value.trim();
+  if (!pw) return;
+
+  // Verify by sending a tiny test request through the proxy
+  try {
+    const res = await fetch('/api/claude', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${pw}`,
+      },
+      body: JSON.stringify({ prompt: 'ping', max_tokens: 8 }),
+    });
+    if (res.status === 401) {
+      document.getElementById('gate-error').style.display = 'block';
+      return;
+    }
+    sessionStorage.setItem(PW_KEY, pw);
+    document.getElementById('password-gate').style.display = 'none';
+  } catch (err) {
+    document.getElementById('gate-error').textContent = 'Network error: ' + err.message;
+    document.getElementById('gate-error').style.display = 'block';
+  }
+}
+
+function logout() {
+  sessionStorage.removeItem(PW_KEY);
+  location.reload();
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Mock data — same fixtures as the Python notebook
+// ─────────────────────────────────────────────────────────────────────────
+const today = new Date();
+const addDays = (d, n) => { const r = new Date(d); r.setDate(r.getDate() + n); return r; };
+const fmt = d => d.toISOString().slice(0,10);
+const daysBetween = (a, b) => Math.round((b - a) / 86400000);
+
+const WORKERS = [
+  { id: "W001", name: "Alice Johnson", hireDate: addDays(today, -60), probationDays: 90 },
+  { id: "W002", name: "Ben Carter",    hireDate: addDays(today, -83), probationDays: 90 },
+  { id: "W003", name: "Carol Smith",   hireDate: addDays(today, -10), probationDays: 90 },
+  { id: "W004", name: "David Lee",     hireDate: addDays(today, -95), probationDays: 90 },
+];
+WORKERS.forEach(w => w.probationEnd = addDays(w.hireDate, w.probationDays));
+
+const GOALS = {
+  "W001": [
+    { title: "Complete onboarding training modules",         status: "Completed",   dueDate: "2025-03-31" },
+    { title: "Shadow three client discovery calls",          status: "In Progress", dueDate: "2025-04-30" },
+    { title: "Deliver first solo sprint planning session",   status: "Not Started", dueDate: "2025-05-15" },
+  ],
+  "W002": [],
+  "W003": [{ title: "Complete security awareness training", status: "In Progress", dueDate: "2025-06-01" }],
+};
+
+const FEEDBACK = {
+  "W001": [
+    { date: "2025-02-15", from: "Sarah Malik (People Partner)",
+      comment: "Alice has settled in well. She picked up the internal tools quickly and has been proactive in asking questions. No concerns at this stage." },
+    { date: "2025-03-10", from: "James Owen (Line Manager)",
+      comment: "1:1 notes: Alice delivered the onboarding training on schedule. She missed the first sprint demo but communicated in advance. Goal 2 (shadow client calls) is progressing — she has attended two so far. I need to schedule her for a third before month end.",
+      badge: "Great Initiative" },
+  ],
+  "W002": [
+    { date: "2025-02-01", from: "James Owen (Line Manager)",
+      comment: "Ben has struggled to integrate with the team. Attendance at stand-ups has been inconsistent. We haven't been able to agree on goals yet — I keep meaning to set up the goal-setting session but haven't done it." },
+    { date: "2025-03-20", from: "Sarah Malik (People Partner)",
+      comment: "Concern raised: Ben's manager flagged that goals still haven't been set at the 10-week mark. I've asked James to prioritise this. No formal PIP in place yet but this needs to be reviewed." },
+  ],
+  "W003": [
+    { date: "2025-04-20", from: "James Owen (Line Manager)",
+      comment: "Carol is very early in her role. No concerns yet. Will review at 4 weeks." },
+  ],
+};
+
+// ─────────────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+function setStatus(text, kind) {
+  const b = document.getElementById('status-badge');
+  b.textContent = text;
+  b.className = 'badge ' + (kind || 'idle');
+}
+
+function setCellState(n, state, count) {
+  const btn = document.getElementById('btn-' + n);
+  const cnt = document.getElementById('cnt-' + n);
+  btn.classList.remove('running', 'executed');
+  if (state === 'running')  btn.classList.add('running');
+  if (state === 'executed') btn.classList.add('executed');
+  cnt.textContent = '[' + (count || ' ') + ']';
+}
+
+function showOutput(n, html) {
+  const out = document.getElementById('out-' + n);
+  out.classList.add('active');
+  out.querySelector('pre').innerHTML = html;
+}
+
+function appendRunOutput(html) {
+  const out = document.getElementById('out-7');
+  out.classList.add('active');
+  document.getElementById('run-output').innerHTML += html;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// LLM call — goes through our /api/claude proxy (server-side key)
+// ─────────────────────────────────────────────────────────────────────────
+async function callClaude(prompt) {
+  const pw = getStoredPassword();
+  if (!pw) throw new Error('Not authenticated. Please refresh and enter the password.');
+
+  const response = await fetch('/api/claude', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${pw}`,
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 2048,
+      prompt,
+    }),
+  });
+  if (response.status === 401) {
+    sessionStorage.removeItem(PW_KEY);
+    location.reload();
+    throw new Error('Session expired');
+  }
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`API error ${response.status}: ${err}`);
+  }
+  const data = await response.json();
+  return data.text;
+}
+
+function buildPrompt(worker, goals, feedback) {
+  const goalsSection = goals.length
+    ? goals.map(g => `  - ${g.title} | Status: ${g.status}${g.dueDate ? ' | Due: ' + g.dueDate : ''}`).join('\n')
+    : '  No goals have been set.';
+  const feedbackSection = feedback.length
+    ? feedback.map(e => `  [${e.date}] ${e.from}${e.badge ? ' [' + e.badge + ']' : ''}: ${e.comment}`).join('\n')
+    : '  No feedback entries found.';
+
+  return `You are an experienced HR business partner preparing a probation review pack.
+Your output will be sent directly to the line manager. Write clearly and professionally. Be specific.
+
+EMPLOYEE: ${worker.name}
+PROBATION END DATE: ${fmt(worker.probationEnd)}
+
+GOALS SET DURING PROBATION:
+${goalsSection}
+
+MANAGER AND PEER FEEDBACK (from Workday Feedback):
+${feedbackSection}
+
+Produce a probation review pack with these exact sections:
+
+## Probation Review Pack — ${worker.name}
+
+### 1. Summary
+A 2-3 sentence executive summary of this employee's probation performance.
+
+### 2. Goals Assessment
+For each goal: state whether it was met, partially met, or not met, and briefly explain why.
+If no goals were set, flag this as a significant concern.
+
+### 3. Key Observations
+3-5 bullet points drawing on the feedback. Be specific. Highlight both strengths and concerns.
+
+### 4. Areas of Concern (if any)
+State concerns plainly, or write "No material concerns identified."
+
+### 5. Recommended Outcome
+State one of: PASS | EXTEND | ESCALATE
+Then give a one-paragraph justification.
+
+PASS = meeting expectations, confirm probation.
+EXTEND = shows potential but needs more time and specific improvements.
+ESCALATE = performance/conduct requires HR or senior leadership involvement.
+
+End your response with this exact line:
+OUTCOME: <PASS|EXTEND|ESCALATE>`;
+}
+
+// Convert markdown-ish review pack text to HTML
+function renderReviewPack(text) {
+  // Strip outcome line
+  const outcomeMatch = text.match(/OUTCOME:\s*(PASS|EXTEND|ESCALATE)/i);
+  const outcome = outcomeMatch ? outcomeMatch[1].toUpperCase() : 'UNKNOWN';
+  let body = text.replace(/\nOUTCOME:.*$/i, '').trim();
+
+  // Convert headings
+  body = body.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+  body = body.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  // Bold
+  body = body.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  // Bullets
+  body = body.replace(/(^|\n)[-*]\s+(.+)/g, '$1<li>$2</li>');
+  body = body.replace(/(<li>.*<\/li>(\n<li>.*<\/li>)*)/gs, '<ul>$1</ul>');
+  body = body.replace(/<\/li>\n<li>/g, '</li><li>');
+  // Paragraphs
+  body = body.split(/\n\n+/).map(p => {
+    if (p.startsWith('<h') || p.startsWith('<ul') || p.startsWith('<li')) return p;
+    return '<p>' + p.replace(/\n/g, ' ') + '</p>';
+  }).join('\n');
+
+  // Wrap badge into Section 5 if found
+  const outcomeClass = outcome === 'PASS' ? 'outcome-pass'
+                     : outcome === 'EXTEND' ? 'outcome-extend'
+                     : 'outcome-escalate';
+  const badge = `<div class="outcome-badge ${outcomeClass}">${outcome}</div>`;
+  // Insert badge right after Section 5 heading
+  body = body.replace(/(<h3>5\..*?<\/h3>)/i, '$1' + badge);
+
+  return { html: body, outcome };
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Run!
+// ─────────────────────────────────────────────────────────────────────────
+async function runAll() {
+  if (!getStoredPassword()) {
+    document.getElementById('password-gate').style.display = 'flex';
+    return;
+  }
+
+  const runBtn = document.getElementById('run-btn');
+  runBtn.disabled = true;
+  setStatus('Running…', 'busy');
+
+  // Reset outputs
+  for (let i = 1; i <= 7; i++) {
+    const out = document.getElementById('out-' + i);
+    out.classList.remove('active');
+    out.querySelector('pre').innerHTML = '';
+    setCellState(i, 'pending');
+  }
+  document.getElementById('run-output').innerHTML = '';
+  document.getElementById('review-pack').classList.remove('active');
+  document.getElementById('summary-bar').classList.remove('active');
+
+  try {
+    // Cells 1–6: simulated execution
+    const setup = [
+      { n: 1, out: '<span class="output-label">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.2/4.2 MB • anthropic\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.9/2.9 MB • requests</span>' },
+      { n: 2, out: '<span class="output-ok">Config loaded.</span>' },
+      { n: 3, out: '<span class="output-ok">Workers module ready.</span>' },
+      { n: 4, out: '<span class="output-ok">Goals module ready.</span>' },
+      { n: 5, out: '<span class="output-ok">Feedback module ready.</span>' },
+      { n: 6, out: '<span class="output-ok">LLM module ready.</span>' },
+    ];
+
+    for (const { n, out } of setup) {
+      setCellState(n, 'running');
+      await sleep(450);
+      setCellState(n, 'executed', n);
+      showOutput(n, out);
+    }
+
+    // Cell 7: actual orchestration run
+    setCellState(7, 'running');
+    await sleep(300);
+
+    const todayDate = new Date();
+    appendRunOutput(`<span class="output-head">============================================================
+  Probation Review Orchestrator
+  Run date: ${fmt(todayDate)}
+  T-30 window: 30 days  |  T-7 window: 7 days  |  Mock: True
+============================================================</span>\n\nLoaded 4 worker(s)\n\n`);
+
+    let counts = { t30: 0, t7: 0, skipped: 0 };
+    let recommendedOutcome = '—';
+
+    for (const worker of WORKERS) {
+      const daysLeft = daysBetween(todayDate, worker.probationEnd);
+      appendRunOutput(`<span class="output-label">────────────────────────────────────────────────────────────</span>\n`);
+      appendRunOutput(`Worker: <b>${worker.name}</b> (${worker.id})\n`);
+      appendRunOutput(`  Hire date: ${fmt(worker.hireDate)}  |  Probation end: ${fmt(worker.probationEnd)}  |  Days left: ${daysLeft}\n\n`);
+      await sleep(400);
+
+      if (daysLeft < 0) {
+        appendRunOutput(`  <span class="output-label">[SKIP] Probation ended ${Math.abs(daysLeft)}d ago</span>\n\n`);
+        counts.skipped++;
+      } else if (daysLeft <= 7) {
+        appendRunOutput(`  <span class="output-info">[T-7]  Handling ${worker.name}</span>\n`);
+        appendRunOutput(`    <span class="output-info">[INBOX] manager:mgr_${worker.id} ← manager_t7_chase</span>\n`);
+        appendRunOutput(`            Reminder: T-7 for ${worker.name} — please complete outstanding tasks.\n`);
+        appendRunOutput(`    <span class="output-info">[INBOX] people_partner:pp_default ← people_partner_t7_chase</span>\n`);
+        appendRunOutput(`            Reminder: T-7 for ${worker.name} — please complete outstanding tasks.\n`);
+
+        const goals = GOALS[worker.id] || [];
+        const feedback = FEEDBACK[worker.id] || [];
+        appendRunOutput(`    Goals: ${goals.length}  |  Feedback entries: ${feedback.length}\n`);
+        appendRunOutput(`    <span class="output-warn">⏳ Calling Claude Sonnet to generate review pack…</span>\n`);
+
+        // ── REAL LLM CALL ──
+        const prompt = buildPrompt(worker, goals, feedback);
+        const reviewText = await callClaude(prompt);
+        const { html, outcome } = renderReviewPack(reviewText);
+
+        recommendedOutcome = outcome;
+        appendRunOutput(`    <span class="output-ok">[LLM] Recommended outcome: ${outcome}</span>\n\n`);
+
+        const rp = document.getElementById('review-pack');
+        rp.innerHTML = html;
+        rp.classList.add('active');
+
+        appendRunOutput(`    <span class="output-info">[INBOX] manager:mgr_${worker.id} ← manager_review_pack_t7</span>\n`);
+        appendRunOutput(`            Drafted review pack for ${worker.name} is ready.\n`);
+        appendRunOutput(`    [DB] T-7 marked as triggered for ${worker.name}\n\n`);
+        counts.t7++;
+      } else if (daysLeft <= 30) {
+        appendRunOutput(`  <span class="output-info">[T-30] Handling ${worker.name}</span>\n`);
+        const goals = GOALS[worker.id] || [];
+        if (goals.length === 0) {
+          appendRunOutput(`    <span class="output-warn">[WARN] No goals found — assigning goal-setting task to manager</span>\n`);
+        } else {
+          appendRunOutput(`    <span class="output-ok">[OK] ${goals.length} goal(s) found:</span>\n`);
+          goals.forEach(g => appendRunOutput(`       - ${g.title} [${g.status}]\n`));
+        }
+        appendRunOutput(`    <span class="output-info">[INBOX] manager:mgr_${worker.id} ← manager_t30_checklist</span>\n`);
+        appendRunOutput(`            Probation review for ${worker.name} due ${fmt(worker.probationEnd)}.\n`);
+        appendRunOutput(`    <span class="output-info">[INBOX] people_partner:pp_default ← pp_t30_awareness</span>\n`);
+        appendRunOutput(`    <span class="output-info">[INBOX] employee:${worker.id} ← employee_self_assessment</span>\n`);
+        appendRunOutput(`    [DB] T-30 marked as triggered for ${worker.name}\n\n`);
+        counts.t30++;
+      } else {
+        appendRunOutput(`  <span class="output-label">[OK] Not yet in action window</span>\n\n`);
+        counts.skipped++;
+      }
+      await sleep(300);
+    }
+
+    appendRunOutput(`<span class="output-head">============================================================
+  Done.  T-30 actions: ${counts.t30}  |  T-7 actions: ${counts.t7}  |  Skipped: ${counts.skipped}
+============================================================</span>\n`);
+
+    // Summary bar
+    const sb = document.getElementById('summary-bar');
+    sb.innerHTML = `
+      <div class="summary-item">T-30 triggered <span>${counts.t30}</span></div>
+      <div class="summary-item">T-7 triggered <span>${counts.t7}</span></div>
+      <div class="summary-item">Review packs drafted <span>${counts.t7}</span></div>
+      <div class="summary-item">Recommended outcome <span>${recommendedOutcome}</span></div>
+    `;
+    sb.classList.add('active');
+
+    setCellState(7, 'executed', 7);
+    setStatus('✓ Run complete', 'idle');
+  } catch (err) {
+    setCellState(7, 'pending');
+    appendRunOutput(`\n<span class="output-error">ERROR: ${err.message}</span>`);
+    setStatus('Error', 'error');
+    console.error(err);
+  } finally {
+    runBtn.disabled = false;
+  }
+}
+
+// On load: hide the password gate if user already has a session password
+window.addEventListener('DOMContentLoaded', () => {
+  if (getStoredPassword()) {
+    document.getElementById('password-gate').style.display = 'none';
+  } else {
+    document.getElementById('gate-pw').focus();
+  }
+});
+
+// Show/hide full code blocks
+function toggleCode(btn) {
+  const fullCode = btn.parentElement.nextElementSibling;
+  const isOpen = fullCode.classList.toggle('open');
+  btn.textContent = isOpen ? '▾ Hide full code' : '▸ Show full code';
+}
+
+// Tab switching
+function showTab(name, btn) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Niokas CoE of AI — Prototypes</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Arial, sans-serif;
+    background: #f8f9fa;
+    color: #202124;
+    font-size: 14px;
+    min-height: 100vh;
+  }
+  .header {
+    background: #fff;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 56px;
+  }
+  .header-title { font-size: 17px; font-weight: 600; color: #202124; }
+  .header-sub { font-size: 12px; color: #80868b; margin-left: auto; }
+
+  .container {
+    max-width: 900px;
+    margin: 48px auto;
+    padding: 0 24px;
+  }
+  h1 { font-size: 28px; font-weight: 600; margin-bottom: 8px; }
+  .lede { color: #5f6368; font-size: 15px; line-height: 1.6; margin-bottom: 32px; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  .card {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    text-decoration: none;
+    color: inherit;
+    transition: box-shadow 0.15s, transform 0.15s;
+    display: block;
+  }
+  .card:hover {
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    transform: translateY(-1px);
+    border-color: #1a73e8;
+  }
+  .card-status {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+  }
+  .status-live   { background: #e6f4ea; color: #137333; }
+  .status-wip    { background: #fef7e0; color: #b06000; }
+  .status-soon   { background: #f1f3f4; color: #5f6368; }
+  .card-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+  .card-desc { color: #5f6368; line-height: 1.5; font-size: 13px; }
+
+  .footer {
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid #e0e0e0;
+    color: #80868b;
+    font-size: 12px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div class="header">
+  <span class="header-title">Niokas · CoE of AI</span>
+  <span class="header-sub">Internal prototype gallery</span>
+</div>
+
+<div class="container">
+  <h1>AI prototypes</h1>
+  <p class="lede">A growing library of AI-powered solutions to common Workday customer problems. Each prototype demonstrates the concept end-to-end with mock data and a live LLM call.</p>
+
+  <div class="grid">
+    <a class="card" href="/probation">
+      <span class="card-status status-live">Live</span>
+      <div class="card-title">Probation Review Orchestrator</div>
+      <div class="card-desc">Tracks every new joiner's probation clock, fires the right inbox tasks, and uses an LLM to draft the review pack with a recommended outcome.</div>
+    </a>
+
+    <div class="card" style="cursor:default; opacity:0.6;">
+      <span class="card-status status-soon">Coming soon</span>
+      <div class="card-title">Next prototype</div>
+      <div class="card-desc">Pulled from the CoE backlog.</div>
+    </div>
+  </div>
+
+  <div class="footer">Internal — protected by site password. Do not share the URL externally.</div>
+</div>
+</body>
+</html>
