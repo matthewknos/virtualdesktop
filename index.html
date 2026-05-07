@@ -78,6 +78,18 @@
 </style>
 </head>
 <body>
+
+<!-- ── Password gate ── -->
+<div id="password-gate" style="position:fixed;inset:0;background:rgba(248,249,250,0.97);z-index:200;display:flex;align-items:center;justify-content:center;">
+  <div style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:32px;max-width:380px;width:90%;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+    <h2 style="font-size:18px;margin-bottom:8px;">CoE Testing — Access</h2>
+    <p style="font-size:13px;color:#5f6368;margin-bottom:20px;line-height:1.5;">Internal use only. Enter the access password to continue.</p>
+    <input type="password" id="gate-pw" placeholder="Access password" style="width:100%;padding:10px;border:1px solid #dadce0;border-radius:4px;font-size:14px;margin-bottom:12px;" onkeydown="if(event.key==='Enter')checkPassword()">
+    <button onclick="checkPassword()" style="width:100%;padding:10px;background:#1a73e8;color:white;border:none;border-radius:4px;font-size:14px;font-weight:600;cursor:pointer;">Continue</button>
+    <div id="gate-error" style="color:#c5221f;font-size:12px;margin-top:10px;display:none;">Incorrect password.</div>
+  </div>
+</div>
+
 <div class="header">
   <span class="header-title">CoE Testing</span>
   <span class="header-sub">Internal prototype gallery</span>
@@ -104,5 +116,35 @@
 
   <div class="footer">Internal — protected by site password. Do not share the URL externally.</div>
 </div>
+<script>
+const PW_KEY = 'coe_site_pw';
+
+async function checkPassword() {
+  const pw = document.getElementById('gate-pw').value.trim();
+  if (!pw) return;
+  try {
+    const res = await fetch('/api/claude', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${pw}` },
+      body: JSON.stringify({ prompt: 'ping', max_tokens: 8 }),
+    });
+    if (res.status === 401) {
+      document.getElementById('gate-error').style.display = 'block';
+      return;
+    }
+    sessionStorage.setItem(PW_KEY, pw);
+    document.getElementById('password-gate').style.display = 'none';
+  } catch (err) {
+    document.getElementById('gate-error').textContent = 'Network error: ' + err.message;
+    document.getElementById('gate-error').style.display = 'block';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (sessionStorage.getItem(PW_KEY)) {
+    document.getElementById('password-gate').style.display = 'none';
+  }
+});
+</script>
 </body>
 </html>

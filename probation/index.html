@@ -927,6 +927,12 @@ function logout() {
   location.reload();
 }
 
+document.addEventListener('DOMContentLoaded', () => {
+  if (sessionStorage.getItem(PW_KEY)) {
+    document.getElementById('password-gate').style.display = 'none';
+  }
+});
+
 // ─────────────────────────────────────────────────────────────────────────
 // Mock data — same fixtures as the Python notebook
 // ─────────────────────────────────────────────────────────────────────────
