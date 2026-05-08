@@ -19,7 +19,7 @@ const WORKERS = {
         goals: [],
         feedback: [],
         inbox: [
-          { icon: '📋', title: 'Set probation goals for Alice Johnson', sub: 'Due in 3 weeks — Workday will auto-flag if missed' }
+          { icon: 'task', title: 'Set probation goals for Alice Johnson', sub: 'Due in 3 weeks — Workday will auto-flag if missed' }
         ]
       },
       week4: {
@@ -60,7 +60,7 @@ const WORKERS = {
           { date: '2025-04-08', from: 'Marcus Lee (Project Lead)', comment: 'Alice has been a strong addition to the discovery workstream. She picks up context fast and is comfortable asking when things are unclear.' }
         ],
         inbox: [
-          { icon: '📋', title: 'T-30 probation kick-off', sub: 'Confirm goals, schedule review meeting' }
+          { icon: 'task', title: 'T-30 probation kick-off', sub: 'Confirm goals, schedule review meeting' }
         ]
       },
       t7: {
@@ -77,7 +77,7 @@ const WORKERS = {
           { date: '2025-04-25', from: 'Self-assessment (Alice)', comment: 'I feel I have met my onboarding goals on time and built strong relationships across the team. Areas to grow: confidence in client-facing meetings.' }
         ],
         inbox: [
-          { icon: '📝', title: 'Probation review pack ready', sub: 'Draft compiled by AI Copilot — review and confirm outcome' }
+          { icon: 'document', title: 'Probation review pack ready', sub: 'Draft compiled by AI Copilot — review and confirm outcome' }
         ]
       },
       reviewDay: {
@@ -112,7 +112,7 @@ const WORKERS = {
         goals: [],
         feedback: [],
         inbox: [
-          { icon: '📋', title: 'Set probation goals for Ben Carter', sub: 'Due in 3 weeks — Workday will auto-flag if missed' }
+          { icon: 'task', title: 'Set probation goals for Ben Carter', sub: 'Due in 3 weeks — Workday will auto-flag if missed' }
         ]
       },
       week4: {
@@ -122,7 +122,7 @@ const WORKERS = {
           { date: '2025-03-04', from: 'Dave Owen (Line Manager)', comment: 'Ben has missed two stand-ups in week 3. We have not had time to set goals yet — I need to find a slot.' }
         ],
         inbox: [
-          { icon: '⚠️', title: 'No goals set — overdue', sub: 'Goals were due in week 3. Workday has auto-flagged this.' }
+          { icon: 'alert', title: 'No goals set — overdue', sub: 'Goals were due in week 3. Workday has auto-flagged this.' }
         ]
       },
       week8: {
@@ -136,7 +136,7 @@ const WORKERS = {
           { date: '2025-03-30', from: 'Dave Owen (Line Manager)', comment: 'Goals finally set this week. Ben says he was unsure what was expected. We agreed two basic goals to get started.' }
         ],
         inbox: [
-          { icon: '⚠️', title: 'Halfway point — feedback gap', sub: 'No peer feedback collected for Ben yet' }
+          { icon: 'alert', title: 'Halfway point — feedback gap', sub: 'No peer feedback collected for Ben yet' }
         ]
       },
       t30: {
@@ -151,7 +151,7 @@ const WORKERS = {
           { date: '2025-04-10', from: 'Priya Patel (People Partner)', comment: 'Concern raised: Ben\'s manager flagged that goals were set late and progress is slow. Asked Dave to consider whether extension is appropriate.' }
         ],
         inbox: [
-          { icon: '📋', title: 'T-30 probation kick-off', sub: 'Concerns flagged — review case with People Partner' }
+          { icon: 'task', title: 'T-30 probation kick-off', sub: 'Concerns flagged — review case with People Partner' }
         ]
       },
       t7: {
@@ -167,7 +167,7 @@ const WORKERS = {
           { date: '2025-04-28', from: 'Self-assessment (Ben)', comment: 'I have struggled to find clarity on what is expected. The team moves fast and I have not been given a clear project to anchor to.' }
         ],
         inbox: [
-          { icon: '📝', title: 'Probation review pack ready', sub: 'Draft compiled — recommended outcome: EXTEND' }
+          { icon: 'document', title: 'Probation review pack ready', sub: 'Draft compiled — recommended outcome: EXTEND' }
         ]
       },
       reviewDay: {
@@ -235,11 +235,11 @@ const NUDGES = {
         ]
       },
       week8: {
-        text: "Hey Dave, Alice is at the halfway point. Goal 2 is at 2/3. Only 1 piece of peer feedback collected so far.\n\nWant me to ask Marcus Lee (project lead) for input on Alice's discovery work?",
+        text: "Hey Dave, Alice is at the halfway point. Goal 2 is 2/3 done and she's making good progress.\n\nOnly 1 piece of feedback collected so far. Want me to send Alice a nudge to ask Marcus Lee for input on her discovery work?",
         actions: [
-          { label: 'Send feedback request to Marcus', style: 'primary', type: 'sendFeedbackRequests',
-            payload: { task: { icon: '💬', title: 'Awaiting feedback from Marcus Lee', sub: 'Sent by AI Copilot on behalf of Dave' } },
-            confirm: "Sent. Marcus has 7 days to reply. I'll let you know." },
+          { label: 'Nudge Alice to ask Marcus', style: 'primary', type: 'draftMessage',
+            confirm: "Message drafted and ready to send to Alice on Teams.",
+            draft: "Hi Alice, you're halfway through probation and doing well. It would be great to have some feedback from Marcus on the discovery work before your review — could you drop him a quick message this week? I'll keep an eye on the Workday record. Cheers, Dave." },
           { label: 'Skip', style: 'tertiary', type: 'dismiss', confirm: "OK, no nudges on this one." }
         ]
       },
@@ -255,7 +255,7 @@ const NUDGES = {
         text: "Hey Dave, Alice's probation review is in 7 days. The draft pack is ready in your Workday inbox.\n\nRecommended outcome: PASS. Want to send Alice's self-assessment request now?",
         actions: [
           { label: 'Send self-assessment to Alice', style: 'primary', type: 'sendFeedbackRequests',
-            payload: { task: { icon: '📝', title: 'Self-assessment requested from Alice', sub: 'Due 3 days before review' } },
+            payload: { task: { icon: 'document', title: 'Self-assessment requested from Alice', sub: 'Due 3 days before review' } },
             confirm: "Sent. Alice will see the form in her Workday inbox + a Teams ping from me." },
           { label: 'Open the pack', style: 'secondary', type: 'info',
             info: "(Demo placeholder) Opens the full review pack — 5 sections, recommended outcome PASS, ready for your sign-off." }
@@ -308,17 +308,11 @@ const NUDGES = {
         ]
       },
       week8: {
-        text: "Hey Dave, Ben is at the halfway point and there's no peer feedback for him yet. Want to kick off a feedback ask to people he's worked with?\n\nSuggested:",
-        bullets: [
-          'Sarah Malik — paired with Ben on Project Atlas, weeks 2–5',
-          'Marcus Lee — project lead, weeks 1–3'
-        ],
+        text: "Hey Dave, Ben is at the halfway point and there's no peer feedback on his record yet.\n\nPeer feedback needs to be requested by Ben — want me to draft a Teams message you can send him, nudging him to ask Sarah Malik and Marcus Lee?",
         actions: [
-          { label: 'Send feedback requests', style: 'primary', type: 'sendFeedbackRequests',
-            payload: { task: { icon: '💬', title: 'Awaiting feedback from 2 colleagues', sub: 'Sarah Malik + Marcus Lee — sent by AI Copilot' } },
-            confirm: "Sent. Sarah and Marcus have 7 days to reply. Their input will land back on Ben's record." },
-          { label: 'Edit list', style: 'secondary', type: 'info',
-            info: "(Demo placeholder) An editor would let you change who gets asked or customise the message." },
+          { label: 'Draft nudge to Ben', style: 'primary', type: 'draftMessage',
+            confirm: "Drafted. Review and send to Ben when ready.",
+            draft: "Hi Ben, we're halfway through your probation. One thing that would really help your review is some peer feedback. Could you reach out to Sarah Malik and Marcus Lee this week? Even 2–3 sentences from each would make a difference. Let me know if you'd like help drafting the ask. Cheers, Dave." },
           { label: 'Dismiss', style: 'tertiary', type: 'dismiss',
             confirm: "OK — I'll re-check in 7 days." }
         ]
@@ -341,7 +335,7 @@ const NUDGES = {
           { label: 'Open pack', style: 'primary', type: 'info',
             info: "(Demo placeholder) Opens the full review pack — recommended outcome EXTEND with 30-day targets, ready for your sign-off." },
           { label: 'Send self-assessment to Ben', style: 'secondary', type: 'sendFeedbackRequests',
-            payload: { task: { icon: '📝', title: 'Self-assessment requested from Ben', sub: 'Due 3 days before review' } },
+            payload: { task: { icon: 'document', title: 'Self-assessment requested from Ben', sub: 'Due 3 days before review' } },
             confirm: "Sent to Ben on Teams + Workday inbox." }
         ]
       },

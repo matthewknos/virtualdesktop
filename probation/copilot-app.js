@@ -7,11 +7,22 @@ const WEEK_LABELS = { week1: 'Week 1', week4: 'Week 4', week8: 'Week 8', t30: 'T
 const state = {
   persona: 'manager',
   workerKey: 'ben',
-  week: 'week8',
+  week: 'week1',
   tab: 'profile',
   // Per-week overlay applied by user actions in the chat (resets when week changes)
   overlay: { extraGoals: [], extraInbox: [] },
 };
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SVG icon map — used in WD inbox tasks and empty states
+// ═══════════════════════════════════════════════════════════════════════════
+const ICONS = {
+  task:     `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12l2 2 4-4"/></svg>`,
+  alert:    `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e67700" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+  document: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`,
+  chat:     `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`,
+};
+function getIcon(name) { return ICONS[name] || ICONS.task; }
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Init
@@ -149,7 +160,7 @@ function renderWorkday() {
   // Goals tab
   const goalsEl = document.getElementById('goals-list');
   if (wd.goals.length === 0) {
-    goalsEl.innerHTML = `<div class="wd-empty"><div class="icon">📭</div>No goals set yet</div>`;
+    goalsEl.innerHTML = `<div class="wd-empty"><div class="icon">${ICONS.task}</div>No goals set yet</div>`;
   } else {
     goalsEl.innerHTML = wd.goals.map(g => `
       <div class="wd-goal">
@@ -166,7 +177,7 @@ function renderWorkday() {
   // Feedback tab
   const fbEl = document.getElementById('feedback-list');
   if (wd.feedback.length === 0) {
-    fbEl.innerHTML = `<div class="wd-empty"><div class="icon">💬</div>No feedback received yet</div>`;
+    fbEl.innerHTML = `<div class="wd-empty"><div class="icon">${ICONS.chat}</div>No feedback received yet</div>`;
   } else {
     fbEl.innerHTML = wd.feedback.map(f => `
       <div class="wd-feedback-entry">
@@ -184,11 +195,11 @@ function renderWorkday() {
   // Inbox tab
   const inEl = document.getElementById('inbox-list');
   if (wd.inbox.length === 0) {
-    inEl.innerHTML = `<div class="wd-empty"><div class="icon">✉️</div>Inbox clear</div>`;
+    inEl.innerHTML = `<div class="wd-empty"><div class="icon">${ICONS.document}</div>Inbox clear</div>`;
   } else {
     inEl.innerHTML = wd.inbox.map(t => `
       <div class="wd-inbox-task">
-        <div class="wd-inbox-icon">${t.icon}</div>
+        <div class="wd-inbox-icon">${getIcon(t.icon)}</div>
         <div class="wd-inbox-body">
           <div class="wd-inbox-title">${t.title}</div>
           <div class="wd-inbox-sub">${t.sub}</div>
@@ -349,7 +360,7 @@ function handleAction(action, originatingCard) {
 
     case 'openPack':
       appendBotCard({ text: action.confirm || 'Pack drafted. I\'ve added it to your Workday inbox.' }, { kind: 'confirm' });
-      state.overlay.extraInbox.push({ icon: '📝', title: 'Probation review pack ready', sub: 'Drafted by AI Copilot — review and confirm outcome' });
+      state.overlay.extraInbox.push({ icon: 'document', title: 'Probation review pack ready', sub: 'Drafted by AI Copilot — review and confirm outcome' });
       renderWorkday();
       break;
 
