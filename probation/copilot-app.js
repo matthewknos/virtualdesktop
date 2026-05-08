@@ -14,13 +14,16 @@ const state = {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
-// SVG icon map — used in WD inbox tasks and empty states
+// Workday system icon helpers — references the inline <symbol> defs in index.html
 // ═══════════════════════════════════════════════════════════════════════════
+function wdIcon(id, size = 16) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" class="wd-icon"><use href="#wd-icon-${id}"/></svg>`;
+}
 const ICONS = {
-  task:     `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12l2 2 4-4"/></svg>`,
-  alert:    `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e67700" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
-  document: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`,
-  chat:     `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`,
+  task:     wdIcon('document-task'),
+  alert:    wdIcon('exclamation-triangle'),
+  document: wdIcon('document'),
+  chat:     wdIcon('comment'),
 };
 function getIcon(name) { return ICONS[name] || ICONS.task; }
 
@@ -66,11 +69,11 @@ function bindEvents() {
     }
   });
 
-  document.querySelectorAll('.wd-tab').forEach(t => {
+  document.querySelectorAll('.cnvs-tab-item').forEach(t => {
     t.addEventListener('click', () => {
-      document.querySelectorAll('.wd-tab').forEach(x => x.classList.remove('active'));
-      document.querySelectorAll('.wd-tab-panel').forEach(x => x.classList.remove('active'));
-      t.classList.add('active');
+      document.querySelectorAll('.cnvs-tab-item').forEach(x => x.setAttribute('aria-selected', 'false'));
+      document.querySelectorAll('.tab-panel').forEach(x => x.classList.remove('active'));
+      t.setAttribute('aria-selected', 'true');
       document.getElementById('panel-' + t.dataset.tab).classList.add('active');
       state.tab = t.dataset.tab;
     });
@@ -90,10 +93,12 @@ function applyPersona() {
   }
   document.getElementById('chat-sub').textContent = `Talking to: ${p.label}`;
 
-  // Welcome banner — greeting matches the logged-in persona
+  // Welcome banner — greeting matches the logged-in persona (banner removed in v2 layout)
   const firstName = p.label.split(' ')[0];
-  document.getElementById('welcome-greeting').textContent = `Welcome, ${firstName}`;
-  document.getElementById('welcome-sub').textContent = p.subtitle;
+  const greetingEl = document.getElementById('welcome-greeting');
+  const subEl = document.getElementById('welcome-sub');
+  if (greetingEl) greetingEl.textContent = `Welcome, ${firstName}`;
+  if (subEl) subEl.textContent = p.subtitle;
 }
 
 function updateTimelineActive() {
@@ -131,12 +136,24 @@ function renderWorkday() {
   const visibleInbox = wd.inbox.filter(t => t.owner === ownerForPersona);
 
   document.getElementById('bc-worker').textContent = w.name;
-  document.getElementById('wh-avatar').textContent = w.initials;
+  document.getElementById('wh-avatar-v2').textContent = w.initials;
   document.getElementById('wh-name').textContent = w.name;
   document.getElementById('wh-role').textContent = w.role;
-  document.getElementById('wh-manager').textContent = w.manager;
-  document.getElementById('wh-pp').textContent = w.peoplePartner;
-  document.getElementById('wh-hire').textContent = w.hireDate;
+  const firstLast = w.name.split(' ');
+  const slug = (firstLast[0] || '').toLowerCase() + '.' + (firstLast[1] || '').toLowerCase();
+  document.getElementById('tile-manager').textContent = w.manager;
+  document.getElementById('tile-location').textContent = w.location || 'London, United Kingdom';
+  document.getElementById('tile-cc').textContent = w.costCenter || 'CC1100 Consulting';
+  document.getElementById('tile-email').textContent = w.email || `${slug}@coe.demo`;
+  document.getElementById('side-hire').textContent = w.hireDate;
+  document.getElementById('side-pp').textContent = w.peoplePartner;
+  document.getElementById('side-pronoun').textContent = w.pronoun || 'He/him';
+  document.getElementById('wh-pronoun').textContent = w.pronoun || 'He/him';
+  const headerPhoto = document.getElementById('wd-header-photo');
+  if (headerPhoto) {
+    const personaLabel = (PERSONAS[state.persona]?.label) || '';
+    headerPhoto.textContent = (personaLabel.trim()[0] || '?').toUpperCase();
+  }
 
   document.getElementById('prob-day').textContent = `Day ${wd.dayInProbation}`;
   document.getElementById('prob-total').textContent = w.probationDays;
@@ -208,9 +225,14 @@ function renderWorkday() {
   if (wd.goals.length === 0) {
     goalsEl.innerHTML = `<div class="wd-empty"><div class="icon">${ICONS.task}</div>No goals set yet</div>`;
   } else {
+    const statusIcon = (s) => {
+      if (s === 'Completed')  return wdIcon('check-circle', 20);
+      if (s === 'In Progress') return wdIcon('clock', 20);
+      return wdIcon('circle', 20);
+    };
     goalsEl.innerHTML = wd.goals.map(g => `
       <div class="wd-goal">
-        <div class="wd-goal-icon status-${g.status.replace(/\s/g, '')}">${g.status === 'Completed' ? '✓' : (g.status === 'In Progress' ? '•' : '–')}</div>
+        <div class="wd-goal-icon status-${g.status.replace(/\s/g, '')}">${statusIcon(g.status)}</div>
         <div class="wd-goal-body">
           <div class="wd-goal-title">${g.title}</div>
           <div class="wd-goal-meta">${g.status} · Due ${g.due}${g.note ? ' · <em>' + g.note + '</em>' : ''}</div>
@@ -250,7 +272,7 @@ function renderWorkday() {
           <div class="wd-inbox-title">${t.title}</div>
           <div class="wd-inbox-sub">${t.sub}</div>
         </div>
-        <button class="wd-inbox-action">Open</button>
+        <button class="cnvs-button cnvs-primary-button size-small wd-inbox-action">Open</button>
       </div>
     `).join('');
   }

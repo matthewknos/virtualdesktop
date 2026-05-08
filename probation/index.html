@@ -6,17 +6,40 @@
 <title>Agentic Probation — CoE Testing</title>
 
 <!--
-  Workday Canvas Design Tokens (CC-BY-ND-4.0) — © Workday, Inc.
-  Source: https://github.com/Workday/canvas-tokens
-  Used unmodified to render an authentic Workday-style tenant for an
-  internal Niokas CoE prototype. Roboto loaded from Google Fonts.
+  Workday open-source assets used to render an authentic Workday-style
+  tenant for an internal CoE prototype. © Workday, Inc.
+    • Canvas Tokens — github.com/Workday/canvas-tokens
+    • Canvas Kit CSS — github.com/Workday/canvas-kit
+    • Canvas System Icons — sprite inlined below
+    • Canvas Expressive Icons — sprite loaded for tile/illustrative use
+    • Canvas Kit CSS Fonts — Roboto from design.workdaycdn.com
+    • Canvas Kit CSS Core — base / reset
 -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://design.workdaycdn.com" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css-fonts@9.1.26/dist/canvas-kit-css-fonts.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css-core@9.1.26/dist/canvas-kit-css-core.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-tokens-web@4.3.0/css/base/_variables.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-tokens-web@4.3.0/css/brand/_variables.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-tokens-web@4.3.0/css/system/_variables.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css@15.0.4/common.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css@15.0.4/button.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css@15.0.4/card.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css@15.0.4/avatar.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css@15.0.4/tabs.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css@15.0.4/breadcrumbs.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css@15.0.4/pill.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css@15.0.4/badge.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css@15.0.4/banner.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css@15.0.4/form-field.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css@15.0.4/text-input.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css@15.0.4/select.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css@15.0.4/icon.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css@15.0.4/skeleton.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css-modal@9.1.26/dist/canvas-kit-css-modal.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css-action-bar@9.1.26/dist/canvas-kit-css-action-bar.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css-page-header@9.1.26/dist/canvas-kit-css-page-header.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css-loading-animation@9.1.26/dist/canvas-kit-css-loading-animation.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css-loading-dots@9.1.26/dist/canvas-kit-css-loading-dots.min.css">
 
 <style>
   /* ── Local aliases over Canvas tokens ─────────────────────────────── */
@@ -39,11 +62,11 @@
     background: var(--wd-tenant-bg);
     color: var(--cnvs-sys-color-text-default);
     font-size: var(--cnvs-sys-font-size-subtext-large); /* 14px */
-    height: calc(100vh / 0.95);
+    height: calc(100vh / 0.80);
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    zoom: 0.95;
+    zoom: 0.80;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -84,7 +107,16 @@
     position: sticky; top: 0; z-index: 10;
     box-shadow: 0 1px 3px rgba(0,0,0,0.18);
   }
-  .wd-logo { width: 30px; height: 30px; border: 1.5px solid rgba(255,255,255,0.85); border-radius: var(--cnvs-sys-shape-x1); display: flex; align-items: center; justify-content: center; font-weight: var(--cnvs-sys-font-weight-bold); color: #fff; font-size: 18px; font-family: Georgia, serif; letter-spacing: -1px; }
+  .wd-logo {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: #ff5f00;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--cnvs-sys-font-family-default);
+    font-weight: var(--cnvs-sys-font-weight-bold);
+    color: #fff;
+    font-size: var(--cnvs-sys-font-size-body-large);
+    letter-spacing: -0.4px;
+  }
   .wd-search { flex: 1; max-width: 360px; position: relative; }
   .wd-search input {
     width: 100%; padding: 6px 12px 6px 32px;
@@ -193,10 +225,10 @@
 
   .wd-goal { padding: var(--cnvs-sys-space-x3) 0; border-bottom: 1px solid var(--cnvs-sys-color-border-divider); display: flex; align-items: flex-start; gap: var(--cnvs-sys-space-x3); }
   .wd-goal:last-child { border-bottom: none; padding-bottom: 0; }
-  .wd-goal-icon { width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: var(--cnvs-sys-font-weight-bold); color: var(--cnvs-sys-color-fg-inverse); margin-top: 1px; }
-  .status-Completed   { background: var(--cnvs-sys-color-fg-positive-default); }
-  .status-InProgress  { background: var(--cnvs-sys-color-bg-primary-default); }
-  .status-NotStarted  { background: var(--cnvs-sys-color-text-hint); }
+  .wd-goal-icon { width: 22px; height: 22px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; margin-top: 1px; }
+  .wd-goal-icon.status-Completed  { color: var(--cnvs-sys-color-fg-positive-default); }
+  .wd-goal-icon.status-InProgress { color: var(--cnvs-sys-color-fg-primary-default); }
+  .wd-goal-icon.status-NotStarted { color: var(--cnvs-sys-color-text-hint); }
   .wd-goal-body { flex: 1; }
   .wd-goal-title { font-size: var(--cnvs-sys-font-size-subtext-large); font-weight: var(--cnvs-sys-font-weight-medium); color: var(--cnvs-sys-color-text-default); }
   .wd-goal-meta { font-size: var(--cnvs-sys-font-size-subtext-medium); color: var(--cnvs-sys-color-text-hint); margin-top: 2px; }
@@ -245,6 +277,40 @@
     font-family: inherit;
   }
   .wd-inbox-action:hover { background: var(--cnvs-sys-color-bg-primary-strong); }
+
+  /* ── Layout-only overrides for canvas-kit cards ─────────────────────── */
+  /* These supply layout (flex/gap/margins) that cnvs-card doesn't carry. */
+  .welcome-card { display: flex; align-items: center; gap: var(--cnvs-sys-space-x4); margin-bottom: -18px; position: relative; z-index: 2; padding: var(--cnvs-sys-space-x4) var(--cnvs-sys-space-x6); }
+  .welcome-card .greeting { font-size: var(--cnvs-sys-font-size-heading-medium); font-weight: var(--cnvs-sys-font-weight-medium); color: var(--cnvs-sys-color-text-default); letter-spacing: -0.2px; }
+  .welcome-card .sub { font-size: var(--cnvs-sys-font-size-subtext-large); color: var(--cnvs-sys-color-text-hint); margin-top: 2px; }
+
+  .worker-card { display: flex; align-items: center; gap: var(--cnvs-sys-space-x5); margin-bottom: var(--cnvs-sys-space-x4); padding: var(--cnvs-sys-space-x5) var(--cnvs-sys-space-x6); }
+  .worker-card .cnvs-base-avatar { flex-shrink: 0; }
+  .worker-info { flex: 1; min-width: 0; }
+  .worker-info h1 { font-size: var(--cnvs-sys-font-size-heading-large); font-weight: var(--cnvs-sys-font-weight-medium); color: var(--cnvs-sys-color-text-default); margin: 0 0 2px; letter-spacing: -0.3px; }
+  .worker-info .role { font-size: var(--cnvs-sys-font-size-subtext-large); color: var(--cnvs-sys-color-text-hint); margin-bottom: 8px; }
+  .worker-info .meta { display: flex; gap: 18px; font-size: var(--cnvs-sys-font-size-subtext-medium); color: var(--cnvs-sys-color-text-hint); flex-wrap: wrap; }
+  .worker-info .meta strong { color: var(--cnvs-sys-color-text-default); font-weight: var(--cnvs-sys-font-weight-medium); }
+  .worker-actions { margin-left: auto; }
+
+  .probation-card { display: flex; align-items: center; gap: var(--cnvs-sys-space-x4); margin-bottom: var(--cnvs-sys-space-x4); padding: var(--cnvs-sys-space-x3) var(--cnvs-sys-space-x5); }
+  .progress-track { flex: 1; height: 8px; background: var(--cnvs-sys-color-bg-alt-soft); border-radius: var(--cnvs-sys-shape-full); overflow: hidden; }
+  .progress-bar { height: 100%; background: var(--cnvs-sys-color-bg-primary-default); transition: width 0.3s; }
+  .probation-text { font-size: var(--cnvs-sys-font-size-subtext-large); color: var(--cnvs-sys-color-text-hint); white-space: nowrap; }
+  .probation-text strong { color: var(--cnvs-sys-color-text-default); font-weight: var(--cnvs-sys-font-weight-medium); }
+
+  .tabs-card { padding: 0; overflow: hidden; }
+  .tabs-card .cnvs-tabs-list { padding: 0 var(--cnvs-sys-space-x3); }
+  .tab-content { padding: var(--cnvs-sys-space-x4) var(--cnvs-sys-space-x5); }
+  .tab-panel { display: none; }
+  .tab-panel[role="tabpanel"].active, .tab-panel.active { display: block; }
+  .section-title { font-size: 11px; font-weight: var(--cnvs-sys-font-weight-bold); color: var(--cnvs-sys-color-text-hint); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: var(--cnvs-sys-space-x3); padding-bottom: 8px; border-bottom: 1px solid var(--cnvs-sys-color-border-divider); }
+
+  .inbox-card-bottom { padding: 0; margin-top: var(--cnvs-sys-space-x4); }
+  .inbox-card-heading { display: flex; align-items: center; gap: 8px; padding: 12px var(--cnvs-sys-space-x5); border-bottom: 1px solid var(--cnvs-sys-color-border-divider); font-size: 11px; font-weight: var(--cnvs-sys-font-weight-bold); color: var(--cnvs-sys-color-text-hint); text-transform: uppercase; letter-spacing: 0.6px; }
+  .inbox-card-bottom #inbox-list { padding: 10px var(--cnvs-sys-space-x4); }
+  .inbox-card-bottom #inbox-list:empty { display: none; }
+  .inbox-card-bottom:has(#inbox-list:empty) { display: none; }
 
   /* ── Teams chat panel — pixel-faithful dark mode (matches Teams desktop screenshot) ── */
   /* Teams Violet brand: #5d5bd4 (active tab indicator + send icon hover) */
@@ -429,9 +495,357 @@
 
   /* ── Password gate ─────────────────────────────────────────────── */
   #password-gate { position: fixed; inset: 0; background: rgba(240,242,245,0.97); z-index: 200; display: flex; align-items: center; justify-content: center; }
+
+  /* ─────────────────────────────────────────────────────────────────
+     Workday tenant — visual rebuild to match real WD Worker Profile.
+     Reference screenshot: navy slim header, centred pill search,
+     left vertical rail, blue-banner worker card with avatar overlap,
+     three-column profile grid (worker / job-details / side cards).
+     ──────────────────────────────────────────────────────────────── */
+
+  /* Override the old wd-header */
+  .panel-workday .wd-header {
+    background: #1a3447;
+    background-image: linear-gradient(180deg, #1f3a52 0%, #18334a 100%);
+    height: 48px;
+    padding: 0 16px;
+    gap: 14px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+  }
+  .panel-workday .wd-header .wd-logo {
+    width: 32px; height: 32px;
+    background: transparent;
+    padding: 0;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .panel-workday .wd-header .wd-logo svg,
+  .panel-workday .wd-header .wd-logo img { width: 100%; height: 100%; display: block; object-fit: contain; }
+  /* Centred pill search */
+  .panel-workday .wd-header .wd-search {
+    flex: 1 1 auto; max-width: 560px;
+    margin: 0 auto;
+  }
+  .panel-workday .wd-header .wd-search input {
+    background: rgba(255,255,255,0.92);
+    border-radius: 999px;
+    padding: 7px 14px 7px 36px;
+    font-size: 13px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .panel-workday .wd-header .wd-search-icon { left: 13px; }
+  .panel-workday .wd-header .wd-icons { gap: 14px; margin-left: 6px; }
+  .panel-workday .wd-header .wd-icon-btn {
+    width: 30px; height: 30px;
+    color: rgba(255,255,255,0.92);
+    background: transparent;
+    border-radius: 50%;
+    position: relative;
+  }
+  .panel-workday .wd-header .wd-icon-btn:hover { background: rgba(255,255,255,0.1); }
+  .panel-workday .wd-header .wd-icon-bell-badge::after {
+    content: ''; position: absolute; top: 4px; right: 4px;
+    width: 8px; height: 8px; background: #e53935;
+    border: 2px solid #1f3a52; border-radius: 50%;
+  }
+  .panel-workday .wd-header .wd-profile-photo {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: #f3e3d0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: #5a3a1f;
+    overflow: hidden;
+  }
+
+  /* Layout: rail + main */
+  .panel-workday { display: flex; flex-direction: column; }
+  .wd-body { display: flex; flex: 1; min-height: 0; }
+  .wd-rail {
+    width: 64px; flex-shrink: 0;
+    background: #fff;
+    border-right: 1px solid #e2e6eb;
+    padding: 12px 0;
+    display: flex; flex-direction: column;
+    gap: 4px;
+  }
+  .wd-rail-spacer { flex: 1; }
+  .wd-rail-item {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 3px;
+    padding: 8px 4px;
+    color: #4a5562;
+    text-decoration: none;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    border-right: 3px solid transparent;
+    transition: background 0.12s, color 0.12s;
+  }
+  .wd-rail-item:hover { background: #f4f5f7; color: #1f3a52; }
+  .wd-rail-item.active { color: #1f3a52; border-left-color: #1f3a52; background: #f4f5f7; }
+  .wd-rail-item svg { width: 20px; height: 20px; }
+  .wd-rail-label { font-size: 10px; font-weight: 500; letter-spacing: 0.1px; }
+  .wd-rail-divider { height: 1px; background: #e2e6eb; margin: 8px 14px; }
+
+  .wd-main {
+    flex: 1; overflow-y: auto;
+    background: #f4f5f7;
+    padding: 0 14px 18px;
+  }
+
+  /* Hide legacy welcome banner + breadcrumb in new layout */
+  .panel-workday .wd-welcome { display: none; }
+  .panel-workday nav[aria-label="Breadcrumb"] {
+    margin: 6px 0 4px;
+    font-size: 12px;
+  }
+  .panel-workday .wd-main > .cnvs-form-field { margin: 0 0 8px !important; }
+  .panel-workday .cnvs-breadcrumbs-list { display: flex; align-items: center; gap: 6px; padding: 0; margin: 0; list-style: none; min-height: 0 !important; height: auto !important; }
+  .panel-workday .cnvs-breadcrumbs-item { display: inline-flex; align-items: center; gap: 6px; }
+  .panel-workday .cnvs-breadcrumbs-item + .cnvs-breadcrumbs-item::before {
+    content: '›'; color: #6b7480; font-size: 14px;
+  }
+  .panel-workday .cnvs-breadcrumbs-link { color: #2566c5; text-decoration: none; font-size: 13px; }
+  .panel-workday .cnvs-breadcrumbs-link:hover { text-decoration: underline; }
+  .panel-workday .cnvs-breadcrumbs-current-item { color: #2a2a2a; font-size: 13px; font-weight: 500; }
+  .wd-tile-value { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* Profile grid: worker card | center | side rail
+     Note: panel-workday is 60% of viewport, so we use container-relative breakpoints. */
+  .wd-profile-grid {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 14px;
+    align-items: start;
+  }
+  /* When the workday panel is roomy, restore the right-hand side column */
+  @media (min-width: 1700px) {
+    .wd-profile-grid { grid-template-columns: 260px minmax(0, 1fr) 260px; }
+  }
+  /* Stack right-rail cards inline below center on narrow viewports */
+  @media (max-width: 1699px) {
+    .wd-side-col {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .wd-side-card { margin-bottom: 0; }
+  }
+  /* Tile row: 4 across when wide, 2x2 when tight */
+  .wd-tile-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (min-width: 980px) {
+    .panel-workday .wd-tile-row { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  }
+
+  /* ── Worker card (left column) — blue banner + avatar overlap ── */
+  .wd-worker-v2 {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.06);
+    overflow: hidden;
+    position: relative;
+  }
+  .wd-worker-banner {
+    height: 110px;
+    background: linear-gradient(180deg, #4a8bc2 0%, #6fa2cf 60%, #b8d4ec 100%);
+    background-image:
+      linear-gradient(180deg, rgba(74,139,194,0.92) 0%, rgba(111,162,207,0.85) 60%, rgba(184,212,236,0.95) 100%),
+      url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200"><defs><radialGradient id="c" cx="50%25" cy="50%25"><stop offset="0%25" stop-color="white" stop-opacity="0.55"/><stop offset="100%25" stop-color="white" stop-opacity="0"/></radialGradient></defs><ellipse cx="80" cy="60" rx="80" ry="22" fill="url(%23c)"/><ellipse cx="280" cy="120" rx="100" ry="28" fill="url(%23c)"/></svg>');
+    background-size: cover;
+    position: relative;
+  }
+  .wd-pdf-btn {
+    position: absolute; top: 10px; right: 10px;
+    width: 28px; height: 28px; border-radius: 6px;
+    background: rgba(255,255,255,0.85);
+    color: #1f3a52;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 700;
+    cursor: pointer;
+    border: none;
+  }
+  .wd-pdf-btn:hover { background: #fff; }
+  .wd-worker-body {
+    padding: 0 18px 18px;
+    text-align: center;
+    margin-top: -50px;
+    position: relative;
+  }
+  .wd-worker-avatar-v2 {
+    width: 110px; height: 110px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f7c97a, #e08820);
+    border: 4px solid #fff;
+    margin: 0 auto 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 36px; font-weight: 700;
+    font-family: 'Roboto', sans-serif;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    overflow: hidden;
+  }
+  .wd-worker-pronoun { font-size: 11px; color: #6b7480; margin-top: 6px; }
+  .wd-worker-name { font-size: 17px; font-weight: 700; color: #2a2a2a; margin-top: 2px; line-height: 1.25; }
+  .wd-worker-role { font-size: 12px; color: #6b7480; margin-top: 2px; }
+  .wd-actions-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-top: 14px;
+    padding: 6px 16px;
+    background: #fff;
+    border: 1.5px solid #c8cdd4;
+    border-radius: 999px;
+    font-size: 12px; font-weight: 500; color: #2a2a2a;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .wd-actions-pill:hover { border-color: #1f3a52; }
+  .wd-actions-pill svg { width: 11px; height: 11px; }
+  .wd-quick-buttons {
+    display: flex; justify-content: center; gap: 30px;
+    margin-top: 16px;
+  }
+  .wd-quick-btn {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 6px;
+    background: none; border: none; cursor: pointer;
+    color: #2a2a2a; font-family: inherit;
+    padding: 4px 8px;
+  }
+  .wd-quick-btn-icon {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: #f4f5f7;
+    display: flex; align-items: center; justify-content: center;
+    color: #1f3a52;
+  }
+  .wd-quick-btn-icon svg { width: 18px; height: 18px; }
+  .wd-quick-btn-label { font-size: 11px; font-weight: 500; }
+  .wd-quick-btn:hover .wd-quick-btn-icon { background: #e8edf2; }
+  .wd-more-link {
+    display: block;
+    margin-top: 14px;
+    text-align: center;
+    color: #2566c5;
+    font-size: 13px; font-weight: 500;
+    text-decoration: none;
+  }
+  .wd-more-link:hover { text-decoration: underline; }
+
+  /* ── Job summary tile row ── */
+  .wd-tile-row {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.06);
+    padding: 16px 20px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 24px;
+    margin-bottom: 14px;
+  }
+  .wd-tile {
+    display: flex; align-items: flex-start; gap: 10px;
+    min-width: 0;
+  }
+  .wd-tile-icon {
+    width: 28px; height: 28px; flex-shrink: 0;
+    color: #6b7480;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .wd-tile-icon svg { width: 18px; height: 18px; }
+  .wd-tile-text { min-width: 0; }
+  .wd-tile-label { font-size: 11px; color: #6b7480; margin-bottom: 2px; }
+  .wd-tile-value { font-size: 13px; color: #2a2a2a; font-weight: 500; word-break: break-word; }
+
+  /* ── Center card (Job Details / Probation / etc.) ── */
+  .wd-section-card {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.06);
+    padding: 18px 20px;
+    margin-bottom: 14px;
+  }
+  .wd-section-card h2 {
+    font-size: 16px; font-weight: 600;
+    color: #2a2a2a;
+    margin-bottom: 14px;
+    letter-spacing: -0.1px;
+  }
+  .wd-detail-row {
+    padding: 8px 0;
+    border-bottom: 1px solid #eef0f3;
+  }
+  .wd-detail-row:last-child { border-bottom: none; }
+  .wd-detail-label { font-size: 12px; color: #6b7480; margin-bottom: 2px; }
+  .wd-detail-value { font-size: 13px; color: #2a2a2a; font-weight: 500; }
+
+  /* ── Right side cards ── */
+  .wd-side-card {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.06);
+    padding: 16px 18px;
+    margin-bottom: 14px;
+  }
+  .wd-side-card h3 {
+    font-size: 14px; font-weight: 700;
+    color: #2a2a2a;
+    margin-bottom: 12px;
+    letter-spacing: -0.1px;
+  }
+  .wd-side-card .wd-detail-label { font-size: 11px; }
+  .wd-side-card .wd-detail-value { font-size: 13px; }
+  .wd-side-card-empty { font-size: 13px; color: #6b7480; }
+
+  /* Tabs card retains its place but visual softer in v2 */
+  .panel-workday .tabs-card {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.06);
+    border: none !important;
+    margin-top: 14px;
+    overflow: hidden;
+  }
+
+  /* Inbox card-bottom in new layout */
+  .panel-workday .inbox-card-bottom {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.06);
+    border: none !important;
+    margin-top: 14px;
+  }
+
+  /* Hide the legacy probation-card in new layout (it lives inside center now) */
+  .panel-workday .probation-card { display: none; }
+
+  /* Probation status bar inside center card */
+  .wd-prob-mini {
+    display: flex; align-items: center; gap: 12px;
+    margin-top: 4px;
+  }
+  .wd-prob-mini .progress-track { flex: 1; height: 6px; background: #e8edf2; border-radius: 999px; overflow: hidden; }
+  .wd-prob-mini .progress-bar { height: 100%; background: #1f3a52; }
+  .wd-prob-mini-text { font-size: 12px; color: #4a5562; white-space: nowrap; }
+  .wd-prob-mini-text strong { color: #1f3a52; font-weight: 600; }
 </style>
 </head>
 <body data-layout="split">
+
+<!-- Workday Canvas System Icons (CC-BY-ND-4.0) — © Workday, Inc. — inlined verbatim from canvas-system-icons-web@4.0.2 -->
+<svg width="0" height="0" style="position:absolute;overflow:hidden" aria-hidden="true">
+  <defs>
+    <symbol id="wd-icon-notifications" viewBox="0 0 24 24"><path fill="transparent" d="M12 2a2 2 0 0 1 2 2c0 .161.093.312.245.363C16.447 5.104 18 6.9 18 9v2.307c0 1.898 1.13 3.573 2.593 4.781l.239.202a.5.5 0 0 1 .168.371v.839a.5.5 0 0 1-.5.5h-17a.5.5 0 0 1-.5-.5v-.839a.5.5 0 0 1 .168-.371q.118-.102.239-.202C4.87 14.88 6 13.205 6 11.307V9c0-2.1 1.553-3.896 3.754-4.637A.38.38 0 0 0 10 4a2 2 0 0 1 2-2" class="wd-icon-background"/><path fill="currentColor" d="M16 19a4 4 0 0 1-8 0H3.5A1.5 1.5 0 0 1 2 17.5v-.839c0-.425.181-.839.514-1.127l.256-.217C4.105 14.214 5 12.795 5 11.307V9c0-2.49 1.73-4.511 4.031-5.436a3 3 0 0 1 5.937 0C17.269 4.488 19 6.51 19 9v2.307c0 1.488.895 2.907 2.23 4.01q.13.108.256.217c.333.288.514.702.514 1.127v.839a1.5 1.5 0 0 1-1.5 1.5zm-6 0a2 2 0 0 0 4 0zm2-16a1 1 0 0 0-1 1c0 .524-.309 1.102-.927 1.31C8.171 5.952 7 7.435 7 9v2.307c0 2.307-1.366 4.238-2.957 5.552L4 16.895V17h16v-.105l-.043-.036C18.366 15.545 17 13.614 17 11.307V9c0-1.566-1.17-3.049-3.073-3.69C13.304 5.102 13 4.52 13 4a1 1 0 0 0-1-1" class="wd-icon-fill"/></symbol>
+    <symbol id="wd-icon-inbox-fill" viewBox="0 0 24 24"><path fill="transparent" d="m2 12 4-8h12l4 8v7H2z" class="wd-icon-background"/><path fill="currentColor" d="M7.758 12a4.5 4.5 0 0 0 8.484 0H22v7H2v-7z" class="wd-icon-accent"/><path fill="currentColor" d="M18.14 3.01a1 1 0 0 1 .755.543l3.994 7.988q.025.051.046.104l.014.045a1 1 0 0 1 .044.205Q23 11.947 23 12v7a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-7q.002-.23.095-.425l.01-.022 4-8 .072-.121A1 1 0 0 1 6 3h12zM3 18h18v-5h-4.103a5.495 5.495 0 0 1-9.793 0H3zm.618-7h4.14l.156.013a1 1 0 0 1 .786.654 3.5 3.5 0 0 0 6.6 0l.063-.144a1 1 0 0 1 .88-.523h4.139l-3-6H6.618z" class="wd-icon-fill"/></symbol>
+    <symbol id="wd-icon-search" viewBox="0 0 24 24"><path fill="currentColor" d="M11 2a9 9 0 0 1 7.03 14.616l4.323 4.323a.5.5 0 0 1 0 .707l-.707.707a.5.5 0 0 1-.707 0l-4.323-4.323A9 9 0 1 1 11 2m0 2a7 7 0 1 0 0 14 7 7 0 0 0 0-14" class="wd-icon-fill"/></symbol>
+    <symbol id="wd-icon-user-focus" viewBox="0 0 24 24"><path fill="currentColor" d="M3.5 16a.5.5 0 0 1 .5.5V20h3.5a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-4A1.5 1.5 0 0 1 2 20.5v-4a.5.5 0 0 1 .5-.5zM21.5 16a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5H20v-3.5a.5.5 0 0 1 .5-.5zM12 6a3 3 0 0 1 3 3 2.99 2.99 0 0 1-1.049 2.275 7 7 0 0 1 2.716 1.507c.212.19.333.461.333.745V16a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1v-2.473c0-.284.121-.555.333-.745a7 7 0 0 1 2.715-1.507A3 3 0 0 1 12 6m0 7a4.97 4.97 0 0 0-3 1v1h6v-1a4.97 4.97 0 0 0-3-1m0-5a1 1 0 1 0 0 2 1 1 0 0 0 0-2M7.5 2a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H4v3.5a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-4A1.5 1.5 0 0 1 3.5 2zM20.5 2A1.5 1.5 0 0 1 22 3.5v4a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5V4h-3.5a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5z" class="wd-icon-fill"/></symbol>
+    <symbol id="wd-icon-document" viewBox="0 0 24 24"><path fill="transparent" d="M5 2.5v19a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5V6.207a.5.5 0 0 0-.146-.353l-3.708-3.708A.5.5 0 0 0 14.793 2H5.5a.5.5 0 0 0-.5.5" class="wd-icon-background"/><path fill="currentColor" d="M14.793 1a1.5 1.5 0 0 1 1.06.44l3.708 3.706A1.5 1.5 0 0 1 20 6.207V21.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 21.5v-19A1.5 1.5 0 0 1 5.5 1zM6 21h12V7h-3.5a.5.5 0 0 1-.5-.5V3H6z" class="wd-icon-fill"/><path fill="currentColor" d="M16 9.5a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5zM13 6.5a.5.5 0 0 1-.5.5h-4a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 .5.5z" class="wd-icon-accent"/></symbol>
+    <symbol id="wd-icon-document-task" viewBox="0 0 24 24"><path fill="transparent" d="M18.5 2h-13a.5.5 0 0 0-.5.5v19a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-19a.5.5 0 0 0-.5-.5" class="wd-icon-background"/><path fill="currentColor" d="M18.5 1A1.5 1.5 0 0 1 20 2.5v19a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 21.5v-19A1.5 1.5 0 0 1 5.5 1zM6 21h12V3H6z" class="wd-icon-fill"/><path fill="currentColor" d="M15.5 16a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zM15.5 13a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5z" class="wd-icon-accent"/></symbol>
+    <symbol id="wd-icon-exclamation-triangle" viewBox="0 0 24 24"><path fill="transparent" d="M2.866 19h18.268a.5.5 0 0 0 .433-.75L12.433 2.43a.5.5 0 0 0-.866 0L2.433 18.25a.5.5 0 0 0 .433.75" class="wd-icon-background"/><path fill="currentColor" d="M10.82 1.754a1.5 1.5 0 0 1 2.36 0l.119.176 9.134 15.82a1.5 1.5 0 0 1-1.3 2.25H2.867a1.5 1.5 0 0 1-1.299-2.25l9.134-15.82zM3.73 18H20.27L12 3.68z" class="wd-icon-fill"/><path fill="currentColor" d="M12 14.75a1.25 1.25 0 1 1 0 2.5 1.25 1.25 0 0 1 0-2.5M12.5 8a.5.5 0 0 1 .5.5v1.34l-.17 3.683a.5.5 0 0 1-.5.477h-.66a.5.5 0 0 1-.5-.477L11 9.84V8.5a.5.5 0 0 1 .5-.5z" class="wd-icon-accent"/></symbol>
+    <symbol id="wd-icon-comment" viewBox="0 0 24 24"><path fill="transparent" d="M18 3.998a3 3 0 0 1 3 2.999v7a3 3 0 0 1-3 3H9.848c-.226.899-.69 1.751-1.393 2.455A5.28 5.28 0 0 1 5 20.997v-4.175a3 3 0 0 1-2-2.825v-7a3 3 0 0 1 3-3z" class="wd-icon-background"/><path fill="currentColor" d="M13 12.5a.5.5 0 0 1-.5.5h-5a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 .5.5zM17 9.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 .5.5z" class="wd-icon-accent"/><path fill="currentColor" d="M18 2.997a4 4 0 0 1 4 4v7a4 4 0 0 1-4 4h-7.425a6.3 6.3 0 0 1-1.413 2.162 6.28 6.28 0 0 1-4.106 1.836A1 1 0 0 1 4 20.997v-3.543a3.99 3.99 0 0 1-2-3.457v-7a4 4 0 0 1 4-4zM6 4.998a2 2 0 0 0-2 2v7a2 2 0 0 0 1.334 1.882 1 1 0 0 1 .666.942v2.984a4.3 4.3 0 0 0 1.748-1.06 4.3 4.3 0 0 0 1.13-1.992l.055-.16a1 1 0 0 1 .915-.597H18a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-1.999z" class="wd-icon-fill"/></symbol>
+    <symbol id="wd-icon-check-circle" viewBox="0 0 24 24"><path fill="transparent" d="M22 12c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2s10 4.477 10 10" class="wd-icon-background"/><path fill="currentColor" d="M12 1c6.075 0 11 4.925 11 11s-4.925 11-11 11S1 18.075 1 12 5.925 1 12 1m0 2a9 9 0 1 0 0 18 9 9 0 0 0 0-18" class="wd-icon-fill"/><path fill="currentColor" d="M15.94 8.146a.5.5 0 0 1 .706 0l.707.707a.5.5 0 0 1 0 .707l-.646.645v.001l-6 6a1 1 0 0 1-1.413 0l-1.35-1.35-.005-.003-1.793-1.793a.5.5 0 0 1 0-.707l.707-.707a.5.5 0 0 1 .707 0l2.44 2.44z" class="wd-icon-accent"/></symbol>
+    <symbol id="wd-icon-clock" viewBox="0 0 24 24"><path fill="transparent" d="M22 12c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2s10 4.477 10 10" class="wd-icon-background"/><path fill="currentColor" d="M12.5 5a.5.5 0 0 1 .5.5V11h3.5a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H12a1 1 0 0 1-1-1V5.5a.5.5 0 0 1 .5-.5z" class="wd-icon-accent"/><path fill="currentColor" d="M12 1c6.075 0 11 4.925 11 11s-4.925 11-11 11S1 18.075 1 12 5.925 1 12 1m0 2a9 9 0 1 0 0 18 9 9 0 0 0 0-18" class="wd-icon-fill"/></symbol>
+    <symbol id="wd-icon-circle" viewBox="0 0 24 24"><path fill="transparent" d="M22 12c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2s10 4.477 10 10" class="wd-icon-background"/><path fill="currentColor" d="M12 1c6.075 0 11 4.925 11 11s-4.925 11-11 11S1 18.075 1 12 5.925 1 12 1m0 2a9 9 0 1 0 0 18 9 9 0 0 0 0-18" class="wd-icon-fill"/></symbol>
+    <symbol id="wd-icon-chevron-right-small" viewBox="0 0 24 24"><path fill="currentColor" d="M9.958 6.112a.5.5 0 0 1 .704.07l1.617 1.976.007.01 2.56 3.128a1 1 0 0 1 0 1.266l-4.184 5.113a.5.5 0 0 1-.704.071l-.775-.633a.5.5 0 0 1-.07-.704l3.666-4.48L9.92 8.437l.001-.001-.808-.988a.5.5 0 0 1 .07-.703z" class="wd-icon-fill"/></symbol>
+    <symbol id="wd-icon-x" viewBox="0 0 24 24"><path fill="currentColor" d="M18.94 3.646a.5.5 0 0 1 .706 0l.707.707a.5.5 0 0 1 0 .707L13.414 12l6.94 6.94a.5.5 0 0 1 0 .706l-.708.707a.5.5 0 0 1-.707 0L12 13.414l-6.939 6.94a.5.5 0 0 1-.707 0l-.707-.708a.5.5 0 0 1 0-.707l6.94-6.94-6.94-6.939a.5.5 0 0 1 0-.707l.707-.707a.5.5 0 0 1 .707 0l6.94 6.94z" class="wd-icon-fill"/></symbol>
+  </defs>
+</svg>
 
 <!-- ── Password gate ── -->
 <div id="password-gate">
@@ -476,91 +890,217 @@
 
   <!-- ── Workday tenant ── -->
   <div class="panel-workday">
+
+    <!-- Slim navy header with centred pill search -->
     <div class="wd-header">
-      <div class="wd-logo">W</div>
       <div class="wd-search">
-        <span class="wd-search-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+        <span class="wd-search-icon"><svg width="14" height="14" viewBox="0 0 24 24"><use href="#wd-icon-search"/></svg></span>
         <input placeholder="Search" disabled>
       </div>
       <div class="wd-icons">
-        <div class="wd-icon-btn wd-icon-orange" title="Notifications"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
-        <div class="wd-icon-btn wd-icon-orange-filled" title="Inbox"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
-        <div class="wd-icon-btn" title="Profile"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+        <div class="wd-icon-btn" title="Chat">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.4 8.4 0 0 1-3.7-.9L3 20l1-4.3A8.4 8.4 0 1 1 21 11.5z"/></svg>
+        </div>
+        <div class="wd-icon-btn wd-icon-bell-badge" title="Notifications">
+          <svg width="20" height="20" viewBox="0 0 24 24"><use href="#wd-icon-notifications"/></svg>
+        </div>
+        <div class="wd-icon-btn" title="Inbox">
+          <svg width="20" height="20" viewBox="0 0 24 24"><use href="#wd-icon-inbox-fill"/></svg>
+        </div>
+        <div class="wd-profile-photo" title="Profile" id="wd-header-photo">M</div>
       </div>
     </div>
 
-    <div class="wd-top-inbox-wrap">
-      <div class="wd-inbox-card" id="inbox-card">
-        <div class="wd-inbox-card-header">
-          <span class="wd-inbox-card-title">Inbox</span>
-          <span class="badge" id="inbox-badge" style="display:none;">0</span>
-        </div>
-        <div class="wd-inbox-card-body" id="inbox-list"></div>
-      </div>
-    </div>
+    <!-- Body: left rail + main content -->
+    <div class="wd-body">
 
-    <div class="wd-welcome">
-      <div class="wd-welcome-card">
-        <div>
-          <div class="greeting" id="welcome-greeting">Welcome</div>
-          <div class="sub" id="welcome-sub">Here's what's happening today</div>
-        </div>
-      </div>
-    </div>
+      <!-- Left vertical rail -->
+      <nav class="wd-rail" aria-label="Primary">
+        <a class="wd-rail-item active" href="#" title="Home">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5l9-7 9 7V20a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1z"/></svg>
+          <span class="wd-rail-label">Home</span>
+        </a>
+        <a class="wd-rail-item" href="#" title="Personal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
+          <span class="wd-rail-label">Personal</span>
+        </a>
+        <a class="wd-rail-item" href="#" title="Team">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="6" r="3"/><circle cx="6" cy="14" r="2.5"/><circle cx="18" cy="14" r="2.5"/><path d="M12 9v3M9 13l2-1M15 13l-2-1"/></svg>
+          <span class="wd-rail-label">Team</span>
+        </a>
+        <a class="wd-rail-item" href="#" title="More">
+          <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="6" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18" cy="12" r="1.6"/></svg>
+          <span class="wd-rail-label">More</span>
+        </a>
+        <div class="wd-rail-spacer"></div>
+        <a class="wd-rail-item" href="#" title="Saved">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          <span class="wd-rail-label">Saved</span>
+        </a>
+        <a class="wd-rail-item" href="#" title="Settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+          <span class="wd-rail-label">Settings</span>
+        </a>
+      </nav>
 
-    <div class="wd-content-wrap">
-      <div class="wd-breadcrumb">
-        <a href="#">Workers</a>
-        <span>›</span>
-        <span id="bc-worker">Loading...</span>
-      </div>
+      <!-- Main content -->
+      <div class="wd-main">
 
-      <div class="wd-worker-card">
-        <div class="wd-avatar" id="wh-avatar">A</div>
-        <div class="wd-worker-info">
-          <h1 id="wh-name">—</h1>
-          <div class="role" id="wh-role">—</div>
-          <div class="meta">
-            <span>Manager: <strong id="wh-manager">—</strong></span>
-            <span>People Partner: <strong id="wh-pp">—</strong></span>
-            <span>Hire date: <strong id="wh-hire">—</strong></span>
-          </div>
-        </div>
-        <div class="wd-worker-actions">
-          <select class="wd-worker-select" id="worker-select" style="display:none;"></select>
-        </div>
-      </div>
+        <nav aria-label="Breadcrumb">
+          <ol class="cnvs-breadcrumbs-list">
+            <li class="cnvs-breadcrumbs-item"><a class="cnvs-breadcrumbs-link" href="#">Workers</a></li>
+            <li class="cnvs-breadcrumbs-item"><span class="cnvs-breadcrumbs-current-item" id="bc-worker">Loading...</span></li>
+          </ol>
+        </nav>
 
-      <div class="wd-probation-card">
-        <div class="wd-probation-text">Probation: <strong id="prob-day">Day —</strong> of <strong id="prob-total">90</strong></div>
-        <div class="wd-progress"><div class="wd-progress-bar" id="prob-bar" style="width:0%;"></div></div>
-        <div class="wd-probation-text" id="prob-end">Ends: —</div>
-      </div>
-
-      <div class="wd-tabs-card">
-        <div class="wd-tabs">
-          <div class="wd-tab active" data-tab="profile">Profile</div>
-          <div class="wd-tab" data-tab="goals">Goals <span id="goals-badge" class="count" style="display:none;"></span></div>
-          <div class="wd-tab" data-tab="feedback">Feedback <span id="feedback-badge" class="count" style="display:none;"></span></div>
+        <!-- Worker selector (preserved from old markup; restyled subtly) -->
+        <div class="cnvs-form-field" style="margin-bottom: 12px;">
+          <select class="cnvs-select-input" id="worker-select" style="display:none;"></select>
         </div>
 
-        <div class="wd-content">
-          <div class="wd-tab-panel active" id="panel-profile">
-            <div class="wd-section-title">Job Information</div>
-            <div id="profile-job"></div>
-            <div style="height:18px;"></div>
-            <div class="wd-section-title">Probation Status</div>
-            <div id="profile-prob"></div>
-            <div id="profile-review"></div>
-          </div>
-          <div class="wd-tab-panel" id="panel-goals">
-            <div class="wd-section-title">Probation Goals</div>
-            <div id="goals-list"></div>
-          </div>
-          <div class="wd-tab-panel" id="panel-feedback">
-            <div class="wd-section-title">Anytime Feedback</div>
-            <div id="feedback-list"></div>
-          </div>
+        <!-- Three-column profile grid -->
+        <div class="wd-profile-grid">
+
+          <!-- LEFT: worker card with banner + avatar overlap -->
+          <aside class="wd-worker-v2">
+            <div class="wd-worker-banner">
+              <button class="wd-pdf-btn" title="Export PDF" type="button">PDF</button>
+            </div>
+            <div class="wd-worker-body">
+              <div class="wd-worker-avatar-v2" id="wh-avatar-v2">A</div>
+              <div class="wd-worker-pronoun" id="wh-pronoun">He/him</div>
+              <div class="wd-worker-name" id="wh-name">—</div>
+              <div class="wd-worker-role" id="wh-role">—</div>
+              <button class="wd-actions-pill" type="button">
+                Actions
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+              <div class="wd-quick-buttons">
+                <button class="wd-quick-btn" type="button">
+                  <span class="wd-quick-btn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><polyline points="3 7 12 13 21 7"/></svg></span>
+                  <span class="wd-quick-btn-label">Email</span>
+                </button>
+                <button class="wd-quick-btn" type="button">
+                  <span class="wd-quick-btn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="6" r="2.5"/><circle cx="6" cy="14" r="2"/><circle cx="18" cy="14" r="2"/><path d="M12 8.5v3M9 13l2-1M15 13l-2-1"/></svg></span>
+                  <span class="wd-quick-btn-label">Team</span>
+                </button>
+              </div>
+              <a class="wd-more-link" href="#">More (12)</a>
+            </div>
+          </aside>
+
+          <!-- CENTER: tile row + tabbed sections -->
+          <main class="wd-center-col">
+
+            <!-- Inbox tasks (top of center column) -->
+            <div class="cnvs-card inbox-card-bottom" id="inbox-card" style="margin-top:0;margin-bottom:14px;">
+              <div class="inbox-card-heading">
+                <span>Awaiting Your Action</span>
+                <span class="cnvs-count-badge" id="inbox-badge" style="display:none;">0</span>
+              </div>
+              <div id="inbox-list"></div>
+            </div>
+
+            <!-- Job summary tile row (icons + label/value) -->
+            <div class="wd-tile-row">
+              <div class="wd-tile">
+                <span class="wd-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-7.5-7-12a7 7 0 1 1 14 0c0 4.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg></span>
+                <div class="wd-tile-text">
+                  <div class="wd-tile-label">Location</div>
+                  <div class="wd-tile-value" id="tile-location">—</div>
+                </div>
+              </div>
+              <div class="wd-tile">
+                <span class="wd-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg></span>
+                <div class="wd-tile-text">
+                  <div class="wd-tile-label">Manager</div>
+                  <div class="wd-tile-value" id="tile-manager">—</div>
+                </div>
+              </div>
+              <div class="wd-tile">
+                <span class="wd-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></span>
+                <div class="wd-tile-text">
+                  <div class="wd-tile-label">Cost Center</div>
+                  <div class="wd-tile-value" id="tile-cc">—</div>
+                </div>
+              </div>
+              <div class="wd-tile">
+                <span class="wd-tile-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><polyline points="3 7 12 13 21 7"/></svg></span>
+                <div class="wd-tile-text">
+                  <div class="wd-tile-label">Primary Work Email</div>
+                  <div class="wd-tile-value" id="tile-email">—</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tabs card (Profile / Goals / Feedback) — preserved -->
+            <div class="cnvs-card tabs-card">
+              <div class="cnvs-tabs-list" role="tablist" aria-label="Worker sections">
+                <button class="cnvs-tab-item" role="tab" aria-selected="true" data-tab="profile">Profile</button>
+                <button class="cnvs-tab-item" role="tab" aria-selected="false" data-tab="goals">Goals <span class="cnvs-count-badge emphasis-low" id="goals-badge" style="display:none;">0</span></button>
+                <button class="cnvs-tab-item" role="tab" aria-selected="false" data-tab="feedback">Feedback <span class="cnvs-count-badge emphasis-low" id="feedback-badge" style="display:none;">0</span></button>
+              </div>
+
+              <div class="tab-content">
+                <div class="tab-panel active" id="panel-profile" role="tabpanel">
+                  <div class="section-title">Job Information</div>
+                  <div id="profile-job"></div>
+                  <div style="height:18px;"></div>
+                  <div class="section-title">Probation Status</div>
+                  <div id="profile-prob"></div>
+                  <div id="profile-review"></div>
+                </div>
+                <div class="tab-panel" id="panel-goals" role="tabpanel">
+                  <div class="section-title">Probation Goals</div>
+                  <div id="goals-list"></div>
+                </div>
+                <div class="tab-panel" id="panel-feedback" role="tabpanel">
+                  <div class="section-title">Anytime Feedback</div>
+                  <div id="feedback-list"></div>
+                </div>
+              </div>
+            </div>
+
+          </main>
+
+          <!-- RIGHT: side cards -->
+          <aside class="wd-side-col">
+            <div class="wd-side-card">
+              <h3>Personal Details</h3>
+              <div class="wd-detail-row">
+                <div class="wd-detail-label">Hire Date</div>
+                <div class="wd-detail-value" id="side-hire">—</div>
+              </div>
+              <div class="wd-detail-row">
+                <div class="wd-detail-label">People Partner</div>
+                <div class="wd-detail-value" id="side-pp">—</div>
+              </div>
+              <div class="wd-detail-row">
+                <div class="wd-detail-label">Pronoun</div>
+                <div class="wd-detail-value" id="side-pronoun">He/him</div>
+              </div>
+            </div>
+
+            <div class="wd-side-card">
+              <h3>Probation</h3>
+              <div class="wd-detail-row">
+                <div class="wd-detail-label">Day</div>
+                <div class="wd-detail-value"><span id="prob-day">Day —</span> of <span id="prob-total">90</span></div>
+              </div>
+              <div class="wd-detail-row" style="border-bottom:none;padding-top:6px;">
+                <div class="wd-prob-mini">
+                  <div class="progress-track"><div class="progress-bar" id="prob-bar" style="width:0%;"></div></div>
+                </div>
+                <div class="wd-prob-mini-text" style="margin-top:8px;font-size:12px;color:#6b7480;">Ends: <strong id="prob-end">—</strong></div>
+              </div>
+            </div>
+
+            <div class="wd-side-card">
+              <h3>Upcoming Absences</h3>
+              <div class="wd-side-card-empty">No upcoming absences in the next 30 days.</div>
+            </div>
+          </aside>
+
         </div>
       </div>
     </div>
@@ -576,12 +1116,8 @@
         <div class="tx-id-text">
           <div class="tx-id-row">
             <span class="tx-id-name">AI Probation Copilot</span>
-            <span class="tx-id-pill">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg>
-              Bot
-            </span>
           </div>
-          <div class="tx-id-sub" id="chat-sub">probation-copilot@niokas.ai</div>
+          <div class="tx-id-sub" id="chat-sub">probation-copilot@coe.demo</div>
         </div>
       </div>
 
@@ -672,6 +1208,14 @@ document.addEventListener('DOMContentLoaded', () => {
   if (sessionStorage.getItem(PW_KEY)) document.getElementById('password-gate').style.display = 'none';
   init();
 });
+</script>
+
+<!-- Canvas Expressive Icons sprite — async, cached, exposes wd-expressive-* symbols for <use href="#wd-expressive-{name}"> -->
+<script>
+  fetch('https://cdn.jsdelivr.net/npm/@workday/canvas-expressive-icons-web@1.0.1/dist/sprite/wd-expressive-icon-sprite.svg')
+    .then(r => r.ok ? r.text() : '')
+    .then(svg => { if (svg) { const d = document.createElement('div'); d.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden'; d.setAttribute('aria-hidden','true'); d.innerHTML = svg; document.body.appendChild(d); }})
+    .catch(() => {});
 </script>
 
 <script src="/probation/copilot-data.js"></script>
