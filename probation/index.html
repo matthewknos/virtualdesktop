@@ -95,7 +95,7 @@
   .timeline-step.passed { background: var(--cnvs-sys-color-bg-primary-softer); color: var(--cnvs-sys-color-fg-primary-default); }
 
   /* ── Main split ──────────────────────────────────────────────────── */
-  .main { flex: 1; display: flex; overflow: hidden; --wd-split: 60%; }
+  .main { flex: 1; display: flex; overflow: hidden; --wd-split: 70%; }
   .panel-workday { flex: 0 0 var(--wd-split); background: var(--wd-tenant-bg); overflow-y: auto; border-right: none; min-width: 0; }
   .panel-chat    { flex: 1; display: flex; flex-direction: column; background: var(--cnvs-sys-color-bg-default); min-width: 0; }
   .wd-divider {
@@ -417,6 +417,17 @@
     width: 1px; height: 20px; background: #3d3d3d; margin: 0 4px;
     align-self: center;
   }
+  /* When the Teams pane is narrow, collapse search + open-in-new-window
+     into the More menu pattern Teams actually uses on small widths. */
+  @container chat-pane (max-width: 520px) {
+    .panel-chat .tx-act-btn[title="Search"],
+    .panel-chat .tx-act-btn[title="Open chat in new window"],
+    .panel-chat .tx-act-divider { display: none; }
+    .panel-chat .tx-header { padding-left: 10px; padding-right: 8px; gap: 12px; }
+    .panel-chat .tx-actions { gap: 0; }
+    .panel-chat .tx-act-btn { padding: 0 4px; min-width: 28px; }
+  }
+  .panel-chat { container-type: inline-size; container-name: chat-pane; }
 
   /* Messages area */
   .chat-messages {
