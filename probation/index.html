@@ -623,28 +623,36 @@
   .panel-workday .cnvs-breadcrumbs-current-item { color: #2a2a2a; font-size: 13px; font-weight: 500; }
   .wd-tile-value { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-  /* Profile grid: worker card | center | side rail
-     Note: panel-workday is 60% of viewport, so we use container-relative breakpoints. */
+  /* Profile grid: left col (breadcrumb + worker + probation) | center | right side col */
   .wd-profile-grid {
     display: grid;
     grid-template-columns: 240px minmax(0, 1fr);
     gap: 14px;
     align-items: start;
   }
-  /* When the workday panel is roomy, restore the right-hand side column */
   @media (min-width: 1700px) {
     .wd-profile-grid { grid-template-columns: 260px minmax(0, 1fr) 260px; }
   }
-  /* Stack right-rail cards inline below center on narrow viewports */
+  /* Left column: stacked vertically */
+  .wd-left-col { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+  .wd-left-col nav[aria-label="Breadcrumb"] { margin: 0; }
+  .wd-left-col .cnvs-form-field { margin: 0 !important; }
+  /* Right side col: stretches to fill below center on narrow viewports */
   @media (max-width: 1699px) {
     .wd-side-col {
       grid-column: 1 / -1;
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 14px;
+      align-items: stretch;
     }
     .wd-side-card { margin-bottom: 0; }
   }
+  @media (min-width: 1700px) {
+    .wd-side-col { display: flex; flex-direction: column; gap: 14px; }
+  }
+  .wd-side-card { display: flex; flex-direction: column; }
+  .wd-side-card > h3 + div { flex: 0 0 auto; }
   /* Tile row: 4 across when wide, 2x2 when tight */
   .wd-tile-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   @media (min-width: 980px) {
@@ -961,46 +969,61 @@
       <!-- Main content -->
       <div class="wd-main">
 
-        <nav aria-label="Breadcrumb">
-          <ol class="cnvs-breadcrumbs-list">
-            <li class="cnvs-breadcrumbs-item"><a class="cnvs-breadcrumbs-link" href="#">Workers</a></li>
-            <li class="cnvs-breadcrumbs-item"><span class="cnvs-breadcrumbs-current-item" id="bc-worker">Loading...</span></li>
-          </ol>
-        </nav>
-
-        <!-- Worker selector (preserved from old markup; restyled subtly) -->
-        <div class="cnvs-form-field" style="margin-bottom: 12px;">
-          <select class="cnvs-select-input" id="worker-select" style="display:none;"></select>
-        </div>
-
         <!-- Three-column profile grid -->
         <div class="wd-profile-grid">
 
-          <!-- LEFT: worker card with banner + avatar overlap -->
-          <aside class="wd-worker-v2">
-            <div class="wd-worker-banner"></div>
-            <div class="wd-worker-body">
-              <div class="wd-worker-avatar-v2" id="wh-avatar-v2">A</div>
-              <div class="wd-worker-pronoun" id="wh-pronoun">He/him</div>
-              <div class="wd-worker-name" id="wh-name">—</div>
-              <div class="wd-worker-role" id="wh-role">—</div>
-              <button class="wd-actions-pill" type="button">
-                Actions
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-              </button>
-              <div class="wd-quick-buttons">
-                <button class="wd-quick-btn" type="button">
-                  <span class="wd-quick-btn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><polyline points="3 7 12 13 21 7"/></svg></span>
-                  <span class="wd-quick-btn-label">Email</span>
-                </button>
-                <button class="wd-quick-btn" type="button">
-                  <span class="wd-quick-btn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="6" r="2.5"/><circle cx="6" cy="14" r="2"/><circle cx="18" cy="14" r="2"/><path d="M12 8.5v3M9 13l2-1M15 13l-2-1"/></svg></span>
-                  <span class="wd-quick-btn-label">Team</span>
-                </button>
-              </div>
-              <a class="wd-more-link" href="#">More (12)</a>
+          <!-- LEFT: breadcrumb + worker selector + worker card + probation -->
+          <div class="wd-left-col">
+            <nav aria-label="Breadcrumb">
+              <ol class="cnvs-breadcrumbs-list">
+                <li class="cnvs-breadcrumbs-item"><a class="cnvs-breadcrumbs-link" href="#">Workers</a></li>
+                <li class="cnvs-breadcrumbs-item"><span class="cnvs-breadcrumbs-current-item" id="bc-worker">Loading...</span></li>
+              </ol>
+            </nav>
+
+            <div class="cnvs-form-field">
+              <select class="cnvs-select-input" id="worker-select" style="display:none;"></select>
             </div>
-          </aside>
+
+            <aside class="wd-worker-v2">
+              <div class="wd-worker-banner"></div>
+              <div class="wd-worker-body">
+                <div class="wd-worker-avatar-v2" id="wh-avatar-v2">A</div>
+                <div class="wd-worker-pronoun" id="wh-pronoun">He/him</div>
+                <div class="wd-worker-name" id="wh-name">—</div>
+                <div class="wd-worker-role" id="wh-role">—</div>
+                <button class="wd-actions-pill" type="button">
+                  Actions
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="wd-quick-buttons">
+                  <button class="wd-quick-btn" type="button">
+                    <span class="wd-quick-btn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><polyline points="3 7 12 13 21 7"/></svg></span>
+                    <span class="wd-quick-btn-label">Email</span>
+                  </button>
+                  <button class="wd-quick-btn" type="button">
+                    <span class="wd-quick-btn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="6" r="2.5"/><circle cx="6" cy="14" r="2"/><circle cx="18" cy="14" r="2"/><path d="M12 8.5v3M9 13l2-1M15 13l-2-1"/></svg></span>
+                    <span class="wd-quick-btn-label">Team</span>
+                  </button>
+                </div>
+                <a class="wd-more-link" href="#">More (12)</a>
+              </div>
+            </aside>
+
+            <div class="wd-side-card">
+              <h3>Probation</h3>
+              <div class="wd-detail-row">
+                <div class="wd-detail-label">Day</div>
+                <div class="wd-detail-value"><span id="prob-day">Day —</span> of <span id="prob-total">90</span></div>
+              </div>
+              <div class="wd-detail-row" style="border-bottom:none;padding-top:6px;">
+                <div class="wd-prob-mini">
+                  <div class="progress-track"><div class="progress-bar" id="prob-bar" style="width:0%;"></div></div>
+                </div>
+                <div class="wd-prob-mini-text" style="margin-top:8px;font-size:12px;color:#6b7480;">Ends: <strong id="prob-end">—</strong></div>
+              </div>
+            </div>
+          </div>
 
           <!-- CENTER: tile row + tabbed sections -->
           <main class="wd-center-col">
@@ -1091,20 +1114,6 @@
               <div class="wd-detail-row">
                 <div class="wd-detail-label">Pronoun</div>
                 <div class="wd-detail-value" id="side-pronoun">He/him</div>
-              </div>
-            </div>
-
-            <div class="wd-side-card">
-              <h3>Probation</h3>
-              <div class="wd-detail-row">
-                <div class="wd-detail-label">Day</div>
-                <div class="wd-detail-value"><span id="prob-day">Day —</span> of <span id="prob-total">90</span></div>
-              </div>
-              <div class="wd-detail-row" style="border-bottom:none;padding-top:6px;">
-                <div class="wd-prob-mini">
-                  <div class="progress-track"><div class="progress-bar" id="prob-bar" style="width:0%;"></div></div>
-                </div>
-                <div class="wd-prob-mini-text" style="margin-top:8px;font-size:12px;color:#6b7480;">Ends: <strong id="prob-end">—</strong></div>
               </div>
             </div>
 
