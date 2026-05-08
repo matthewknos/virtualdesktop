@@ -16,8 +16,9 @@
   .topbar-title { font-size: 14px; font-weight: 600; color: #202124; }
   .topbar-spacer { flex: 1; }
 
+  .persona-label { font-size: 11px; font-weight: 700; color: #5f6368; text-transform: uppercase; letter-spacing: 0.6px; }
   .persona-group { display: flex; gap: 4px; background: #f1f3f4; padding: 3px; border-radius: 6px; }
-  .persona-btn { background: transparent; border: none; padding: 6px 14px; font-size: 12px; font-weight: 600; color: #5f6368; cursor: pointer; border-radius: 4px; transition: all 0.15s; white-space: nowrap; }
+  .persona-btn { background: transparent; border: none; padding: 7px 14px; font-size: 12px; font-weight: 600; color: #5f6368; cursor: pointer; border-radius: 4px; transition: all 0.15s; white-space: nowrap; }
   .persona-btn:hover { color: #202124; }
   .persona-btn.active { background: #fff; color: #0875e1; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
 
@@ -136,29 +137,52 @@
   .wd-inbox-action { padding: 6px 14px; font-size: 12px; background: #0875e1; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; }
   .wd-inbox-action:hover { background: #0a66c2; }
 
-  /* ── Chat panel ──────────────────────────────────────────────────── */
-  .chat-header { padding: 14px 20px; border-bottom: 1px solid #e0e0e0; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
-  .chat-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #0875e1, #0a4f9c); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; box-shadow: 0 2px 4px rgba(8,117,225,0.25); }
-  .chat-title { font-size: 14px; font-weight: 600; color: #2a2a2a; }
-  .chat-sub { font-size: 12px; color: #5f6368; }
+  /* ── Teams chat panel ────────────────────────────────────────────── */
+  .panel-chat { background: #f5f5f9; }
+  .teams-header { background: #4b53bc; color: #fff; padding: 10px 16px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+  .teams-logo { width: 28px; height: 28px; background: #fff; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+  .teams-logo-text { color: #4b53bc; font-weight: 800; font-size: 14px; font-family: 'Segoe UI', Arial; letter-spacing: -0.5px; }
+  .teams-app-title { font-size: 13px; font-weight: 600; }
+  .teams-app-sub { font-size: 11px; opacity: 0.85; margin-top: 1px; }
 
-  .chat-messages { flex: 1; overflow-y: auto; padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; }
+  .teams-convo-header { background: #fff; padding: 10px 16px; border-bottom: 1px solid #e1dfdd; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .teams-bot-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #6264a7, #4b53bc); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; flex-shrink: 0; position: relative; }
+  .teams-bot-avatar::after { content: ''; position: absolute; bottom: -1px; right: -1px; width: 10px; height: 10px; background: #6bb700; border: 2px solid #fff; border-radius: 50%; }
+  .teams-bot-name { font-size: 14px; font-weight: 600; color: #252423; }
+  .teams-bot-status { font-size: 11px; color: #6bb700; font-weight: 500; }
 
-  .msg { max-width: 85%; padding: 10px 14px; border-radius: 14px; font-size: 13px; line-height: 1.55; white-space: pre-wrap; }
-  .msg.ai { background: #f0f2f5; color: #2a2a2a; align-self: flex-start; border-bottom-left-radius: 4px; }
-  .msg.user { background: #0875e1; color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
-  .msg.thinking { background: #f0f2f5; color: #5f6368; font-style: italic; align-self: flex-start; }
+  .chat-messages { flex: 1; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 14px; background: #f5f5f9; }
 
-  .suggested-replies { padding: 0 20px 8px; display: flex; flex-wrap: wrap; gap: 6px; }
-  .reply-chip { padding: 6px 12px; background: #fff; border: 1px solid #0875e1; color: #0875e1; border-radius: 16px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
-  .reply-chip:hover { background: #0875e1; color: #fff; }
+  /* Teams message — bot side */
+  .teams-msg { display: flex; gap: 10px; }
+  .teams-msg-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #6264a7, #4b53bc); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px; flex-shrink: 0; margin-top: 2px; }
+  .teams-msg-body { flex: 1; min-width: 0; }
+  .teams-msg-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+  .teams-msg-sender { font-size: 13px; font-weight: 600; color: #252423; }
+  .teams-msg-time { font-size: 11px; color: #797775; }
+  .teams-msg-bubble { background: #fff; border: 1px solid #e1dfdd; border-radius: 4px; padding: 12px 14px; font-size: 13px; color: #252423; line-height: 1.55; }
+  .teams-msg-bubble p { margin-bottom: 8px; }
+  .teams-msg-bubble p:last-child { margin-bottom: 0; }
+  .teams-msg-bullets { list-style: none; padding: 8px 0 4px; margin: 0; }
+  .teams-msg-bullets li { padding: 6px 10px; background: #f5f5f9; border-left: 3px solid #4b53bc; border-radius: 2px; margin-bottom: 4px; font-size: 13px; color: #252423; }
+  .teams-msg-bullets li:last-child { margin-bottom: 0; }
 
-  .chat-input { padding: 12px 16px; border-top: 1px solid #e0e0e0; display: flex; gap: 8px; flex-shrink: 0; }
-  .chat-input input { flex: 1; padding: 10px 14px; border: 1px solid #dadce0; border-radius: 20px; font-size: 13px; outline: none; }
-  .chat-input input:focus { border-color: #0875e1; }
-  .chat-input button { padding: 8px 18px; background: #0875e1; color: #fff; border: none; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; }
-  .chat-input button:hover { background: #0a66c2; }
-  .chat-input button:disabled { background: #dadce0; cursor: not-allowed; }
+  .teams-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; padding-top: 10px; border-top: 1px solid #f3f2f1; }
+  .teams-action { padding: 7px 14px; font-size: 12px; font-weight: 600; border-radius: 3px; cursor: pointer; border: 1px solid transparent; transition: all 0.15s; font-family: inherit; }
+  .teams-action.primary { background: #4b53bc; color: #fff; border-color: #4b53bc; }
+  .teams-action.primary:hover { background: #3d44a0; border-color: #3d44a0; }
+  .teams-action.secondary { background: #fff; color: #4b53bc; border-color: #c7c6e2; }
+  .teams-action.secondary:hover { background: #f5f5f9; border-color: #4b53bc; }
+  .teams-action.tertiary { background: transparent; color: #797775; border-color: transparent; }
+  .teams-action.tertiary:hover { background: #f3f2f1; color: #252423; }
+  .teams-action:disabled { opacity: 0.55; cursor: not-allowed; }
+
+  /* Confirmation message after action */
+  .teams-msg-confirm .teams-msg-bubble { background: #f0f9f0; border-color: #c7e5c7; color: #1a4d1a; }
+  .teams-msg-confirm .teams-msg-bubble::before { content: '✓ '; color: #2e8540; font-weight: 700; }
+
+  /* Info/placeholder message */
+  .teams-msg-info .teams-msg-bubble { background: #fef9e7; border-color: #f9e9b3; }
 
   /* ── Password gate ─────────────────────────────────────────────── */
   #password-gate { position: fixed; inset: 0; background: rgba(240,242,245,0.97); z-index: 200; display: flex; align-items: center; justify-content: center; }
@@ -183,10 +207,11 @@
   <div class="topbar-title">Probation Copilot</div>
   <div class="topbar-spacer"></div>
 
+  <div class="persona-label">View tenant as:</div>
   <div class="persona-group" id="persona-group">
-    <button class="persona-btn active" data-persona="manager">Manager</button>
-    <button class="persona-btn" data-persona="employeeA">Employee — Alice</button>
-    <button class="persona-btn" data-persona="employeeB">Employee — Ben</button>
+    <button class="persona-btn active" data-persona="manager">Manager (Dave)</button>
+    <button class="persona-btn" data-persona="employeeA">Employee — Alice (going well)</button>
+    <button class="persona-btn" data-persona="employeeB">Employee — Ben (struggling)</button>
   </div>
 </div>
 
@@ -289,21 +314,23 @@
     </div>
   </div>
 
-  <!-- ── Chat panel ── -->
+  <!-- ── Teams chat panel ── -->
   <div class="panel-chat">
-    <div class="chat-header">
-      <div class="chat-avatar">AI</div>
+    <div class="teams-header">
+      <div class="teams-logo"><span class="teams-logo-text">T</span></div>
       <div>
-        <div class="chat-title">Probation Copilot</div>
-        <div class="chat-sub" id="chat-sub">—</div>
+        <div class="teams-app-title">Microsoft Teams</div>
+        <div class="teams-app-sub">Chat</div>
+      </div>
+    </div>
+    <div class="teams-convo-header">
+      <div class="teams-bot-avatar">AI</div>
+      <div>
+        <div class="teams-bot-name">AI Probation Copilot</div>
+        <div class="teams-bot-status" id="chat-sub">● Active now</div>
       </div>
     </div>
     <div class="chat-messages" id="chat-messages"></div>
-    <div class="suggested-replies" id="suggested-replies"></div>
-    <div class="chat-input">
-      <input id="chat-input" placeholder="Reply to the copilot..." onkeydown="if(event.key==='Enter')sendMessage()">
-      <button id="send-btn" onclick="sendMessage()">Send</button>
-    </div>
   </div>
 </div>
 

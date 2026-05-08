@@ -2,13 +2,15 @@
 // State
 // ═══════════════════════════════════════════════════════════════════════════
 const WEEK_ORDER = ['week1', 'week4', 'week8', 't30', 't7', 'reviewDay'];
+const WEEK_LABELS = { week1: 'Week 1', week4: 'Week 4', week8: 'Week 8', t30: 'T-30', t7: 'T-7', reviewDay: 'Review Day' };
 
 const state = {
   persona: 'manager',
   workerKey: 'ben',
   week: 'week8',
   tab: 'profile',
-  conversationHistory: [], // [{role: 'assistant'|'user', content: '...'}]
+  // Per-week overlay applied by user actions in the chat (resets when week changes)
+  overlay: { extraGoals: [], extraInbox: [] },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -102,7 +104,14 @@ function render() {
 
 function renderWorkday() {
   const w = WORKERS[state.workerKey];
-  const wd = w.weekData[state.week];
+  const baseWd = w.weekData[state.week];
+  // Merge fixture data with action-driven overlay (resets on week change)
+  const wd = {
+    dayInProbation: baseWd.dayInProbation,
+    goals:    [...baseWd.goals,    ...state.overlay.extraGoals],
+    feedback: [...baseWd.feedback],
+    inbox:    [...baseWd.inbox,    ...state.overlay.extraInbox]
+  };
 
   document.getElementById('bc-worker').textContent = w.name;
   document.getElementById('wh-avatar').textContent = w.initials;
@@ -219,139 +228,140 @@ function setInboxBadge(n) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Chat — scripted nudges + suggested chips + live LLM
+// Chat — Teams-style adaptive cards with structured action buttons
 // ═══════════════════════════════════════════════════════════════════════════
 function renderChatOpening() {
-  const nudge = NUDGES[state.persona]?.[state.workerKey]?.[state.week];
   const messages = document.getElementById('chat-messages');
-  const chips    = document.getElementById('suggested-replies');
   messages.innerHTML = '';
-  chips.innerHTML = '';
 
+  const nudge = NUDGES[state.persona]?.[state.workerKey]?.[state.week];
   if (!nudge) {
-    appendMessage('ai', `(No scripted nudge for ${state.persona} / ${state.workerKey} / ${state.week} — try typing a question.)`);
+    appendBotCard({ text: `(No scripted card for ${state.persona} / ${state.workerKey} / ${state.week}.)`, actions: [] });
     return;
   }
 
-  appendMessage('ai', nudge.text);
-  state.conversationHistory = [{ role: 'assistant', content: nudge.text }];
-
-  (nudge.chips || []).forEach(label => {
-    const chip = document.createElement('button');
-    chip.className = 'reply-chip';
-    chip.textContent = label;
-    chip.addEventListener('click', () => sendUserMessage(label));
-    chips.appendChild(chip);
-  });
+  appendBotCard(nudge);
 }
 
 function resetChat() {
-  state.conversationHistory = [];
+  state.overlay = { extraGoals: [], extraInbox: [] };
 }
 
-function appendMessage(role, text) {
+// Returns "9:00 AM" style time
+function nowTime() {
+  const d = new Date();
+  let h = d.getHours();
+  const m = d.getMinutes().toString().padStart(2, '0');
+  const ap = h >= 12 ? 'PM' : 'AM';
+  h = h % 12; if (h === 0) h = 12;
+  return `${h}:${m} ${ap}`;
+}
+
+function appendBotCard(nudge, opts = {}) {
   const messages = document.getElementById('chat-messages');
-  const div = document.createElement('div');
-  div.className = 'msg ' + role;
-  // very light markdown: **bold**
-  div.innerHTML = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  messages.appendChild(div);
-  messages.scrollTop = messages.scrollHeight;
-  return div;
-}
+  const wrap = document.createElement('div');
+  wrap.className = 'teams-msg' + (opts.kind === 'confirm' ? ' teams-msg-confirm' : '') + (opts.kind === 'info' ? ' teams-msg-info' : '');
 
-function clearChips() {
-  document.getElementById('suggested-replies').innerHTML = '';
-}
+  const avatar = document.createElement('div');
+  avatar.className = 'teams-msg-avatar';
+  avatar.textContent = 'AI';
+  wrap.appendChild(avatar);
 
-async function sendMessage() {
-  const input = document.getElementById('chat-input');
-  const text = input.value.trim();
-  if (!text) return;
-  input.value = '';
-  await sendUserMessage(text);
-}
+  const body = document.createElement('div');
+  body.className = 'teams-msg-body';
 
-async function sendUserMessage(text) {
-  clearChips();
-  appendMessage('user', text);
-  state.conversationHistory.push({ role: 'user', content: text });
+  const head = document.createElement('div');
+  head.className = 'teams-msg-head';
+  head.innerHTML = `<span class="teams-msg-sender">AI Probation Copilot</span><span class="teams-msg-time">${nowTime()}</span>`;
+  body.appendChild(head);
 
-  const thinkingEl = appendMessage('thinking', 'Thinking…');
-  document.getElementById('send-btn').disabled = true;
+  const bubble = document.createElement('div');
+  bubble.className = 'teams-msg-bubble';
 
-  try {
-    const reply = await callLLM();
-    thinkingEl.remove();
-    appendMessage('ai', reply);
-    state.conversationHistory.push({ role: 'assistant', content: reply });
-  } catch (err) {
-    thinkingEl.remove();
-    appendMessage('ai', '(Error reaching the copilot: ' + err.message + ')');
-  } finally {
-    document.getElementById('send-btn').disabled = false;
-  }
-}
-
-function buildSystemContext() {
-  const w = WORKERS[state.workerKey];
-  const wd = w.weekData[state.week];
-  const persona = PERSONAS[state.persona];
-
-  const goalsBlock = wd.goals.length === 0
-    ? 'No goals set yet.'
-    : wd.goals.map(g => `- ${g.title} | ${g.status} | due ${g.due}${g.note ? ' (' + g.note + ')' : ''}`).join('\n');
-
-  const fbBlock = wd.feedback.length === 0
-    ? 'No feedback received yet.'
-    : wd.feedback.map(f => `- [${f.date}] ${f.from}${f.badge ? ' [' + f.badge + ']' : ''}: ${f.comment}`).join('\n');
-
-  const inboxBlock = wd.inbox.length === 0
-    ? 'Inbox clear.'
-    : wd.inbox.map(t => `- ${t.title} — ${t.sub}`).join('\n');
-
-  return `You are an AI Probation Copilot inside a Workday HR tenant. You help managers, employees, and people partners run probation reviews proactively.
-
-CURRENT USER: ${persona.label}
-CURRENT EMPLOYEE BEING DISCUSSED: ${w.name} (${w.role}, manager: ${w.manager}, people partner: ${w.peoplePartner})
-TIMELINE POINT: ${state.week} — Day ${wd.dayInProbation} of ${w.probationDays} probation
-PROBATION END DATE: ${w.probationEnd}
-
-WHAT YOU CAN SEE:
-GOALS:
-${goalsBlock}
-
-FEEDBACK:
-${fbBlock}
-
-INBOX TASKS:
-${inboxBlock}
-
-GUIDELINES:
-- Be concise (2-4 sentences max per reply).
-- Be proactive — suggest concrete next actions, not vague advice.
-- Stay grounded in the Workday data shown above. Don't invent data.
-- For managers: focus on action ("draft this", "schedule that", "consider extension").
-- For employees: be supportive and specific. Help them take the next small step.
-- For people partners: focus on patterns, risk, escalation, oversight.
-- This is a demo — keep replies confident and professional.`;
-}
-
-async function callLLM() {
-  const pw = sessionStorage.getItem(PW_KEY);
-  if (!pw) throw new Error('Not authenticated');
-
-  const system = buildSystemContext();
-  const history = state.conversationHistory.map(m => `${m.role === 'user' ? 'User' : 'Copilot'}: ${m.content}`).join('\n\n');
-
-  const prompt = `${system}\n\n--- CONVERSATION ---\n${history}\n\nCopilot:`;
-
-  const res = await fetch('/api/claude', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${pw}` },
-    body: JSON.stringify({ prompt, max_tokens: 400 }),
+  // Body text — paragraphs split on double newlines, **bold** support
+  const paragraphs = (nudge.text || '').split('\n\n');
+  paragraphs.forEach(p => {
+    const el = document.createElement('p');
+    el.innerHTML = p.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+    bubble.appendChild(el);
   });
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  const data = await res.json();
-  return (data.text || data.content?.[0]?.text || '(empty reply)').trim();
+
+  // Bullets (suggested goals, names, etc.)
+  if (nudge.bullets && nudge.bullets.length) {
+    const ul = document.createElement('ul');
+    ul.className = 'teams-msg-bullets';
+    nudge.bullets.forEach(b => {
+      const li = document.createElement('li');
+      li.textContent = b;
+      ul.appendChild(li);
+    });
+    bubble.appendChild(ul);
+  }
+
+  // Action buttons
+  if (nudge.actions && nudge.actions.length) {
+    const actWrap = document.createElement('div');
+    actWrap.className = 'teams-actions';
+    nudge.actions.forEach(action => {
+      const btn = document.createElement('button');
+      btn.className = 'teams-action ' + (action.style || 'secondary');
+      btn.textContent = action.label;
+      btn.addEventListener('click', () => handleAction(action, wrap));
+      actWrap.appendChild(btn);
+    });
+    bubble.appendChild(actWrap);
+  }
+
+  body.appendChild(bubble);
+  wrap.appendChild(body);
+  messages.appendChild(wrap);
+  messages.scrollTop = messages.scrollHeight;
+  return wrap;
+}
+
+function disableActions(cardEl) {
+  cardEl.querySelectorAll('.teams-action').forEach(b => b.disabled = true);
+}
+
+function handleAction(action, originatingCard) {
+  // Disable all buttons on the originating card after a click (one-shot)
+  disableActions(originatingCard);
+
+  switch (action.type) {
+    case 'addGoals':
+      state.overlay.extraGoals.push(...(action.payload || []));
+      renderWorkday(); // re-render with new goals visible
+      appendBotCard({ text: action.confirm || 'Done.' }, { kind: 'confirm' });
+      break;
+
+    case 'sendFeedbackRequests':
+      if (action.payload?.task) state.overlay.extraInbox.push(action.payload.task);
+      renderWorkday();
+      appendBotCard({ text: action.confirm || 'Sent.' }, { kind: 'confirm' });
+      break;
+
+    case 'draftExtension':
+    case 'draftMessage':
+    case 'draftSelfAssessment':
+      appendBotCard({ text: action.confirm || 'Drafted.' }, { kind: 'confirm' });
+      if (action.draft) appendBotCard({ text: action.draft }, { kind: 'info' });
+      break;
+
+    case 'openPack':
+      appendBotCard({ text: action.confirm || 'Pack drafted. I\'ve added it to your Workday inbox.' }, { kind: 'confirm' });
+      state.overlay.extraInbox.push({ icon: '📝', title: 'Probation review pack ready', sub: 'Drafted by AI Copilot — review and confirm outcome' });
+      renderWorkday();
+      break;
+
+    case 'info':
+      appendBotCard({ text: action.info || '(no info)' }, { kind: 'info' });
+      break;
+
+    case 'dismiss':
+      appendBotCard({ text: action.confirm || "OK, I'll re-check in 7 days." }, { kind: 'info' });
+      break;
+
+    default:
+      appendBotCard({ text: '(Unknown action type: ' + action.type + ')' }, { kind: 'info' });
+  }
 }
