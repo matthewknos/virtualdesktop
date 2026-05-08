@@ -79,9 +79,10 @@ function bindEvents() {
 
 function applyPersona() {
   const p = PERSONAS[state.persona];
-  // Set the worker for fixed-employee personas
+  // Anchor to the persona's defaultWorker on every persona enter, so swapping
+  // Employee Alice -> Manager doesn't strand the manager view on Alice.
+  state.workerKey = p.defaultWorker;
   if (!p.allowsWorkerSwitch) {
-    state.workerKey = p.defaultWorker;
     document.getElementById('worker-select').style.display = 'none';
   } else {
     document.getElementById('worker-select').style.display = '';
