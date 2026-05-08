@@ -129,6 +129,7 @@
   .wd-feedback-badge { background: #fef7e0; color: #b06000; padding: 2px 8px; font-size: 11px; border-radius: 10px; font-weight: 600; }
   .wd-feedback-comment { font-size: 13px; color: #3c4043; line-height: 1.55; }
 
+  .wd-top-inbox-wrap { padding: 16px 24px 0; }
   .wd-inbox-card { background: #fff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); overflow: hidden; margin-bottom: 16px; }
   .wd-inbox-card-header { padding: 10px 22px; border-bottom: 1px solid #f0f2f5; display: flex; align-items: center; gap: 8px; }
   .wd-inbox-card-title { font-size: 11px; font-weight: 700; color: #5f6368; text-transform: uppercase; letter-spacing: 0.6px; }
@@ -253,6 +254,16 @@
       </div>
     </div>
 
+    <div class="wd-top-inbox-wrap">
+      <div class="wd-inbox-card" id="inbox-card">
+        <div class="wd-inbox-card-header">
+          <span class="wd-inbox-card-title">Inbox</span>
+          <span class="badge" id="inbox-badge" style="display:none;">0</span>
+        </div>
+        <div class="wd-inbox-card-body" id="inbox-list"></div>
+      </div>
+    </div>
+
     <div class="wd-welcome">
       <div class="wd-welcome-card">
         <div>
@@ -289,14 +300,6 @@
         <div class="wd-probation-text">Probation: <strong id="prob-day">Day —</strong> of <strong id="prob-total">90</strong></div>
         <div class="wd-progress"><div class="wd-progress-bar" id="prob-bar" style="width:0%;"></div></div>
         <div class="wd-probation-text" id="prob-end">Ends: —</div>
-      </div>
-
-      <div class="wd-inbox-card" id="inbox-card">
-        <div class="wd-inbox-card-header">
-          <span class="wd-inbox-card-title">Inbox</span>
-          <span class="badge" id="inbox-badge" style="display:none;">0</span>
-        </div>
-        <div class="wd-inbox-card-body" id="inbox-list"></div>
       </div>
 
       <div class="wd-tabs-card">
