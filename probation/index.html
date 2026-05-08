@@ -95,9 +95,24 @@
   .timeline-step.passed { background: var(--cnvs-sys-color-bg-primary-softer); color: var(--cnvs-sys-color-fg-primary-default); }
 
   /* ── Main split ──────────────────────────────────────────────────── */
-  .main { flex: 1; display: flex; overflow: hidden; }
-  .panel-workday { flex: 0 0 60%; background: var(--wd-tenant-bg); overflow-y: auto; border-right: 1px solid var(--cnvs-sys-color-border-container); }
-  .panel-chat    { flex: 1; display: flex; flex-direction: column; background: var(--cnvs-sys-color-bg-default); }
+  .main { flex: 1; display: flex; overflow: hidden; --wd-split: 60%; }
+  .panel-workday { flex: 0 0 var(--wd-split); background: var(--wd-tenant-bg); overflow-y: auto; border-right: none; min-width: 0; }
+  .panel-chat    { flex: 1; display: flex; flex-direction: column; background: var(--cnvs-sys-color-bg-default); min-width: 0; }
+  .wd-divider {
+    flex: 0 0 5px;
+    background: #d6dae0;
+    cursor: col-resize;
+    position: relative;
+    transition: background 0.12s;
+    user-select: none;
+  }
+  .wd-divider:hover, .wd-divider.dragging { background: #1f3a52; }
+  .wd-divider::after {
+    content: ''; position: absolute; left: 50%; top: 50%;
+    width: 2px; height: 32px; transform: translate(-50%, -50%);
+    background: #fff; border-radius: 2px; opacity: 0.6;
+  }
+  body.wd-dragging, body.wd-dragging * { cursor: col-resize !important; user-select: none !important; }
 
   /* ── Workday tenant chrome ────────────────────────────────────────── */
   .wd-header {
@@ -963,9 +978,7 @@
 
           <!-- LEFT: worker card with banner + avatar overlap -->
           <aside class="wd-worker-v2">
-            <div class="wd-worker-banner">
-              <button class="wd-pdf-btn" title="Export PDF" type="button">PDF</button>
-            </div>
+            <div class="wd-worker-banner"></div>
             <div class="wd-worker-body">
               <div class="wd-worker-avatar-v2" id="wh-avatar-v2">A</div>
               <div class="wd-worker-pronoun" id="wh-pronoun">He/him</div>
@@ -1106,6 +1119,9 @@
     </div>
   </div>
 
+  <!-- ── Drag handle between panes ── -->
+  <div class="wd-divider" id="wd-divider" role="separator" aria-orientation="vertical" aria-label="Resize panes" tabindex="0" title="Drag to resize"></div>
+
   <!-- ── Teams chat panel ── -->
   <div class="panel-chat">
 
@@ -1207,7 +1223,48 @@ async function checkPassword() {
 document.addEventListener('DOMContentLoaded', () => {
   if (sessionStorage.getItem(PW_KEY)) document.getElementById('password-gate').style.display = 'none';
   init();
+  initSplitDrag();
 });
+
+function initSplitDrag() {
+  const divider = document.getElementById('wd-divider');
+  const main = document.querySelector('.main');
+  if (!divider || !main) return;
+  const SAVE_KEY = 'wd_split_pct';
+  const saved = parseFloat(sessionStorage.getItem(SAVE_KEY));
+  if (!isNaN(saved)) main.style.setProperty('--wd-split', saved + '%');
+
+  const onMove = (e) => {
+    const rect = main.getBoundingClientRect();
+    const raw = ((e.clientX - rect.left) / rect.width) * 100;
+    const pct = Math.max(25, Math.min(80, raw));
+    main.style.setProperty('--wd-split', pct + '%');
+  };
+  const onUp = () => {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+    document.body.classList.remove('wd-dragging');
+    divider.classList.remove('dragging');
+    const m = main.style.getPropertyValue('--wd-split');
+    if (m) sessionStorage.setItem(SAVE_KEY, parseFloat(m));
+  };
+  divider.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    document.body.classList.add('wd-dragging');
+    divider.classList.add('dragging');
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+  // Keyboard accessibility: arrow keys nudge by 2%
+  divider.addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    const cur = parseFloat(getComputedStyle(main).getPropertyValue('--wd-split')) || 60;
+    const next = Math.max(25, Math.min(80, cur + (e.key === 'ArrowLeft' ? -2 : 2)));
+    main.style.setProperty('--wd-split', next + '%');
+    sessionStorage.setItem(SAVE_KEY, next);
+    e.preventDefault();
+  });
+}
 </script>
 
 <!-- Canvas Expressive Icons sprite — async, cached, exposes wd-expressive-* symbols for <use href="#wd-expressive-{name}"> -->
