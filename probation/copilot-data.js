@@ -207,7 +207,7 @@ const WORKERS = {
 // Personas — who's logged in, and how the chat addresses them
 // ═══════════════════════════════════════════════════════════════════════════
 const PERSONAS = {
-  manager:   { label: 'Dave Owen (Manager)',      subtitle: 'You are managing 4 workers in probation.', allowsWorkerSwitch: true,  defaultWorker: 'ben'   },
+  manager:   { label: 'Dave Owen (Manager)',      subtitle: 'You are managing 2 workers in probation.', allowsWorkerSwitch: true,  defaultWorker: 'ben'   },
   employeeA: { label: 'Alice Johnson (Employee)', subtitle: 'You are tracking your own probation.',     allowsWorkerSwitch: false, defaultWorker: 'alice' },
   employeeB: { label: 'Ben Carter (Employee)',    subtitle: 'You are tracking your own probation.',     allowsWorkerSwitch: false, defaultWorker: 'ben'   }
 };
