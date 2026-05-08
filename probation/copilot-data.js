@@ -230,10 +230,9 @@ const WORKERS = {
 // Personas — who's logged in, and how the chat addresses them
 // ═══════════════════════════════════════════════════════════════════════════
 const PERSONAS = {
-  manager:       { label: 'Dave Owen (Manager)',     subtitle: 'You are managing 4 workers in probation.', allowsWorkerSwitch: true,  defaultWorker: 'ben'   },
-  employeeA:     { label: 'Alice Johnson (Employee)', subtitle: 'You are 8 weeks into probation.',         allowsWorkerSwitch: false, defaultWorker: 'alice' },
-  employeeB:     { label: 'Ben Carter (Employee)',    subtitle: 'You are 8 weeks into probation.',         allowsWorkerSwitch: false, defaultWorker: 'ben'   },
-  peoplePartner: { label: 'Priya Patel (People Partner)', subtitle: 'You oversee probation cases for the practice.', allowsWorkerSwitch: true, defaultWorker: 'ben' }
+  manager:   { label: 'Dave Owen (Manager)',      subtitle: 'You are managing 4 workers in probation.', allowsWorkerSwitch: true,  defaultWorker: 'ben'   },
+  employeeA: { label: 'Alice Johnson (Employee)', subtitle: 'You are tracking your own probation.',     allowsWorkerSwitch: false, defaultWorker: 'alice' },
+  employeeB: { label: 'Ben Carter (Employee)',    subtitle: 'You are tracking your own probation.',     allowsWorkerSwitch: false, defaultWorker: 'ben'   }
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -295,41 +294,6 @@ const NUDGES = {
       t30:   { text: "30 days until probation end. Your goals haven't moved in 3 weeks.\n\nTell me what you've actually been doing day-to-day and I'll update your goals for you.", chips: ["Tell you what I've done", "Show me what's missing", 'Send a check-in to Dave'] },
       t7:    { text: "Probation review next week. Have you completed your self-assessment?\n\nIf not, I can draft a starting point and we'll polish it together.", chips: ['Draft my self-assessment', 'What happens at the review?', "I'm worried about the outcome"] },
       reviewDay: { text: "Review day. Your probation has been **extended by 30 days** with clear targets. This is a chance to demonstrate progress, not a failure.\n\nWant help building a plan for the next 30 days?", chips: ['Build extension plan', 'Talk to Dave first', 'What does this mean for me?'] }
-    }
-  },
-
-  peoplePartner: {
-    alice: {
-      week1: { text: "Alice Johnson just started. Standard 90-day probation tracking is active. No action needed.", chips: ['Show all probation cases', 'Set custom watch'] },
-      week4: { text: "Alice on track. Goals set, onboarding complete. No flags.", chips: ['Show all cases', 'Move on'] },
-      week8: { text: "Alice tracking well — on PASS trajectory. No intervention needed.", chips: ['Show feedback', 'No action'] },
-      t30:   { text: "Alice on track for PASS. No action.", chips: ['Move on', 'Show pack draft'] },
-      t7:    { text: "Alice review pack ready, recommended PASS. Standard sign-off — pre-approve?", chips: ['Pre-approve PASS', 'Review pack first'] },
-      reviewDay: { text: "Alice — outcome PASS. Closed cleanly. No follow-up needed.", chips: ['Show next case', 'Done'] }
-    },
-    ben: {
-      week1: { text: "Ben Carter just started. Standard 90-day probation tracking is active. No action needed.", chips: ['Show all probation cases', 'Set custom watch'] },
-      week4: { text: "**Concern flag: Ben Carter's manager (Dave) hasn't set goals yet.** This is the #1 indicator of probation risk.\n\nWant me to send Dave a nudge?", chips: ['Yes, nudge Dave', 'Tell me more about the risk', 'Add Ben to my watch list'] },
-      week8: { text: "**Ben Carter risk signals:** goals set late, attendance concerns from Dave, no billable work.\n\nWant to schedule a check-in with Dave to discuss the case?", chips: ['Schedule check-in with Dave', 'Show full case detail', 'Add Priya as observer'] },
-      t30:   { text: "Ben showing extension trajectory. Dave is considering EXTEND.\n\nWant to review the case before it goes to formal review?", chips: ['Review the case now', 'Wait for the formal review', 'Set up T-7 prep meeting'] },
-      t7:    { text: "Ben's review next week. Recommended **EXTEND**. The case has been on the watch list since Week 4.\n\nWant to discuss with Dave before the meeting?", chips: ['Schedule call with Dave', 'Open the draft pack', 'Approve EXTEND recommendation'] },
-      reviewDay: { text: "Ben — outcome EXTEND with 30-day plan. I'll continue tracking and flag at T-15 and T-5 of the extension period.", chips: ['Show extension plan', 'Schedule weekly check-ins', 'Done'] }
-    },
-    carol: {
-      week1: { text: "Carol Reyes just started. No action needed.", chips: ['Show all cases'] },
-      week4: { text: "Carol at 4 weeks. No concerns. Standard track.", chips: ['Move on'] },
-      week8: { text: "Carol at halfway — limited feedback. Worth flagging if it stays sparse.", chips: ['Set a flag', 'Move on'] },
-      t30:   { text: "Carol at T-30. Sparse data — recommend Dave gathers more feedback.", chips: ['Nudge Dave', 'Move on'] },
-      t7:    { text: "Carol's review in 7 days. Limited data — outcome uncertain.", chips: ['Pre-empt with Dave', 'Wait for review'] },
-      reviewDay: { text: "Carol's outcome pending. Watch space.", chips: ['Show pack', 'Done'] }
-    },
-    david: {
-      week1: { text: "David Park just started. Senior hire — different risk profile.", chips: ['Show all cases'] },
-      week4: { text: "David at 4 weeks — strong start. No action needed.", chips: ['Move on'] },
-      week8: { text: "David at halfway. Strong PASS trajectory.", chips: ['Move on'] },
-      t30:   { text: "David at T-30. Strong PASS trajectory. No action.", chips: ['Move on'] },
-      t7:    { text: "David's review in 7 days. Recommended PASS. Pre-approve?", chips: ['Pre-approve PASS'] },
-      reviewDay: { text: "David — outcome PASS. Closed.", chips: ['Done'] }
     }
   }
 };

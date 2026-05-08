@@ -8,7 +8,6 @@ const state = {
   workerKey: 'ben',
   week: 'week8',
   tab: 'profile',
-  layout: 'split',
   conversationHistory: [], // [{role: 'assistant'|'user', content: '...'}]
 };
 
@@ -45,15 +44,6 @@ function bindEvents() {
     }
   });
 
-  document.getElementById('layout-group').addEventListener('click', e => {
-    if (e.target.matches('.layout-btn')) {
-      document.querySelectorAll('.layout-btn').forEach(b => b.classList.remove('active'));
-      e.target.classList.add('active');
-      state.layout = e.target.dataset.layout;
-      document.body.dataset.layout = state.layout;
-    }
-  });
-
   document.getElementById('timeline-track').addEventListener('click', e => {
     if (e.target.matches('.timeline-step')) {
       state.week = e.target.dataset.week;
@@ -85,6 +75,11 @@ function applyPersona() {
     document.getElementById('worker-select').value = state.workerKey;
   }
   document.getElementById('chat-sub').textContent = `Talking to: ${p.label}`;
+
+  // Welcome banner — greeting matches the logged-in persona
+  const firstName = p.label.split(' ')[0];
+  document.getElementById('welcome-greeting').textContent = `Welcome, ${firstName}`;
+  document.getElementById('welcome-sub').textContent = p.subtitle;
 }
 
 function updateTimelineActive() {
