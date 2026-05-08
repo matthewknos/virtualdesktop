@@ -637,6 +637,30 @@
   .wd-left-col { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
   .wd-left-col nav[aria-label="Breadcrumb"] { margin: 0; }
   .wd-left-col .cnvs-form-field { margin: 0 !important; }
+  .wd-left-col select#worker-select {
+    width: 100%;
+    padding: 6px 28px 6px 10px;
+    border: 1px solid #c8cdd4;
+    border-radius: 4px;
+    background-color: #fff;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="%236b7480" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 10px 10px;
+    font-size: 13px;
+    font-family: inherit;
+    color: #2a2a2a;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: border-color 0.12s, box-shadow 0.12s;
+  }
+  .wd-left-col select#worker-select:hover { border-color: #1f3a52; }
+  .wd-left-col select#worker-select:focus {
+    outline: none;
+    border-color: #2566c5;
+    box-shadow: 0 0 0 2px rgba(37,102,197,0.18);
+  }
   /* Right side col: stretches to fill below center on narrow viewports */
   @media (max-width: 1699px) {
     .wd-side-col {
