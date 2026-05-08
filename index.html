@@ -5,88 +5,269 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CoE Testing — Prototypes</title>
 <style>
+  :root {
+    --color-ink: #1d1d1f;
+    --color-graphite: #707070;
+    --color-fog: #f5f5f7;
+    --color-snow: #ffffff;
+    --color-silver-mist: #e8e8ed;
+    --color-azure: #0071e3;
+    --color-caution: #b64400;
+    --font-display: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-text: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body { height: 100%; }
+
   body {
-    font-family: Arial, sans-serif;
-    background: #f8f9fa;
-    color: #202124;
-    font-size: 14px;
+    font-family: var(--font-text);
+    background: var(--color-fog);
+    color: var(--color-ink);
+    font-size: 17px;
+    line-height: 1.47;
+    letter-spacing: -0.1px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     min-height: 100vh;
   }
+
+  /* ── Global nav ── */
   .header {
-    background: #fff;
-    border-bottom: 1px solid #e0e0e0;
-    padding: 0 16px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--color-fog);
+    border-bottom: 1px solid var(--color-silver-mist);
+    height: 44px;
     display: flex;
     align-items: center;
-    gap: 12px;
-    height: 56px;
+    padding: 0 22px;
   }
-  .header-title { font-size: 17px; font-weight: 600; color: #202124; }
-  .header-sub { font-size: 12px; color: #80868b; margin-left: auto; }
+  .header-title {
+    font-family: var(--font-text);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-ink);
+    letter-spacing: -0.26px;
+  }
+  .header-sub {
+    font-family: var(--font-text);
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--color-graphite);
+    margin-left: auto;
+    letter-spacing: -0.26px;
+  }
 
+  /* ── Page container ── */
   .container {
-    max-width: 900px;
-    margin: 48px auto;
-    padding: 0 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 120px 40px 80px;
   }
-  h1 { font-size: 28px; font-weight: 600; margin-bottom: 8px; }
-  .lede { color: #5f6368; font-size: 15px; line-height: 1.6; margin-bottom: 32px; }
 
+  /* ── Hero ── */
+  h1 {
+    font-family: var(--font-display);
+    font-size: 72px;
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -1.3px;
+    color: var(--color-ink);
+    margin-bottom: 20px;
+  }
+
+  .lede {
+    font-family: var(--font-text);
+    font-size: 22px;
+    font-weight: 300;
+    line-height: 1.4;
+    letter-spacing: -0.2px;
+    color: var(--color-ink);
+    max-width: 720px;
+    margin-bottom: 24px;
+  }
+
+  .pii-note {
+    display: block;
+    font-family: var(--font-text);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--color-caution);
+    margin-bottom: 80px;
+  }
+  .pii-note .glyph { margin-right: 6px; }
+
+  /* ── Card grid ── */
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
   }
+
   .card {
-    background: #fff;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    padding: 20px;
+    background: var(--color-snow);
+    border-radius: 28px;
+    padding: 40px 32px 36px;
     text-decoration: none;
     color: inherit;
-    transition: box-shadow 0.15s, transform 0.15s;
     display: block;
+    transition: background-color 0.34s ease;
+    min-height: 240px;
   }
-  .card:hover {
-    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-    transform: translateY(-1px);
-    border-color: #1a73e8;
-  }
+  .card:hover { background-color: #fafafa; }
+
   .card-status {
     display: inline-block;
-    font-size: 11px;
+    font-family: var(--font-text);
+    font-size: 12px;
     font-weight: 600;
-    padding: 2px 8px;
-    border-radius: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--color-graphite);
+    margin-bottom: 18px;
+  }
+  .card-status.live { color: var(--color-ink); }
+
+  .card-title {
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.5px;
+    color: var(--color-ink);
     margin-bottom: 10px;
   }
-  .status-live   { background: #e6f4ea; color: #137333; }
-  .status-wip    { background: #fef7e0; color: #b06000; }
-  .status-soon   { background: #f1f3f4; color: #5f6368; }
-  .card-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
-  .card-desc { color: #5f6368; line-height: 1.5; font-size: 13px; }
 
+  .card-desc {
+    font-family: var(--font-text);
+    font-size: 17px;
+    font-weight: 400;
+    line-height: 1.47;
+    letter-spacing: -0.1px;
+    color: var(--color-graphite);
+  }
+
+  .card-soon {
+    cursor: default;
+    background: var(--color-snow);
+  }
+  .card-soon .card-title,
+  .card-soon .card-desc { color: var(--color-graphite); }
+  .card-soon:hover { background: var(--color-snow); }
+
+  /* ── Footer ── */
   .footer {
-    margin-top: 48px;
-    padding-top: 24px;
-    border-top: 1px solid #e0e0e0;
-    color: #80868b;
-    font-size: 12px;
+    margin-top: 80px;
+    padding-top: 40px;
     text-align: center;
+    font-family: var(--font-text);
+    font-size: 12px;
+    line-height: 1.33;
+    letter-spacing: -0.26px;
+    color: var(--color-graphite);
+  }
+
+  /* ── Password gate ── */
+  #password-gate {
+    position: fixed;
+    inset: 0;
+    background: var(--color-fog);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .gate-card {
+    background: var(--color-snow);
+    border-radius: 28px;
+    padding: 44px 40px 36px;
+    max-width: 420px;
+    width: 100%;
+  }
+  .gate-card h2 {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+    color: var(--color-ink);
+    margin-bottom: 10px;
+  }
+  .gate-card p {
+    font-family: var(--font-text);
+    font-size: 17px;
+    font-weight: 400;
+    line-height: 1.47;
+    letter-spacing: -0.1px;
+    color: var(--color-graphite);
+    margin-bottom: 24px;
+  }
+  .gate-card input {
+    width: 100%;
+    padding: 12px 14px;
+    background: var(--color-fog);
+    border: 1px solid var(--color-silver-mist);
+    border-radius: 12px;
+    font-family: var(--font-text);
+    font-size: 17px;
+    color: var(--color-ink);
+    margin-bottom: 16px;
+    outline: none;
+    transition: border-color 0.2s ease;
+  }
+  .gate-card input:focus { border-color: var(--color-ink); }
+
+  .gate-card button {
+    display: inline-block;
+    background: var(--color-azure);
+    color: #ffffff;
+    border: none;
+    border-radius: 999px;
+    padding: 8px 16px;
+    font-family: var(--font-text);
+    font-size: 17px;
+    font-weight: 400;
+    letter-spacing: -0.1px;
+    cursor: pointer;
+    transition: opacity 0.1s ease;
+  }
+  .gate-card button:hover { opacity: 0.92; }
+
+  .gate-error {
+    color: var(--color-caution);
+    font-family: var(--font-text);
+    font-size: 14px;
+    letter-spacing: -0.04px;
+    margin-top: 14px;
+    display: none;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 720px) {
+    .container { padding: 64px 22px 64px; }
+    h1 { font-size: 48px; letter-spacing: -0.8px; }
+    .lede { font-size: 19px; }
+    .pii-note { margin-bottom: 56px; }
+    .footer { margin-top: 56px; }
   }
 </style>
 </head>
 <body>
 
 <!-- ── Password gate ── -->
-<div id="password-gate" style="position:fixed;inset:0;background:rgba(248,249,250,0.97);z-index:200;display:flex;align-items:center;justify-content:center;">
-  <div style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:32px;max-width:380px;width:90%;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
-    <h2 style="font-size:18px;margin-bottom:8px;">CoE Testing — Access</h2>
-    <p style="font-size:13px;color:#5f6368;margin-bottom:20px;line-height:1.5;">Internal use only. Enter the access password to continue.</p>
-    <input type="password" id="gate-pw" placeholder="Access password" style="width:100%;padding:10px;border:1px solid #dadce0;border-radius:4px;font-size:14px;margin-bottom:12px;" onkeydown="if(event.key==='Enter')checkPassword()">
-    <button onclick="checkPassword()" style="width:100%;padding:10px;background:#1a73e8;color:white;border:none;border-radius:4px;font-size:14px;font-weight:600;cursor:pointer;">Continue</button>
-    <div id="gate-error" style="color:#c5221f;font-size:12px;margin-top:10px;display:none;">Incorrect password.</div>
+<div id="password-gate">
+  <div class="gate-card">
+    <h2>CoE Testing</h2>
+    <p>Internal use only. Enter the access password to continue.</p>
+    <input type="password" id="gate-pw" placeholder="Access password" onkeydown="if(event.key==='Enter')checkPassword()">
+    <button onclick="checkPassword()">Continue</button>
+    <div id="gate-error" class="gate-error">Incorrect password.</div>
   </div>
 </div>
 
@@ -96,24 +277,25 @@
 </div>
 
 <div class="container">
-  <h1>AI prototypes</h1>
-  <p class="lede" style="background:#e6f4ea;border:1px solid #ceead6;border-radius:6px;padding:10px 14px;color:#137333;font-size:13px;margin-bottom:32px;">&#10003; <strong>No PII.</strong> All names, dates, and data across every prototype are entirely fictional. No real employee records or personally identifiable information is used anywhere.</p>
+  <h1>AI prototypes.</h1>
+  <p class="lede">A curated gallery of working prototypes from the Niokas Workday AI Centre of Excellence. Each tile is a self-contained sandbox.</p>
+  <span class="pii-note"><span class="glyph">&#10003;</span>No PII &middot; All names, dates and data are fictional</span>
 
   <div class="grid">
     <a class="card" href="/probation">
-      <span class="card-status status-live">Live</span>
+      <span class="card-status live">Live</span>
       <div class="card-title">Probation Copilot</div>
-      <div class="card-desc">A simulated Workday tenant with an embedded AI copilot. Switch perspective between manager, employee, and people partner. Scrub through the probation timeline to see the proactive nudges that fire at each stage.</div>
+      <div class="card-desc">A simulated Workday tenant with an embedded AI copilot. Switch perspective between manager, employee and people partner, and scrub through the probation timeline to see proactive nudges fire at each stage.</div>
     </a>
 
-    <div class="card" style="cursor:default; opacity:0.6;">
-      <span class="card-status status-soon">Coming soon</span>
+    <div class="card card-soon">
+      <span class="card-status">Coming soon</span>
       <div class="card-title">Next prototype</div>
       <div class="card-desc">Pulled from the CoE backlog.</div>
     </div>
   </div>
 
-  <div class="footer">Internal — protected by site password. Do not share the URL externally.</div>
+  <div class="footer">Internal &mdash; protected by site password. Do not share the URL externally.</div>
 </div>
 <script>
 const PW_KEY = 'coe_site_pw';
