@@ -1,6 +1,14 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // Workers — fictional fixtures, no PII
-// Each worker has weekData per timeline point: dayInProbation, goals, feedback, inbox
+// Each weekData entry has:
+//   - dayInProbation, goals, feedback (Anytime Feedback only)
+//   - selfAssessment? — Probation Review BP field, NOT Anytime Feedback
+//   - outcome?        — Probation Review BP outcome, NOT Anytime Feedback
+//   - inbox[]         — each item has `owner: 'manager' | 'employee'`; the WD
+//                       tenant filters to the logged-in persona's items only,
+//                       because in Workday tasks are assigned to a person.
+// The bot cannot create goals on someone's behalf — goal creation is the
+// employee's own Workday task, prompted by talking points or Teams nudges.
 // ═══════════════════════════════════════════════════════════════════════════
 const WORKERS = {
   alice: {
@@ -19,7 +27,8 @@ const WORKERS = {
         goals: [],
         feedback: [],
         inbox: [
-          { icon: 'task', title: 'Set probation goals for Alice Johnson', sub: 'Due in 3 weeks — Workday will auto-flag if missed' }
+          { icon: 'task', title: 'Schedule first 1:1 with Alice', sub: 'Goal-setting conversation — due end of week 2', owner: 'manager' },
+          { icon: 'task', title: 'Set your probation goals', sub: 'Due in 3 weeks — Workday will auto-flag if missed', owner: 'employee' }
         ]
       },
       week4: {
@@ -60,7 +69,7 @@ const WORKERS = {
           { date: '2025-04-08', from: 'Marcus Lee (Project Lead)', comment: 'Alice has been a strong addition to the discovery workstream. She picks up context fast and is comfortable asking when things are unclear.' }
         ],
         inbox: [
-          { icon: 'task', title: 'T-30 probation kick-off', sub: 'Confirm goals, schedule review meeting' }
+          { icon: 'task', title: 'T-30 probation kick-off', sub: 'Confirm goals, schedule review meeting', owner: 'manager' }
         ]
       },
       t7: {
@@ -73,11 +82,11 @@ const WORKERS = {
         feedback: [
           { date: '2025-03-05', from: 'Priya Patel (People Partner)', comment: 'Alice has settled in well. Picking up the internal tools quickly and asks good questions.' },
           { date: '2025-03-22', from: 'Dave Owen (Line Manager)', comment: 'Alice delivered the onboarding training modules ahead of schedule.', badge: 'Great Initiative' },
-          { date: '2025-04-08', from: 'Marcus Lee (Project Lead)', comment: 'Alice has been a strong addition to the discovery workstream.' },
-          { date: '2025-04-25', from: 'Self-assessment (Alice)', comment: 'I feel I have met my onboarding goals on time and built strong relationships across the team. Areas to grow: confidence in client-facing meetings.' }
+          { date: '2025-04-08', from: 'Marcus Lee (Project Lead)', comment: 'Alice has been a strong addition to the discovery workstream.' }
         ],
+        selfAssessment: { date: '2025-04-25', text: 'I feel I have met my onboarding goals on time and built strong relationships across the team. Areas to grow: confidence in client-facing meetings.' },
         inbox: [
-          { icon: 'document', title: 'Probation review pack ready', sub: 'Draft compiled by AI Copilot — review and confirm outcome' }
+          { icon: 'document', title: 'Probation review pack ready', sub: 'Draft compiled by AI Copilot — review and confirm outcome', owner: 'manager' }
         ]
       },
       reviewDay: {
@@ -88,9 +97,12 @@ const WORKERS = {
           { title: 'Deliver first solo sprint planning session', status: 'Completed', due: '2025-05-01' }
         ],
         feedback: [
-          { date: '2025-04-25', from: 'Self-assessment (Alice)', comment: 'I feel I have met my onboarding goals on time and built strong relationships across the team.' },
-          { date: '2025-05-10', from: 'Outcome (PASS)', comment: 'Probation passed. Alice transitions to full team member status.', badge: 'PASS' }
+          { date: '2025-03-05', from: 'Priya Patel (People Partner)', comment: 'Alice has settled in well. Picking up the internal tools quickly and asks good questions.' },
+          { date: '2025-03-22', from: 'Dave Owen (Line Manager)', comment: 'Alice delivered the onboarding training modules ahead of schedule.', badge: 'Great Initiative' },
+          { date: '2025-04-08', from: 'Marcus Lee (Project Lead)', comment: 'Alice has been a strong addition to the discovery workstream.' }
         ],
+        selfAssessment: { date: '2025-04-25', text: 'I feel I have met my onboarding goals on time and built strong relationships across the team. Areas to grow: confidence in client-facing meetings.' },
+        outcome: { status: 'PASS', date: '2025-05-10', note: 'Probation passed. Alice transitions to full team member status.' },
         inbox: []
       }
     }
@@ -112,7 +124,8 @@ const WORKERS = {
         goals: [],
         feedback: [],
         inbox: [
-          { icon: 'task', title: 'Set probation goals for Ben Carter', sub: 'Due in 3 weeks — Workday will auto-flag if missed' }
+          { icon: 'task', title: 'Schedule first 1:1 with Ben', sub: 'Goal-setting conversation — due end of week 2', owner: 'manager' },
+          { icon: 'task', title: 'Set your probation goals', sub: 'Due in 3 weeks — Workday will auto-flag if missed', owner: 'employee' }
         ]
       },
       week4: {
@@ -122,7 +135,8 @@ const WORKERS = {
           { date: '2025-03-04', from: 'Dave Owen (Line Manager)', comment: 'Ben has missed two stand-ups in week 3. We have not had time to set goals yet — I need to find a slot.' }
         ],
         inbox: [
-          { icon: 'alert', title: 'No goals set — overdue', sub: 'Goals were due in week 3. Workday has auto-flagged this.' }
+          { icon: 'alert', title: 'Goals not set — discuss with Ben', sub: 'Auto-flagged at week 3', owner: 'manager' },
+          { icon: 'alert', title: 'Set your probation goals (overdue)', sub: 'Goals were due in week 3', owner: 'employee' }
         ]
       },
       week8: {
@@ -136,7 +150,7 @@ const WORKERS = {
           { date: '2025-03-30', from: 'Dave Owen (Line Manager)', comment: 'Goals finally set this week. Ben says he was unsure what was expected. We agreed two basic goals to get started.' }
         ],
         inbox: [
-          { icon: 'alert', title: 'Halfway point — feedback gap', sub: 'No peer feedback collected for Ben yet' }
+          { icon: 'task', title: 'Halfway probation check — review with Ben', sub: 'Concerns flagged: feedback gap, goal progress', owner: 'manager' }
         ]
       },
       t30: {
@@ -151,7 +165,7 @@ const WORKERS = {
           { date: '2025-04-10', from: 'Priya Patel (People Partner)', comment: 'Concern raised: Ben\'s manager flagged that goals were set late and progress is slow. Asked Dave to consider whether extension is appropriate.' }
         ],
         inbox: [
-          { icon: 'task', title: 'T-30 probation kick-off', sub: 'Concerns flagged — review case with People Partner' }
+          { icon: 'task', title: 'T-30 probation review — concerns flagged', sub: 'Review case with People Partner', owner: 'manager' }
         ]
       },
       t7: {
@@ -163,11 +177,11 @@ const WORKERS = {
         feedback: [
           { date: '2025-03-04', from: 'Dave Owen (Line Manager)', comment: 'Ben has missed two stand-ups in week 3.' },
           { date: '2025-03-30', from: 'Dave Owen (Line Manager)', comment: 'Goals finally set this week.' },
-          { date: '2025-04-10', from: 'Priya Patel (People Partner)', comment: 'Concern raised: goals set late, progress slow.' },
-          { date: '2025-04-28', from: 'Self-assessment (Ben)', comment: 'I have struggled to find clarity on what is expected. The team moves fast and I have not been given a clear project to anchor to.' }
+          { date: '2025-04-10', from: 'Priya Patel (People Partner)', comment: 'Concern raised: goals set late, progress slow.' }
         ],
+        selfAssessment: { date: '2025-04-28', text: 'I have struggled to find clarity on what is expected. The team moves fast and I have not been given a clear project to anchor to.' },
         inbox: [
-          { icon: 'document', title: 'Probation review pack ready', sub: 'Draft compiled — recommended outcome: EXTEND' }
+          { icon: 'document', title: 'Complete probation review for Ben', sub: 'Pack drafted — recommended outcome: EXTEND', owner: 'manager' }
         ]
       },
       reviewDay: {
@@ -177,9 +191,12 @@ const WORKERS = {
           { title: 'Attend daily stand-ups consistently', status: 'In Progress', due: '2025-05-01' }
         ],
         feedback: [
-          { date: '2025-04-28', from: 'Self-assessment (Ben)', comment: 'I have struggled to find clarity on what is expected.' },
-          { date: '2025-05-10', from: 'Outcome (EXTEND)', comment: 'Probation extended by 30 days with new clear targets and weekly check-ins.', badge: 'EXTEND' }
+          { date: '2025-03-04', from: 'Dave Owen (Line Manager)', comment: 'Ben has missed two stand-ups in week 3.' },
+          { date: '2025-03-30', from: 'Dave Owen (Line Manager)', comment: 'Goals finally set this week.' },
+          { date: '2025-04-10', from: 'Priya Patel (People Partner)', comment: 'Concern raised: goals set late, progress slow.' }
         ],
+        selfAssessment: { date: '2025-04-28', text: 'I have struggled to find clarity on what is expected. The team moves fast and I have not been given a clear project to anchor to.' },
+        outcome: { status: 'EXTEND', date: '2025-05-10', note: 'Probation extended by 30 days with new clear targets and weekly check-ins.' },
         inbox: []
       }
     }
@@ -199,35 +216,32 @@ const PERSONAS = {
 // Scripted Teams adaptive cards per persona × worker × week
 // Each card: { text, bullets?, actions: [{ label, style, type, payload?, confirm?, info? }] }
 // Action types:
-//   - addGoals             — appends goals to Workday Goals tab; bot confirms
-//   - sendFeedbackRequests — adds inbox tasks for outstanding feedback; bot confirms
+//   - draftMessage         — bot replies with a drafted Teams message inline
 //   - draftExtension       — bot replies with extension note draft inline
-//   - draftMessage         — bot replies with drafted Teams message inline
 //   - draftSelfAssessment  — bot replies with self-assessment draft inline
-//   - openPack             — bot opens the review pack inline
+//   - openPack             — bot drafts review pack, adds task to manager's WD inbox
 //   - dismiss              — bot says "OK, I'll re-check in 7 days"
-//   - info                 — bot shows a placeholder note (e.g., "would let you edit each goal")
+//   - info                 — bot shows a placeholder note
+// IMPORTANT: The bot CANNOT create goals on the worker's behalf, request peer
+// feedback on the worker's behalf, or skip Workday business processes. Its job
+// is to draft content, surface signals, and nudge people to do their own WD task.
 // ═══════════════════════════════════════════════════════════════════════════
 const NUDGES = {
   // ═══════════ MANAGER (Dave) ═══════════
   manager: {
     alice: {
       week1: {
-        text: "Hey Dave, Alice Johnson starts today. Probation runs 90 days, ending May 11. I'll track her goals, feedback, and self-assessment automatically.\n\nWant me to draft 3 starter goals for a Junior Consultant?",
+        text: "Hey Dave, Alice Johnson starts today. Probation runs 90 days, ending May 11. Workday has given Alice a task to set her probation goals — your job is to discuss them with her in your first 1:1 so she knows what good looks like.\n\nWant me to draft talking points for that conversation?",
         actions: [
-          { label: 'Draft starter goals', style: 'primary', type: 'addGoals',
-            payload: [
-              { title: 'Complete onboarding training modules', status: 'Not Started', due: '2025-03-31' },
-              { title: 'Shadow 3 client discovery calls',      status: 'Not Started', due: '2025-04-30' },
-              { title: 'Deliver first solo sprint planning session', status: 'Not Started', due: '2025-05-15' }
-            ],
-            confirm: "Done. I've added 3 starter goals to Alice's Workday record and notified her on Teams." },
-          { label: "I'll do it myself", style: 'tertiary', type: 'dismiss',
-            confirm: "OK — I'll re-check at week 4 and nudge if goals are still missing." }
+          { label: 'Draft 1:1 talking points', style: 'primary', type: 'draftMessage',
+            confirm: "Drafted. Use these to anchor the goal-setting conversation.",
+            draft: "**Goal-setting 1:1 — talking points for Alice**\n\n• What does she think 'good' looks like for her first 90 days?\n• Anchor on 3 goals: one onboarding, one shadowing, one delivery\n• Suggested examples: complete onboarding training, shadow 3 client discovery calls, deliver first solo sprint planning session\n• Agree due dates and how you'll review progress\n• Remind Alice she creates the goals herself in Workday after the 1:1\n• Ask: any concerns about the role or scope?" },
+          { label: "I've got it", style: 'tertiary', type: 'dismiss',
+            confirm: "OK — I'll re-check at week 4 and nudge if goals haven't been set in Workday." }
         ]
       },
       week4: {
-        text: "Hey Dave, Alice is 4 weeks in and all 3 goals are on track. She's finished onboarding and is shadowing client calls.\n\nNo action needed from you — just an FYI.",
+        text: "Hey Dave, Alice is 4 weeks in and her 3 goals are set and on track. She's finished onboarding and is shadowing client calls.\n\nNo action needed from you — just an FYI.",
         actions: [
           { label: 'Acknowledge', style: 'primary', type: 'dismiss', confirm: "Got it — I'll check back at week 8." },
           { label: 'Show me her feedback', style: 'secondary', type: 'info',
@@ -252,20 +266,18 @@ const NUDGES = {
         ]
       },
       t7: {
-        text: "Hey Dave, Alice's probation review is in 7 days. The draft pack is ready in your Workday inbox.\n\nRecommended outcome: PASS. Want to send Alice's self-assessment request now?",
+        text: "Hey Dave, Alice's probation review is in 7 days. Alice's self-assessment is in. The draft pack is ready in your Workday inbox.\n\nRecommended outcome: PASS. Want to review the pack?",
         actions: [
-          { label: 'Send self-assessment to Alice', style: 'primary', type: 'sendFeedbackRequests',
-            payload: { task: { icon: 'document', title: 'Self-assessment requested from Alice', sub: 'Due 3 days before review' } },
-            confirm: "Sent. Alice will see the form in her Workday inbox + a Teams ping from me." },
-          { label: 'Open the pack', style: 'secondary', type: 'info',
-            info: "(Demo placeholder) Opens the full review pack — 5 sections, recommended outcome PASS, ready for your sign-off." }
+          { label: 'Open the pack', style: 'primary', type: 'info',
+            info: "(Demo placeholder) Opens the full review pack — 5 sections, recommended outcome PASS, ready for your sign-off in Workday." },
+          { label: 'Acknowledge', style: 'tertiary', type: 'dismiss', confirm: "OK — I'll check back on review day." }
         ]
       },
       reviewDay: {
-        text: "Review day. You confirmed PASS yesterday. I've written the outcome back to Workday and closed the business process.",
+        text: "Review day. You confirmed PASS yesterday. The outcome's been written back to Workday and the BP is closed.",
         actions: [
           { label: 'Set post-probation goals', style: 'primary', type: 'info',
-            info: "(Demo placeholder) Would open a goal-setting flow for Alice's first quarter as a confirmed team member." },
+            info: "(Demo placeholder) Would prompt Alice to set her first quarter goals as a confirmed team member." },
           { label: 'All done', style: 'tertiary', type: 'dismiss', confirm: "All wrapped up. See you at the next probation case." }
         ]
       }
@@ -273,38 +285,28 @@ const NUDGES = {
 
     ben: {
       week1: {
-        text: "Hey Dave, Ben Carter starts today. Probation runs 90 days, ending May 11. I'll track goals, feedback, and self-assessment automatically.",
+        text: "Hey Dave, Ben Carter starts today. Probation runs 90 days, ending May 11. Workday has given Ben a task to set his probation goals — your job is to talk through them with him in your first 1:1 so he knows what good looks like.\n\nWant me to draft talking points for that conversation?",
         actions: [
-          { label: 'Draft starter goals', style: 'primary', type: 'addGoals',
-            payload: [
-              { title: 'Complete onboarding training modules', status: 'Not Started', due: '2025-03-31' },
-              { title: 'Shadow 3 client discovery calls',      status: 'Not Started', due: '2025-04-30' },
-              { title: 'Deliver first solo sprint planning session', status: 'Not Started', due: '2025-05-15' }
-            ],
-            confirm: "Done. 3 starter goals added to Ben's Workday record. I've notified Ben on Teams." },
-          { label: "I'll set them in our 1:1", style: 'tertiary', type: 'dismiss',
-            confirm: "OK — I'll re-check at week 4 and nudge if goals are still missing." }
+          { label: 'Draft 1:1 talking points', style: 'primary', type: 'draftMessage',
+            confirm: "Drafted. Use these to anchor the goal-setting conversation.",
+            draft: "**Goal-setting 1:1 — talking points for Ben**\n\n• What does he think 'good' looks like for his first 90 days?\n• Anchor on 3 goals: one onboarding, one shadowing, one delivery\n• Suggested examples: complete onboarding training, shadow 3 client discovery calls, deliver first solo sprint planning session\n• Agree due dates and how you'll review progress\n• Remind Ben he creates the goals himself in Workday after the 1:1\n• Ask: any concerns about the role or scope?" },
+          { label: "I've got it", style: 'tertiary', type: 'dismiss',
+            confirm: "OK — I'll re-check at week 4 and nudge if goals haven't been set in Workday." }
         ]
       },
       week4: {
-        text: "Hey Dave, Ben has been here 4 weeks and has no goals in Workday. Here are 3 that might suit his role (Junior Consultant, Workday Financials team, first 6 months):",
+        text: "Hey Dave, Ben has been here 4 weeks and his probation goals aren't set in Workday. The Workday task has been sitting in his inbox for 2 weeks — only Ben can complete it.\n\nHere are 3 examples that might suit his role. Want me to draft a Teams nudge for Ben with these and a reminder to complete the task?",
         bullets: [
           'Complete onboarding training modules — due 31 Mar',
           'Shadow 3 client discovery calls — due 30 Apr',
           'Deliver first solo sprint planning session — due 15 May'
         ],
         actions: [
-          { label: 'Add all to Workday', style: 'primary', type: 'addGoals',
-            payload: [
-              { title: 'Complete onboarding training modules', status: 'Not Started', due: '2025-03-31' },
-              { title: 'Shadow 3 client discovery calls',      status: 'Not Started', due: '2025-04-30' },
-              { title: 'Deliver first solo sprint planning session', status: 'Not Started', due: '2025-05-15' }
-            ],
-            confirm: "Done. 3 goals added to Ben's Workday record. I've notified Ben on Teams." },
-          { label: 'Edit list', style: 'secondary', type: 'info',
-            info: "(Demo placeholder) An inline editor would let you tweak each goal title and due date before adding to Workday." },
-          { label: 'Dismiss', style: 'tertiary', type: 'dismiss',
-            confirm: "OK — I'll re-check in 7 days and nudge again if goals are still missing." }
+          { label: 'Draft Teams nudge to Ben', style: 'primary', type: 'draftMessage',
+            confirm: "Drafted. Read it below and send when ready.",
+            draft: "Hi Ben, your probation goals haven't been set yet — there's a task in your Workday inbox. Could you complete it this week? If it helps, here are 3 examples that fit our team:\n\n• Complete onboarding training modules — due 31 Mar\n• Shadow 3 client discovery calls — due 30 Apr\n• Deliver first solo sprint planning session — due 15 May\n\nFeel free to use these, change them, or come up with your own. Happy to chat in our 1:1. Cheers, Dave." },
+          { label: "I'll raise it in our 1:1", style: 'tertiary', type: 'dismiss',
+            confirm: "OK — I'll re-check in 7 days." }
         ]
       },
       week8: {
@@ -330,13 +332,12 @@ const NUDGES = {
         ]
       },
       t7: {
-        text: "Hey Dave, Ben's probation review is in 7 days. Goals not met, attendance concerns, no billable work logged.\n\nRecommended outcome: **EXTEND** (30 days) with clear targets. The pack is in your Workday inbox.",
+        text: "Hey Dave, Ben's probation review is in 7 days. Goals not met, attendance concerns, no billable work logged. Ben's self-assessment is in.\n\nRecommended outcome: **EXTEND** (30 days) with clear targets. The pack is in your Workday inbox.",
         actions: [
           { label: 'Open pack', style: 'primary', type: 'info',
-            info: "(Demo placeholder) Opens the full review pack — recommended outcome EXTEND with 30-day targets, ready for your sign-off." },
-          { label: 'Send self-assessment to Ben', style: 'secondary', type: 'sendFeedbackRequests',
-            payload: { task: { icon: 'document', title: 'Self-assessment requested from Ben', sub: 'Due 3 days before review' } },
-            confirm: "Sent to Ben on Teams + Workday inbox." }
+            info: "(Demo placeholder) Opens the full review pack — recommended outcome EXTEND with 30-day targets, ready for your sign-off in Workday." },
+          { label: 'Acknowledge', style: 'tertiary', type: 'dismiss',
+            confirm: "OK — I'll check back on review day." }
         ]
       },
       reviewDay: {
@@ -391,17 +392,17 @@ const NUDGES = {
         ]
       },
       t7: {
-        text: "Hi Alice, your probation review is in a week. Have you submitted your self-assessment?",
+        text: "Hi Alice, your probation review is in a week. Have you submitted your self-assessment in Workday?",
         actions: [
           { label: 'Submit it now', style: 'primary', type: 'info',
-            info: "(Demo placeholder) Submits your self-assessment to Workday + lets Dave know it's ready to review." },
+            info: "(Demo placeholder) Submits your self-assessment to the Workday probation review BP + lets Dave know it's ready to review." },
           { label: 'I need to edit it first', style: 'tertiary', type: 'dismiss', confirm: "OK — I'll re-check tomorrow." }
         ]
       },
       reviewDay: {
         text: "Probation review day! Dave confirmed PASS. Congratulations 🎉\n\nWant help setting your post-probation development goals?",
         actions: [
-          { label: 'Set development goals', style: 'primary', type: 'info', info: "(Demo placeholder) Would open a goal-setting flow." },
+          { label: 'Set development goals', style: 'primary', type: 'info', info: "(Demo placeholder) Would open a goal-setting flow in Workday." },
           { label: 'Take a break first', style: 'tertiary', type: 'dismiss', confirm: "Enjoy it 🍻" }
         ]
       }
@@ -420,7 +421,7 @@ const NUDGES = {
         ]
       },
       week4: {
-        text: "Hi Ben, you're 4 weeks in and your manager hasn't set probation goals with you yet. This is the most common reason probation reviews go badly — not because the work isn't there, but because it's not written down.\n\nWant me to draft a polite message to Dave asking to schedule a goal-setting session?",
+        text: "Hi Ben, you're 4 weeks in and you haven't set your probation goals in Workday yet — there's a task in your inbox. This is the most common reason probation reviews go badly: not because the work isn't there, but because it's not written down.\n\nWant me to draft a polite message to Dave asking to schedule a goal-setting session?",
         actions: [
           { label: 'Draft message to Dave', style: 'primary', type: 'draftMessage',
             confirm: "Drafted. Read it below — send when ready.",
@@ -442,10 +443,10 @@ const NUDGES = {
         ]
       },
       t30: {
-        text: "Hi Ben, you're 30 days from probation end and your goals haven't been updated in 3 weeks.\n\nThis is fixable. Tell me what you've actually been doing day-to-day and I'll update your goal records for you.",
+        text: "Hi Ben, you're 30 days from probation end and your goals haven't been updated in 3 weeks.\n\nThis is fixable. Tell me what you've actually been doing day-to-day and I'll help you draft updates you can post into Workday.",
         actions: [
           { label: "I'll tell you", style: 'primary', type: 'info',
-            info: "(Demo placeholder) Would open an inline form where you describe what you've worked on, and I'd map it to your existing goals + suggest updates." },
+            info: "(Demo placeholder) Would open an inline form where you describe what you've worked on, and I'd map it to your existing goals + suggest updates you can paste into Workday." },
           { label: "Show me what's missing", style: 'secondary', type: 'info',
             info: "Goal 1 (security training): not started — needs a status update or completion. Goal 2 (stand-ups): in progress, last update 18 days ago. Want to add a quick note?" },
           { label: 'Send a check-in to Dave', style: 'tertiary', type: 'draftMessage',
@@ -454,10 +455,10 @@ const NUDGES = {
         ]
       },
       t7: {
-        text: "Hi Ben, your probation review is next week. Have you completed your self-assessment?",
+        text: "Hi Ben, your probation review is next week. Have you completed your self-assessment in Workday?",
         actions: [
           { label: 'Help me draft it', style: 'primary', type: 'draftSelfAssessment',
-            confirm: "Drafted. Read the starting point below — edit it to be in your own words.",
+            confirm: "Drafted. Read the starting point below — edit it to be in your own words, then submit it in Workday.",
             draft: "**My probation self-assessment**\n\n**Goals**: My probation goals were set in week 5 and I've made partial progress. I want to acknowledge the slow start and own that.\n\n**What I've learned**: That I needed to ask earlier and louder when I wasn't clear on expectations. I'm doing that better now.\n\n**What I'd like**: A clear set of 30-day targets so I can demonstrate progress, with weekly check-ins so we don't end up in the same spot at the next review." },
           { label: "I'm worried about the outcome", style: 'tertiary', type: 'info',
             info: "Honest take: the data isn't strong, but extension with clear targets is more likely than escalation. Engaging actively in the review (which the self-assessment shows) helps a lot. Drafting it makes a real difference." }

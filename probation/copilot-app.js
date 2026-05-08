@@ -9,8 +9,8 @@ const state = {
   workerKey: 'ben',
   week: 'week1',
   tab: 'profile',
-  // Per-week overlay applied by user actions in the chat (resets when week changes)
-  overlay: { extraGoals: [], extraInbox: [] },
+  // Inbox tasks layered on by user actions (resets on week/persona/worker change)
+  overlay: { extraInbox: [] },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -116,13 +116,18 @@ function render() {
 function renderWorkday() {
   const w = WORKERS[state.workerKey];
   const baseWd = w.weekData[state.week];
-  // Merge fixture data with action-driven overlay (resets on week change)
   const wd = {
     dayInProbation: baseWd.dayInProbation,
-    goals:    [...baseWd.goals,    ...state.overlay.extraGoals],
+    goals:    [...baseWd.goals],
     feedback: [...baseWd.feedback],
-    inbox:    [...baseWd.inbox,    ...state.overlay.extraInbox]
+    inbox:    [...baseWd.inbox, ...state.overlay.extraInbox],
+    selfAssessment: baseWd.selfAssessment,
+    outcome: baseWd.outcome
   };
+
+  // Filter inbox by who's logged in — Workday tasks are person-assigned
+  const ownerForPersona = state.persona === 'manager' ? 'manager' : 'employee';
+  const visibleInbox = wd.inbox.filter(t => t.owner === ownerForPersona);
 
   document.getElementById('bc-worker').textContent = w.name;
   document.getElementById('wh-avatar').textContent = w.initials;
@@ -138,7 +143,7 @@ function renderWorkday() {
   const pct = Math.min(100, Math.round((wd.dayInProbation / w.probationDays) * 100));
   document.getElementById('prob-bar').style.width = pct + '%';
 
-  // Profile tab
+  // Profile tab — Job + Probation Status
   document.getElementById('profile-job').innerHTML = `
     <div style="display:grid;grid-template-columns:140px 1fr;gap:10px 16px;font-size:13px;">
       <div style="color:#5f6368;">Worker ID</div><div>${w.id}</div>
@@ -157,6 +162,46 @@ function renderWorkday() {
     </div>
   `;
 
+  // Profile tab — Probation Review (self-assessment + outcome).
+  // These live on the BP record in Workday, NOT in Anytime Feedback.
+  const reviewEl = document.getElementById('profile-review');
+  if (wd.selfAssessment || wd.outcome) {
+    let html = `<div style="height:18px;"></div><div class="wd-section-title">Probation Review</div>`;
+    if (wd.selfAssessment) {
+      html += `
+        <div style="font-size:13px;margin-bottom:14px;">
+          <div style="font-weight:600;color:#2a2a2a;margin-bottom:4px;">
+            Self-assessment
+            <span style="color:#80868b;font-weight:400;font-size:12px;margin-left:6px;">${wd.selfAssessment.date}</span>
+          </div>
+          <div style="color:#3c4043;line-height:1.55;">${wd.selfAssessment.text}</div>
+        </div>
+      `;
+    }
+    if (wd.outcome) {
+      const colours = wd.outcome.status === 'PASS'
+        ? { bg: '#e6f4ea', fg: '#1e7e34' }
+        : wd.outcome.status === 'EXTEND'
+          ? { bg: '#fef7e0', fg: '#b06000' }
+          : { bg: '#fce8e6', fg: '#a50e0e' };
+      html += `
+        <div style="font-size:13px;">
+          <div style="font-weight:600;color:#2a2a2a;margin-bottom:6px;">
+            Outcome
+            <span style="color:#80868b;font-weight:400;font-size:12px;margin-left:6px;">${wd.outcome.date}</span>
+          </div>
+          <div style="margin-bottom:6px;">
+            <span style="background:${colours.bg};color:${colours.fg};padding:4px 12px;border-radius:12px;font-weight:700;font-size:11px;letter-spacing:0.5px;">${wd.outcome.status}</span>
+          </div>
+          <div style="color:#3c4043;line-height:1.55;">${wd.outcome.note}</div>
+        </div>
+      `;
+    }
+    reviewEl.innerHTML = html;
+  } else {
+    reviewEl.innerHTML = '';
+  }
+
   // Goals tab
   const goalsEl = document.getElementById('goals-list');
   if (wd.goals.length === 0) {
@@ -174,7 +219,7 @@ function renderWorkday() {
   }
   setBadge('goals-badge', wd.goals.length);
 
-  // Feedback tab
+  // Feedback tab (Anytime Feedback ONLY — no self-assessment, no outcome)
   const fbEl = document.getElementById('feedback-list');
   if (wd.feedback.length === 0) {
     fbEl.innerHTML = `<div class="wd-empty"><div class="icon">${ICONS.chat}</div>No feedback received yet</div>`;
@@ -192,12 +237,12 @@ function renderWorkday() {
   }
   setBadge('feedback-badge', wd.feedback.length);
 
-  // Inbox tab
+  // Inbox card — show only the logged-in persona's tasks
   const inEl = document.getElementById('inbox-list');
-  if (wd.inbox.length === 0) {
-    inEl.innerHTML = `<div class="wd-empty"><div class="icon">${ICONS.document}</div>Inbox clear</div>`;
+  if (visibleInbox.length === 0) {
+    inEl.innerHTML = `<div class="wd-empty"><div class="icon">${ICONS.document}</div>No tasks in your inbox</div>`;
   } else {
-    inEl.innerHTML = wd.inbox.map(t => `
+    inEl.innerHTML = visibleInbox.map(t => `
       <div class="wd-inbox-task">
         <div class="wd-inbox-icon">${getIcon(t.icon)}</div>
         <div class="wd-inbox-body">
@@ -208,7 +253,7 @@ function renderWorkday() {
       </div>
     `).join('');
   }
-  setInboxBadge(wd.inbox.length);
+  setInboxBadge(visibleInbox.length);
 }
 
 function setBadge(id, n) {
@@ -255,7 +300,7 @@ function renderChatOpening() {
 }
 
 function resetChat() {
-  state.overlay = { extraGoals: [], extraInbox: [] };
+  state.overlay = { extraInbox: [] };
 }
 
 // Returns "9:00 AM" style time
@@ -339,18 +384,6 @@ function handleAction(action, originatingCard) {
   disableActions(originatingCard);
 
   switch (action.type) {
-    case 'addGoals':
-      state.overlay.extraGoals.push(...(action.payload || []));
-      renderWorkday(); // re-render with new goals visible
-      appendBotCard({ text: action.confirm || 'Done.' }, { kind: 'confirm' });
-      break;
-
-    case 'sendFeedbackRequests':
-      if (action.payload?.task) state.overlay.extraInbox.push(action.payload.task);
-      renderWorkday();
-      appendBotCard({ text: action.confirm || 'Sent.' }, { kind: 'confirm' });
-      break;
-
     case 'draftExtension':
     case 'draftMessage':
     case 'draftSelfAssessment':
@@ -360,7 +393,7 @@ function handleAction(action, originatingCard) {
 
     case 'openPack':
       appendBotCard({ text: action.confirm || 'Pack drafted. I\'ve added it to your Workday inbox.' }, { kind: 'confirm' });
-      state.overlay.extraInbox.push({ icon: 'document', title: 'Probation review pack ready', sub: 'Drafted by AI Copilot — review and confirm outcome' });
+      state.overlay.extraInbox.push({ icon: 'document', title: 'Probation review pack ready', sub: 'Drafted by AI Copilot — review and confirm outcome', owner: 'manager' });
       renderWorkday();
       break;
 
