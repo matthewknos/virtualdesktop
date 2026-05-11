@@ -104,31 +104,6 @@ Auto-loaded by `loadExpressiveIcons()`. After it resolves, `<use href="#wd-expre
 
 Version this kit by tagging commits. Each prototype's README should record the kit version it copied so we can diff later.
 
----
-
-## Mock tenant + launcher
-
-A multi-page mock Workday tenant lives at `/tenant/{home,inbox,pay,time-off,directory,profile}`. It is **not linked from anywhere** — open it only via the hotkey:
-
-```
-Cmd+Shift+E   (Ctrl+Shift+E on Win/Linux)
-```
-
-Any prototype can wire this in by adding one line:
-
-```html
-<script src="/_tenant-kit/tenant-mock-launcher.js" defer></script>
-```
-
-The launcher is also included on every tenant page, so the hotkey toggles in both directions:
-
-- From a non-tenant page → navigates to `/tenant/home`.
-- From a tenant page → goes back (history) to wherever you came from, or `/` if there's no history.
-
-Exposes a `window.tenantMock` API: `enter()`, `exit()`, `toggle()`.
-
-To extend the mock tenant — add a page, change the persona, alter the rail — edit `coe-prototypes/tenant/_shared/shell.js` (rail config, persona) and `shell.css` (layout). The `TENANT_NAV` array drives the left rail across all pages.
-
 ## Catalogue of prototypes using this kit
 
 See `coe-prototypes/CATALOGUE.md` at the repo root.
