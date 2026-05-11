@@ -192,64 +192,127 @@
   }
 
   /* ── Workday pane content ── */
+  /* Chrome (header + rail) mirrors /coe-prototypes/probation/index.html — keep visually identical. */
   .wd-shell {
     background: #f4f5f7;
     height: 100%;
     display: flex;
     flex-direction: column;
+    min-width: 0;
   }
+  /* Slim navy header with centred pill search (matches probation) */
   .wd-shell .wd-header {
-    background: linear-gradient(180deg, #1f3a52 0%, #18334a 100%);
+    background: #1a3447;
+    background-image: linear-gradient(180deg, #1f3a52 0%, #18334a 100%);
     color: #fff;
-    height: 44px;
+    height: 48px;
     display: flex;
     align-items: center;
-    padding: 0 14px;
-    gap: 12px;
+    padding: 0 16px;
+    gap: 14px;
     flex-shrink: 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
   }
   .wd-shell .wd-logo {
-    width: 28px; height: 28px; border-radius: 50%;
-    background: #ff5f00;
+    width: 32px; height: 32px; border-radius: 0;
+    background: transparent;
+    flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
     font-weight: 700; font-size: 14px;
+    color: #fff;
   }
   .wd-shell .wd-search {
-    flex: 1; max-width: 320px; position: relative;
+    flex: 1 1 auto;
+    max-width: 560px;
+    margin: 0 auto;
+    position: relative;
   }
   .wd-shell .wd-search input {
-    width: 100%; padding: 6px 12px 6px 30px;
-    border: none; border-radius: 4px;
-    background: rgba(255,255,255,0.95);
-    font-family: inherit; font-size: 13px;
+    width: 100%;
+    padding: 7px 14px 7px 36px;
+    border: none;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.92);
+    font-family: inherit;
+    font-size: 13px;
     color: var(--color-ink);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   }
   .wd-shell .wd-search-icon {
-    position: absolute; left: 9px; top: 50%; transform: translateY(-50%);
-    color: rgba(42,42,42,0.45);
-    font-size: 12px;
+    position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+    color: rgba(42,42,42,0.55);
+    display: flex;
+    pointer-events: none;
   }
   .wd-shell .wd-icons {
-    margin-left: auto; display: flex; gap: 10px; align-items: center;
+    margin-left: 6px;
+    display: flex; gap: 14px; align-items: center;
   }
   .wd-shell .wd-icon-btn {
     width: 30px; height: 30px;
     display: flex; align-items: center; justify-content: center;
-    border-radius: 4px;
-    color: rgba(255,255,255,0.85);
+    border-radius: 50%;
+    color: rgba(255,255,255,0.92);
     cursor: pointer;
+    background: transparent;
+    position: relative;
   }
   .wd-shell .wd-icon-btn:hover { background: rgba(255,255,255,0.10); }
-  .wd-shell .wd-profile-photo {
-    width: 28px; height: 28px; border-radius: 50%;
-    background: #5b8fd8; color: #fff;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 600; font-size: 12px;
+  .wd-shell .wd-icon-bell-badge::after {
+    content: ''; position: absolute; top: 4px; right: 4px;
+    width: 8px; height: 8px; background: #e53935;
+    border: 2px solid #1f3a52; border-radius: 50%;
   }
+  .wd-shell .wd-profile-photo {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: #f3e3d0; color: #5a3a1f;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 11px;
+    overflow: hidden;
+  }
+
+  /* Body: rail + main */
+  .wd-shell .wd-body {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+  }
+  .wd-shell .wd-rail {
+    width: 64px;
+    flex-shrink: 0;
+    background: #fff;
+    border-right: 1px solid #e2e6eb;
+    padding: 12px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .wd-shell .wd-rail-spacer { flex: 1; }
+  .wd-shell .wd-rail-item {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 3px;
+    padding: 8px 4px;
+    color: #4a5562;
+    text-decoration: none;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    border-right: 3px solid transparent;
+    transition: background 0.12s, color 0.12s;
+  }
+  .wd-shell .wd-rail-item:hover { background: #f4f5f7; color: #1f3a52; }
+  .wd-shell .wd-rail-item.active {
+    color: #1f3a52;
+    border-left-color: #1f3a52;
+    background: #f4f5f7;
+  }
+  .wd-shell .wd-rail-item svg { width: 20px; height: 20px; }
+  .wd-shell .wd-rail-label { font-size: 10px; font-weight: 500; letter-spacing: 0.1px; }
 
   .wd-content {
     flex: 1;
     overflow-y: auto;
+    min-width: 0;
     padding: 18px 22px 32px;
   }
 
@@ -851,48 +914,64 @@
     animation: rowSlideIn 0.45s ease-out;
   }
 
-  /* Reasoning expansion row */
+  /* ── Agent reasoning expansion row ───────────────────────────────────
+     Goals: scannable in 5s, Apple-y minimal palette, clean hierarchy,
+     state colours that read instantly without shouting. */
   .reasoning-row td {
-    background: #f9fbfd !important;
-    padding: 12px 16px !important;
+    background: var(--color-fog) !important;
+    padding: 10px 16px 14px !important;
     white-space: normal;
     border-top: none;
   }
   .reasoning-card {
-    border-left: 3px solid #1f3a52;
-    padding: 8px 12px;
-    background: #fff;
-    border-radius: 0 4px 4px 0;
-    border: 1px solid #d8e0e8;
-    border-left-width: 3px;
+    background: var(--color-snow);
+    border: 1px solid var(--color-silver-mist);
+    border-radius: 8px;
+    padding: 14px 16px 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
   }
   .reasoning-card .rc-title {
-    font-size: 11px;
+    font-size: 10.5px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.4px;
-    color: #1f3a52;
-    margin-bottom: 6px;
+    letter-spacing: 0.6px;
+    color: var(--color-graphite);
+    margin: 0 0 6px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
   }
+  .reasoning-card .rc-title-spacer { flex: 1; }
   .reasoning-card .conf-pill {
     font-size: 10px;
     font-weight: 600;
-    padding: 1px 7px;
+    padding: 2px 9px;
     border-radius: 999px;
     text-transform: uppercase;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.4px;
+    border: 1px solid transparent;
+    line-height: 1.4;
+    white-space: nowrap;
   }
-  .conf-pill.high   { background: #dff1e3; color: #0b5d2c; }
-  .conf-pill.medium { background: #fff4d6; color: #6b4900; }
-  .conf-pill.low    { background: #fbe1cf; color: #7a2d00; }
+  .conf-pill.high   { background: #e7f4ec; color: var(--color-success); border-color: #cfe7d7; }
+  .conf-pill.medium { background: #fbf2dc; color: var(--color-warning); border-color: #ecdcae; }
+  .conf-pill.low    { background: #fbe7da; color: var(--color-caution); border-color: #f1c9ad; }
+
   .reasoning-card .rc-summary {
-    font-size: 12.5px;
-    color: #1d1d1f;
-    line-height: 1.45;
-    margin-bottom: 8px;
+    font-size: 13.5px;
+    color: var(--color-ink);
+    line-height: 1.5;
+    margin: 0 0 12px;
+    letter-spacing: -0.1px;
+  }
+
+  .reasoning-card .rc-rules-label {
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-graphite);
+    margin: 0 0 6px;
   }
   .reasoning-card .rc-rules {
     list-style: none;
@@ -903,38 +982,71 @@
     gap: 4px;
   }
   .reasoning-card .rc-rules li {
-    font-size: 11.5px;
-    line-height: 1.4;
-    padding: 4px 8px;
-    background: #f4f7fa;
-    border-radius: 3px;
+    font-size: 12.5px;
+    line-height: 1.45;
+    padding: 8px 10px;
+    background: var(--color-fog);
+    border: 1px solid transparent;
+    border-radius: 5px;
     display: grid;
-    grid-template-columns: 24px 160px 1fr;
-    gap: 8px;
+    grid-template-columns: 18px minmax(140px, max-content) 1fr;
+    column-gap: 10px;
+    row-gap: 2px;
     align-items: baseline;
   }
-  .reasoning-card .rc-rules .rc-mark { font-weight: 700; }
-  .reasoning-card .rc-rules .rc-pass .rc-mark { color: #0b5d2c; }
-  .reasoning-card .rc-rules .rc-fail .rc-mark { color: #8a0000; }
-  .reasoning-card .rc-rules .rc-warn .rc-mark { color: #6b4900; }
+  /* State backgrounds — soft tints, left accent for fast scanning */
+  .reasoning-card .rc-rules .rc-pass {
+    background: #f1f8f3;
+    border-color: #dceadf;
+  }
+  .reasoning-card .rc-rules .rc-fail {
+    background: #fdf3ee;
+    border-color: #f1d6c5;
+  }
+  .reasoning-card .rc-rules .rc-warn {
+    background: #fbf6e6;
+    border-color: #ecdcae;
+  }
+  .reasoning-card .rc-rules .rc-mark {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1;
+    align-self: start;
+    margin-top: 1px;
+  }
+  .reasoning-card .rc-rules .rc-pass .rc-mark { background: var(--color-success); }
+  .reasoning-card .rc-rules .rc-fail .rc-mark { background: var(--color-caution); }
+  .reasoning-card .rc-rules .rc-warn .rc-mark { background: var(--color-warning); }
   .reasoning-card .rc-rules .rc-rule-name {
     font-weight: 600;
-    color: #444;
-    font-family: 'Consolas', 'Menlo', monospace;
-    font-size: 11px;
+    color: var(--color-ink);
+    font-size: 12.5px;
+    letter-spacing: -0.1px;
   }
-  .reasoning-card .rc-rules .rc-rule-detail { color: #555; }
+  .reasoning-card .rc-rules .rc-rule-detail {
+    color: var(--color-graphite);
+    grid-column: 2 / 4;
+    font-size: 12px;
+    line-height: 1.4;
+  }
   .reasoning-card .rc-raw {
-    margin-top: 8px;
-    padding: 6px 8px;
-    background: #fff7e6;
-    border: 1px solid #f0d9a8;
-    border-radius: 3px;
+    margin-top: 10px;
+    padding: 8px 10px;
+    background: #fbf6e6;
+    border: 1px solid #ecdcae;
+    border-radius: 5px;
     font-family: 'Consolas', 'Menlo', monospace;
     font-size: 11px;
-    color: #5a4400;
+    color: #6b4900;
     white-space: pre-wrap;
     word-break: break-word;
+    line-height: 1.4;
   }
 
   /* Status bar at bottom of SP pane */
@@ -1030,6 +1142,15 @@
 </head>
 <body>
 
+<!-- Workday Canvas System Icons (CC-BY-ND-4.0) — © Workday, Inc. — minimal subset for the tenant chrome -->
+<svg width="0" height="0" style="position:absolute;overflow:hidden" aria-hidden="true">
+  <defs>
+    <symbol id="wd-icon-search" viewBox="0 0 24 24"><path fill="currentColor" d="M11 2a9 9 0 0 1 7.03 14.616l4.323 4.323a.5.5 0 0 1 0 .707l-.707.707a.5.5 0 0 1-.707 0l-4.323-4.323A9 9 0 1 1 11 2m0 2a7 7 0 1 0 0 14 7 7 0 0 0 0-14"/></symbol>
+    <symbol id="wd-icon-notifications" viewBox="0 0 24 24"><path fill="currentColor" d="M16 19a4 4 0 0 1-8 0H3.5A1.5 1.5 0 0 1 2 17.5v-.839c0-.425.181-.839.514-1.127l.256-.217C4.105 14.214 5 12.795 5 11.307V9c0-2.49 1.73-4.511 4.031-5.436a3 3 0 0 1 5.937 0C17.269 4.488 19 6.51 19 9v2.307c0 1.488.895 2.907 2.23 4.01q.13.108.256.217c.333.288.514.702.514 1.127v.839a1.5 1.5 0 0 1-1.5 1.5zm-6 0a2 2 0 0 0 4 0zm2-16a1 1 0 0 0-1 1c0 .524-.309 1.102-.927 1.31C8.171 5.952 7 7.435 7 9v2.307c0 2.307-1.366 4.238-2.957 5.552L4 16.895V17h16v-.105l-.043-.036C18.366 15.545 17 13.614 17 11.307V9c0-1.566-1.17-3.049-3.073-3.69C13.304 5.102 13 4.52 13 4a1 1 0 0 0-1-1"/></symbol>
+    <symbol id="wd-icon-inbox-fill" viewBox="0 0 24 24"><path fill="currentColor" d="M18.14 3.01a1 1 0 0 1 .755.543l3.994 7.988q.025.051.046.104l.014.045a1 1 0 0 1 .044.205Q23 11.947 23 12v7a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-7q.002-.23.095-.425l.01-.022 4-8 .072-.121A1 1 0 0 1 6 3h12zM3 18h18v-5h-4.103a5.495 5.495 0 0 1-9.793 0H3zm.618-7h4.14l.156.013a1 1 0 0 1 .786.654 3.5 3.5 0 0 0 6.6 0l.063-.144a1 1 0 0 1 .88-.523h4.139l-3-6H6.618z"/></symbol>
+  </defs>
+</svg>
+
 <!-- ── Sticky CoE header ── -->
 <header class="coe-header">
   <span class="h-title">CoE Testing</span>
@@ -1057,28 +1178,60 @@
     <div class="pane-body">
       <div class="wd-shell">
 
-        <!-- Workday top header -->
+        <!-- Workday top header (mirrors probation prototype) -->
         <div class="wd-header">
-          <div class="wd-logo">K</div>
           <div class="wd-search">
-            <span class="wd-search-icon">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-            </span>
-            <input placeholder="Search Workday" disabled>
+            <span class="wd-search-icon"><svg width="14" height="14" viewBox="0 0 24 24"><use href="#wd-icon-search"/></svg></span>
+            <input placeholder="Search" disabled>
           </div>
           <div class="wd-icons">
-            <div class="wd-icon-btn" title="Notifications">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+            <div class="wd-icon-btn" title="Chat">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.4 8.4 0 0 1-3.7-.9L3 20l1-4.3A8.4 8.4 0 1 1 21 11.5z"/></svg>
+            </div>
+            <div class="wd-icon-btn wd-icon-bell-badge" title="Notifications">
+              <svg width="20" height="20" viewBox="0 0 24 24"><use href="#wd-icon-notifications"/></svg>
             </div>
             <div class="wd-icon-btn" title="Inbox">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11Z"/></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24"><use href="#wd-icon-inbox-fill"/></svg>
             </div>
-            <div class="wd-profile-photo">M</div>
+            <div class="wd-profile-photo" title="Profile">M</div>
           </div>
         </div>
 
-        <!-- Workday content -->
-        <div class="wd-content">
+        <!-- Body: left rail + main content (mirrors probation prototype) -->
+        <div class="wd-body">
+
+          <!-- Left vertical rail -->
+          <nav class="wd-rail" aria-label="Primary">
+            <a class="wd-rail-item active" href="#" title="Home" onclick="event.preventDefault()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5l9-7 9 7V20a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1z"/></svg>
+              <span class="wd-rail-label">Home</span>
+            </a>
+            <a class="wd-rail-item" href="#" title="Personal" onclick="event.preventDefault()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
+              <span class="wd-rail-label">Personal</span>
+            </a>
+            <a class="wd-rail-item" href="#" title="Team" onclick="event.preventDefault()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="6" r="3"/><circle cx="6" cy="14" r="2.5"/><circle cx="18" cy="14" r="2.5"/><path d="M12 9v3M9 13l2-1M15 13l-2-1"/></svg>
+              <span class="wd-rail-label">Team</span>
+            </a>
+            <a class="wd-rail-item" href="#" title="More" onclick="event.preventDefault()">
+              <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="6" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18" cy="12" r="1.6"/></svg>
+              <span class="wd-rail-label">More</span>
+            </a>
+            <div class="wd-rail-spacer"></div>
+            <a class="wd-rail-item" href="#" title="Saved" onclick="event.preventDefault()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+              <span class="wd-rail-label">Saved</span>
+            </a>
+            <a class="wd-rail-item" href="#" title="Settings" onclick="event.preventDefault()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+              <span class="wd-rail-label">Settings</span>
+            </a>
+          </nav>
+
+          <!-- Workday content -->
+          <div class="wd-content">
           <div class="wd-page-title">Reward &amp; Recognition — Submit Nomination</div>
           <div class="wd-page-sub">Recognise a colleague for outstanding contribution. All nominations are screened automatically against the active R&amp;R policy.</div>
 
@@ -1197,6 +1350,7 @@
             </div>
           </div>
 
+          </div>
         </div>
       </div>
     </div>
@@ -1447,21 +1601,24 @@
                 : result === 'fail' ? 'rc-fail'
                 : 'rc-warn';
       const mark = result === 'pass' ? '✓' : result === 'fail' ? '✗' : '!';
+      const ariaLabel = result === 'pass' ? 'Pass' : result === 'fail' ? 'Fail' : 'Warning';
       rulesHtml += `<li class="${cls}">
-        <span class="rc-mark">${mark}</span>
+        <span class="rc-mark" aria-label="${ariaLabel}">${mark}</span>
         <span class="rc-rule-name">${escapeHtml(r.rule || '')}</span>
         <span class="rc-rule-detail">${escapeHtml(r.detail || '')}</span>
       </li>`;
     });
-    if (!rulesHtml) rulesHtml = '<li class="rc-warn"><span class="rc-mark">!</span><span class="rc-rule-name">no rules returned</span><span class="rc-rule-detail">agent did not include a rules_applied array</span></li>';
+    if (!rulesHtml) rulesHtml = '<li class="rc-warn"><span class="rc-mark" aria-label="Warning">!</span><span class="rc-rule-name">no rules returned</span><span class="rc-rule-detail">agent did not include a rules_applied array</span></li>';
 
     let html = `
       <div class="reasoning-card">
         <div class="rc-title">
-          Agent reasoning
-          <span class="conf-pill ${conf}">confidence: ${conf}</span>
+          <span>Agent reasoning</span>
+          <span class="rc-title-spacer"></span>
+          <span class="conf-pill ${conf}">${conf} confidence</span>
         </div>
         <div class="rc-summary">${escapeHtml(summary)}</div>
+        <div class="rc-rules-label">Rules applied</div>
         <ul class="rc-rules">${rulesHtml}</ul>`;
     if (!parsedOk && rawText) {
       html += `<div class="rc-raw">Raw model output (parse failed):\n${escapeHtml(rawText)}</div>`;
