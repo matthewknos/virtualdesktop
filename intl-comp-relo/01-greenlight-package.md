@@ -15,7 +15,7 @@
 
 AI-CoE runs ~60–80 cross-border comp packages a year (relocations + cross-border hires + short-term assignments). Each takes 2–5 days of HRBP + Total Rewards + Tax to assemble. ~250 person-days / year burned on package construction. ~10–15% of senior cross-border candidates withdraw due to slow offer cycle — €150–300k / year recruitment leakage at the senior end.
 
-The signal exists — in six different places. Workday holds the bands. SharePoint holds FX. SharePoint holds cost-of-living. SharePoint holds the relocation matrix. Workday holds benefits. The external tax advisor (PwC) is on email. The hiring manager sees none of it. Time-to-offer drifts from 5 days to 15.
+The signal exists — in six different places. Workday holds the bands. SharePoint holds FX. SharePoint holds cost-of-living. SharePoint holds the relocation matrix. Workday holds benefits. The external tax advisor is on email. The hiring manager sees none of it. Time-to-offer drifts from 5 days to 15.
 
 ## Reframed outcome
 
