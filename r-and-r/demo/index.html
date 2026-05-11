@@ -1356,7 +1356,7 @@
   <section class="pane pane-right">
     <div class="pane-caption sharepoint">
       <span class="dot"></span>
-      SharePoint — R&amp;R Agent Decision Log.xlsx
+      SharePoint Excel sheet / Workday worksheet — R&amp;R Agent Decision Log
     </div>
     <div class="pane-body" style="overflow:hidden;">
       <div class="sp-shell">
@@ -1429,7 +1429,7 @@
 
         <!-- Status bar -->
         <div class="sp-status-bar">
-          <span id="sp-row-count">Ready &middot; 3 rows</span>
+          <span id="sp-row-count">Ready &middot; 12 rows</span>
           <span class="right">100%</span>
         </div>
 
@@ -1463,6 +1463,90 @@
   // ── Pre-seed historical rows ───────────────────────────────────────
   const seedRows = [
     {
+      ts: '2026-05-05 09:12',
+      nomId: 'NOM-2178',
+      recipient: 'Conall Doherty',
+      nominator: 'Eimear Fitzgibbon',
+      value: 50,
+      decision: 'AUTO-APPROVED',
+      decisionClass: 'approve',
+      rules: 'value≤cap, eligibility OK, frequency OK',
+      version: rulesetVersion,
+      link: 'NOM-2178'
+    },
+    {
+      ts: '2026-05-05 11:48',
+      nomId: 'NOM-2179',
+      recipient: 'Saoirse Ní Mhuiris',
+      nominator: 'Owen Maguire',
+      value: 150,
+      decision: 'AUTO-APPROVED',
+      decisionClass: 'approve',
+      rules: 'value≤cap, eligibility OK, frequency OK',
+      version: rulesetVersion,
+      link: 'NOM-2179'
+    },
+    {
+      ts: '2026-05-06 08:34',
+      nomId: 'NOM-2180',
+      recipient: 'Liam Ó hAodha',
+      nominator: 'Niamh Costello',
+      value: 25,
+      decision: 'AUTO-APPROVED',
+      decisionClass: 'approve',
+      rules: 'value≤cap, eligibility OK, frequency OK',
+      version: rulesetVersion,
+      link: 'NOM-2180'
+    },
+    {
+      ts: '2026-05-06 13:55',
+      nomId: 'NOM-2181',
+      recipient: 'Aisling McGrath',
+      nominator: 'Daniel Park',
+      value: 245,
+      decision: 'AUTO-APPROVED',
+      decisionClass: 'approve',
+      rules: 'value within 10% of cap (£245 of £250) — flagged for sample audit; eligibility OK, frequency OK',
+      version: rulesetVersion,
+      link: 'NOM-2181'
+    },
+    {
+      ts: '2026-05-07 10:07',
+      nomId: 'NOM-2182',
+      recipient: 'Méabh Lonergan',
+      nominator: 'Priya Ramanathan',
+      value: 75,
+      decision: 'AUTO-APPROVED',
+      decisionClass: 'approve',
+      rules: 'value≤cap, eligibility OK, frequency OK',
+      version: rulesetVersion,
+      link: 'NOM-2182'
+    },
+    {
+      ts: '2026-05-07 15:22',
+      nomId: 'NOM-2183',
+      recipient: 'Ronan Carberry',
+      nominator: 'Cathal Brennan',
+      value: 400,
+      decision: 'ROUTED FOR REVIEW',
+      decisionClass: 'routed',
+      rules: 'value cap exceeded (£400 > £250)',
+      version: rulesetVersion,
+      link: 'NOM-2183'
+    },
+    {
+      ts: '2026-05-08 11:05',
+      nomId: 'NOM-2184',
+      recipient: 'Fergal Twomey',
+      nominator: 'Helen Ó Briain',
+      value: 125,
+      decision: 'AUTO-APPROVED',
+      decisionClass: 'approve',
+      rules: 'value≤cap, eligibility OK, frequency OK',
+      version: rulesetVersion,
+      link: 'NOM-2184'
+    },
+    {
       ts: '2026-05-08 14:22',
       nomId: 'NOM-2185',
       recipient: 'Joanne Whitcombe',
@@ -1473,6 +1557,18 @@
       rules: 'value≤cap, eligibility OK, frequency OK',
       version: rulesetVersion,
       link: 'NOM-2185'
+    },
+    {
+      ts: '2026-05-08 16:41',
+      nomId: 'NOM-2185b',
+      recipient: 'Niamh Costello',
+      nominator: 'Owen Maguire',
+      value: 75,
+      decision: 'ROUTED FOR REVIEW',
+      decisionClass: 'routed',
+      rules: 'eligibility check failed (recipient on long-term leave)',
+      version: rulesetVersion,
+      link: 'NOM-2185b'
     },
     {
       ts: '2026-05-09 09:41',
@@ -1487,10 +1583,22 @@
       link: 'NOM-2186'
     },
     {
+      ts: '2026-05-09 14:18',
+      nomId: 'NOM-2186b',
+      recipient: 'Eimear Fitzgibbon',
+      nominator: 'Cathal Brennan',
+      value: 200,
+      decision: 'AUTO-APPROVED',
+      decisionClass: 'approve',
+      rules: 'value≤cap, eligibility OK, frequency OK',
+      version: rulesetVersion,
+      link: 'NOM-2186b'
+    },
+    {
       ts: '2026-05-09 16:03',
       nomId: 'NOM-2187',
-      recipient: 'Aoife Donnelly',
-      nominator: 'Marcus Doyle',
+      recipient: 'Méabh Lonergan',
+      nominator: 'Cathal Brennan',
       value: 250,
       decision: 'ROUTED FOR REVIEW',
       decisionClass: 'routed',
