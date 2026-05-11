@@ -472,7 +472,7 @@
 <div class="container">
 
   <h1>How would we build it</h1>
-  <p class="lede">An event-driven agent that reads R&amp;R nominations from Workday, applies versioned policy thresholds, completes the BP step for in-policy nominations, and writes every decision to a SharePoint audit sheet via Microsoft Graph.</p>
+  <p class="lede">An event-driven agent that reads R&amp;R nominations from Workday, applies versioned policy thresholds, completes the BP step for in-policy nominations, and writes every decision to a SharePoint Excel sheet or Workday worksheet via Microsoft Graph (or Workday RaaS write-back).</p>
 
   <!-- 1. Architecture overview -->
   <section>
@@ -550,7 +550,7 @@
         </div>
         <div class="diagram-col">
           <div class="node node-out">
-            <div class="node-system">SharePoint Excel sheet</div>
+            <div class="node-system">SharePoint Excel sheet / Workday worksheet</div>
             <div class="node-role">append decision row (every decision)</div>
           </div>
         </div>
@@ -695,7 +695,7 @@
   <!-- 5. Data model -->
   <section>
     <span class="section-num">05 — Data model</span>
-    <h2>SharePoint sheet schema</h2>
+    <h2>Audit sheet schema (SharePoint Excel / Workday worksheet)</h2>
     <p class="section-intro">One row per decision &mdash; whether auto-approved or routed for review. The schema is versioned because Power BI dashboards downstream depend on stable column names.</p>
 
     <div class="table-wrap">
@@ -748,21 +748,7 @@
     </ul>
   </section>
 
-  <!-- 8. Open questions -->
-  <section>
-    <span class="section-num">08 — Open questions</span>
-    <h2>Open questions</h2>
-    <p class="section-intro">Items requiring the People Ops working session and the Workday admin review before MVP scoping is locked.</p>
-    <ul>
-      <li>Does Workday R&amp;R expose a nomination-submitted event hook, or must we poll RaaS?</li>
-      <li>Where does R&amp;R actually live &mdash; Workday-native module, Workday Extend, or third-party tool (Bonusly, Achievers)?</li>
-      <li>Is the reward monetary (vouchers / payroll) or non-monetary (points, badges)?</li>
-      <li>What are the actual numeric thresholds? (People Ops working session)</li>
-      <li>Multi-tier approval &mdash; single People Ops step, or does Finance see anything above a threshold?</li>
-    </ul>
-
-    <p class="footer-note">Code samples will be added as the build progresses. This page describes the intended shape, not the current state of implementation.</p>
-  </section>
+  <p class="footer-note">Code samples will be added as the build progresses. This page describes the intended shape, not the current state of implementation.</p>
 
   <div class="footer">Internal &mdash; protected by site password. Do not share the URL externally.</div>
 </div>
