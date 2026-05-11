@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>International Comp &amp; Relocation Agent — Technical</title>
+<style>
+  :root {
+    --color-ink: #1d1d1f;
+    --color-graphite: #707070;
+    --color-fog: #f5f5f7;
+    --color-snow: #ffffff;
+    --color-silver-mist: #e8e8ed;
+    --color-azure: #0071e3;
+    --color-caution: #b64400;
+    --font-display: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-text: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-mono: 'SF Mono', ui-monospace, 'Menlo', 'Monaco', 'Consolas', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body { height: 100%; }
+
+  body {
+    font-family: var(--font-text);
+    background: var(--color-fog);
+    color: var(--color-ink);
+    font-size: 17px;
+    line-height: 1.47;
+    letter-spacing: -0.1px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+  }
+
+  /* ── Sticky header ── */
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(245, 245, 247, 0.85);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 1px solid var(--color-silver-mist);
+    height: 44px;
+    display: flex;
+    align-items: center;
+    padding: 0 22px;
+    gap: 14px;
+  }
+  .header-title { font-size: 12px; font-weight: 600; color: var(--color-ink); letter-spacing: -0.26px; }
+  .header-sub { font-size: 12px; font-weight: 400; color: var(--color-graphite); letter-spacing: -0.26px; }
+  .header-back {
+    margin-left: auto; font-size: 12px; font-weight: 400; color: var(--color-azure);
+    text-decoration: none; letter-spacing: -0.26px;
+  }
+  .header-back:hover { text-decoration: underline; }
+
+  /* ── Page container ── */
+  .container { max-width: 880px; margin: 0 auto; padding: 80px 40px 80px; }
+
+  /* ── Hero ── */
+  h1 {
+    font-family: var(--font-display);
+    font-size: 56px;
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -1.1px;
+    color: var(--color-ink);
+    margin-bottom: 18px;
+  }
+  .lede {
+    font-size: 21px; font-weight: 300; line-height: 1.42;
+    letter-spacing: -0.2px; color: var(--color-ink);
+    max-width: 760px; margin-bottom: 64px;
+  }
+
+  /* ── Sections ── */
+  section { margin-bottom: 72px; }
+  h2 {
+    font-family: var(--font-display); font-size: 32px; font-weight: 600;
+    line-height: 1.15; letter-spacing: -0.6px; margin-bottom: 8px; color: var(--color-ink);
+  }
+  .section-num {
+    display: block; font-size: 12px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.6px;
+    color: var(--color-graphite); margin-bottom: 10px;
+  }
+  .section-intro {
+    font-size: 17px; color: var(--color-graphite);
+    margin-bottom: 28px; max-width: 760px;
+  }
+  p { margin-bottom: 16px; }
+  p:last-child { margin-bottom: 0; }
+  ul, ol { margin: 0 0 16px 22px; }
+  li { margin-bottom: 10px; line-height: 1.5; }
+  li:last-child { margin-bottom: 0; }
+  strong { font-weight: 600; }
+  code {
+    font-family: var(--font-mono); font-size: 14px;
+    background: var(--color-silver-mist); color: var(--color-ink);
+    padding: 1px 6px; border-radius: 5px; letter-spacing: -0.1px;
+  }
+
+  /* ── Tables ── */
+  .table-wrap { background: var(--color-snow); border-radius: 18px; padding: 8px 24px; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 15px; line-height: 1.42; }
+  th, td { text-align: left; padding: 14px 12px; border-bottom: 1px solid var(--color-silver-mist); vertical-align: top; }
+  th { font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--color-graphite); }
+  tr:last-child td { border-bottom: none; }
+  td code { font-size: 13px; }
+
+  /* ── Architecture diagram ── */
+  .diagram { background: var(--color-snow); border-radius: 18px; padding: 36px 28px; overflow-x: auto; }
+  .diagram-row { display: flex; flex-wrap: nowrap; gap: 16px; align-items: stretch; justify-content: center; margin-bottom: 8px; }
+  .diagram-col { display: flex; flex-direction: column; align-items: center; flex: 1 1 0; min-width: 0; }
+  .diagram-spacer { flex: 1 1 0; }
+  .node {
+    background: var(--color-fog);
+    border: 1px solid var(--color-silver-mist);
+    border-radius: 12px;
+    padding: 14px 16px; text-align: center; width: 100%;
+    min-height: 70px; display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+  }
+  .node-system { font-family: var(--font-mono); font-size: 12px; font-weight: 600; letter-spacing: -0.1px; color: var(--color-ink); line-height: 1.2; }
+  .node-role { font-size: 12px; color: var(--color-graphite); margin-top: 4px; line-height: 1.3; }
+  .node-decision { background: var(--color-ink); color: var(--color-snow); border-color: var(--color-ink); }
+  .node-decision .node-system { color: var(--color-snow); }
+  .node-decision .node-role { color: rgba(255,255,255,0.7); }
+  .node-out { background: var(--color-snow); border: 1px solid var(--color-ink); }
+  .node-v2 { border-style: dashed; }
+  .arrow-vert { width: 1px; background: var(--color-graphite); height: 22px; margin: 4px 0; position: relative; }
+  .arrow-vert::after {
+    content: ""; position: absolute; bottom: -1px; left: -3px; width: 0; height: 0;
+    border-left: 4px solid transparent; border-right: 4px solid transparent;
+    border-top: 6px solid var(--color-graphite);
+  }
+  .arrow-label { font-family: var(--font-mono); font-size: 11px; color: var(--color-graphite); margin: 2px 0; letter-spacing: -0.1px; }
+  .branch { width: 100%; height: 22px; position: relative; margin: 4px 0; }
+  .branch::before { content: ""; position: absolute; top: 0; left: 16.66%; right: 16.66%; height: 1px; background: var(--color-graphite); }
+  .branch::after { content: ""; position: absolute; top: -11px; left: 50%; transform: translateX(-50%); width: 1px; height: 11px; background: var(--color-graphite); }
+  .branch-down { display: flex; justify-content: space-between; padding: 0 16.66%; margin-top: -1px; }
+  .branch-down-col { width: 1px; height: 22px; background: var(--color-graphite); position: relative; }
+  .branch-down-col::after {
+    content: ""; position: absolute; bottom: -1px; left: -3px; width: 0; height: 0;
+    border-left: 4px solid transparent; border-right: 4px solid transparent;
+    border-top: 6px solid var(--color-graphite);
+  }
+  .diagram-legend { display: flex; gap: 18px; flex-wrap: wrap; justify-content: center; margin-top: 24px; font-size: 12px; color: var(--color-graphite); }
+  .legend-swatch { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; border: 1px solid var(--color-silver-mist); }
+  .legend-swatch.input { background: var(--color-fog); }
+  .legend-swatch.core { background: var(--color-ink); border-color: var(--color-ink); }
+  .legend-swatch.output { background: var(--color-snow); border-color: var(--color-ink); }
+  .legend-swatch.v2 { background: var(--color-snow); border: 1px dashed var(--color-ink); }
+
+  /* ── Cascade ── */
+  .cascade { background: var(--color-snow); border-radius: 18px; padding: 12px 8px; }
+  .cascade-step {
+    display: grid; grid-template-columns: 36px 1fr; gap: 18px;
+    padding: 18px 22px; border-bottom: 1px solid var(--color-silver-mist); align-items: start;
+  }
+  .cascade-step:last-child { border-bottom: none; }
+  .cascade-num {
+    font-family: var(--font-mono); font-size: 13px; font-weight: 600;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--color-fog); border: 1px solid var(--color-silver-mist);
+    display: flex; align-items: center; justify-content: center; color: var(--color-ink); margin-top: 1px;
+  }
+  .cascade-step.terminal .cascade-num { background: var(--color-ink); color: var(--color-snow); border-color: var(--color-ink); }
+  .cascade-body { font-size: 16px; line-height: 1.5; }
+  .cascade-rule { font-weight: 600; color: var(--color-ink); }
+  .cascade-fail { display: block; font-size: 13px; color: var(--color-graphite); margin-top: 4px; }
+  .cascade-log { display: block; font-family: var(--font-mono); font-size: 12px; color: var(--color-graphite); margin-top: 6px; }
+
+  /* ── Callout ── */
+  .callout {
+    background: var(--color-snow);
+    border-left: 3px solid var(--color-caution);
+    border-radius: 4px 12px 12px 4px;
+    padding: 18px 22px; margin: 20px 0;
+  }
+  .callout-label {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.6px; color: var(--color-caution);
+    display: block; margin-bottom: 6px;
+  }
+  .callout.info { border-left-color: var(--color-azure); }
+  .callout.info .callout-label { color: var(--color-azure); }
+
+  /* ── Phase cards ── */
+  .phase-list { list-style: none; margin-left: 0; }
+  .phase-list li { background: var(--color-snow); border-radius: 12px; padding: 18px 22px; margin-bottom: 12px; }
+  .phase-name { font-weight: 600; color: var(--color-ink); display: inline-block; margin-right: 6px; }
+
+  /* ── Footer ── */
+  .footer-note {
+    font-style: italic; font-size: 14px; color: var(--color-graphite);
+    margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--color-silver-mist);
+  }
+  .footer {
+    margin-top: 64px; padding-top: 32px; text-align: center;
+    font-size: 12px; line-height: 1.33; letter-spacing: -0.26px; color: var(--color-graphite);
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 720px) {
+    .container { padding: 48px 22px 64px; }
+    h1 { font-size: 40px; letter-spacing: -0.7px; }
+    .lede { font-size: 18px; margin-bottom: 48px; }
+    h2 { font-size: 26px; }
+    section { margin-bottom: 56px; }
+    .header { padding: 0 16px; gap: 8px; }
+    .header-sub { display: none; }
+    .diagram { padding: 24px 14px; }
+    .node-system { font-size: 11px; }
+    .node-role { font-size: 11px; }
+    .cascade-step { padding: 14px 16px; gap: 12px; grid-template-columns: 28px 1fr; }
+  }
+</style>
+<script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+
+<div class="header">
+  <span class="header-title">CoE Testing</span>
+  <span class="header-sub">International Comp &amp; Relocation Agent — Technical</span>
+  <span style="margin-left:10px;padding:2px 8px;border:1px solid #b88600;border-radius:3px;color:#b88600;font-size:10px;font-weight:600;letter-spacing:0.4px;text-transform:uppercase;">Candidate</span>
+  <a class="header-back" href="/intl-comp-relo">&larr; Back to overview</a>
+</div>
+
+<div class="container">
+
+  <h1>How the agent works</h1>
+  <p class="lede">A Copilot Studio agent backed by Power Automate that reads a consolidated Workday-resident source of truth, drafts a cross-border comp package into a Teams adaptive card for Total Rewards, classifies the tax case against a versioned rule engine (routine cases only), and logs every recommendation to a 7-year equal-pay audit trail. Read-only across Workday and SharePoint in v1; the canonical Cross-Border Comp record is written in v2.</p>
+
+  <!-- 1. Architecture overview -->
+  <section>
+    <span class="section-num">01 — Architecture</span>
+    <h2>Architecture overview</h2>
+    <p class="section-intro">Three input clusters feed the agent. The agent resolves context, freshness-checks every source, drafts a package, and fans out: a Teams adaptive card for Total Rewards, an equal-pay audit row for every recommendation, and (Bold v2 only) a canonical Cross-Border Comp record in Workday Extend.</p>
+
+    <div class="diagram">
+      <!-- Top row: three input clusters -->
+      <div class="diagram-row">
+        <div class="diagram-col">
+          <div class="node">
+            <div class="node-system">Workday Comp &amp; Benefits</div>
+            <div class="node-role">bands, country catalogues</div>
+          </div>
+        </div>
+        <div class="diagram-col">
+          <div class="node">
+            <div class="node-system">Workday HCM REST</div>
+            <div class="node-role">subject, jurisdiction, requisition</div>
+          </div>
+        </div>
+        <div class="diagram-col">
+          <div class="node">
+            <div class="node-system">Workday Extend XBC_*</div>
+            <div class="node-role">FX, COL, relocation, parity, tax rules</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- three arrows down converging -->
+      <div class="diagram-row" style="gap: 16px;">
+        <div class="diagram-col"><div class="arrow-vert"></div></div>
+        <div class="diagram-col"><div class="arrow-vert"></div></div>
+        <div class="diagram-col"><div class="arrow-vert"></div></div>
+      </div>
+
+      <!-- Agent core (centred) -->
+      <div class="diagram-row">
+        <div class="diagram-spacer"></div>
+        <div class="diagram-col" style="flex: 0 0 360px;">
+          <div class="node node-decision">
+            <div class="node-system">Agent core</div>
+            <div class="node-role">freshness &middot; resolve &middot; classify &middot; draft &middot; log</div>
+          </div>
+        </div>
+        <div class="diagram-spacer"></div>
+      </div>
+
+      <!-- single arrow down -->
+      <div class="diagram-row">
+        <div class="diagram-spacer"></div>
+        <div class="diagram-col" style="flex: 0 0 220px;">
+          <div class="arrow-vert"></div>
+          <div class="arrow-label">draft package</div>
+        </div>
+        <div class="diagram-spacer"></div>
+      </div>
+
+      <!-- 3-way branch -->
+      <div class="branch"></div>
+      <div class="branch-down">
+        <div class="branch-down-col"></div>
+        <div class="branch-down-col"></div>
+        <div class="branch-down-col"></div>
+      </div>
+
+      <!-- bottom row: three outputs -->
+      <div class="diagram-row">
+        <div class="diagram-col">
+          <div class="node node-out">
+            <div class="node-system">Teams adaptive card</div>
+            <div class="node-role">Total Rewards review &middot; approve / edit / refer</div>
+          </div>
+        </div>
+        <div class="diagram-col">
+          <div class="node node-out">
+            <div class="node-system">Equal-pay audit log</div>
+            <div class="node-role">append one row per recommendation &middot; 7-yr retention</div>
+          </div>
+        </div>
+        <div class="diagram-col">
+          <div class="node node-out node-v2">
+            <div class="node-system">CrossBorderComp record</div>
+            <div class="node-role">Workday Extend &middot; canonical (Bold v2)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-legend">
+        <span><span class="legend-swatch input"></span>Workday source</span>
+        <span><span class="legend-swatch core"></span>Agent core</span>
+        <span><span class="legend-swatch output"></span>v1 output</span>
+        <span><span class="legend-swatch v2"></span>Bold v2 only</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. Trigger model -->
+  <section>
+    <span class="section-num">02 — Trigger</span>
+    <h2>Trigger model</h2>
+    <p class="section-intro">Conversational, not event-driven. Two DM entry points; each one starts a single agent loop bound to one requisition.</p>
+
+    <ol>
+      <li><strong>Hiring manager DM</strong> &mdash; <em>"what does [name] cost in [city]?"</em> The agent posts a one-screen preview to the hiring manager (no band inputs, no percentile language) and a full draft to Total Rewards for sign-off.</li>
+      <li><strong>Total Rewards DM</strong> &mdash; <em>"package for [requisition id]"</em>. The agent posts the full draft straight to a Teams adaptive card for review.</li>
+    </ol>
+
+    <div class="callout info">
+      <span class="callout-label">Why conversational, not event-driven</span>
+      The trigger is a Talent Acquisition decision (open the conversation with the candidate), not a Workday state transition. Coupling the agent to a Workday business-process event would force the agent to run on every requisition opened &mdash; including ones that never cross a border. The DM model keeps the agent's surface area tight: it runs only when a human needs a package.
+    </div>
+  </section>
+
+  <!-- 3. Integration surface -->
+  <section>
+    <span class="section-num">03 — Integration</span>
+    <h2>Integration surface</h2>
+    <p class="section-intro">Eight touchpoints. Seven read, one write (the audit log) in v1; one additional write (CrossBorderComp) in Bold v2. The agent never invents new approval routing &mdash; it posts to Total Rewards via Teams and inherits their existing escalation paths to HRD and CFO.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>System</th><th>Operation</th><th>Mode</th><th>Notes</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Workday Compensation</td>
+            <td>Read bands via Workday REST</td>
+            <td>Read-only</td>
+            <td>Freshness: <code>as_of_quarter</code> must equal current quarter</td>
+          </tr>
+          <tr>
+            <td>Workday Benefits</td>
+            <td>Read country catalogue per home / destination</td>
+            <td>Read-only</td>
+            <td>Freshness: catalogue last-updated must be current quarter</td>
+          </tr>
+          <tr>
+            <td>Workday HCM</td>
+            <td>Read subject (employee or candidate stub), home location, requisition</td>
+            <td>Read-only</td>
+            <td>Daily refresh sufficient</td>
+          </tr>
+          <tr>
+            <td>Workday Extend <code>XBC_FxRate</code></td>
+            <td>Read FX pair for corridor</td>
+            <td>Read-only</td>
+            <td>Refreshed weekly via Power Automate; cap 30 days</td>
+          </tr>
+          <tr>
+            <td>Workday Extend <code>XBC_ColIndex</code></td>
+            <td>Read COL index for home + destination cities</td>
+            <td>Read-only</td>
+            <td>Refreshed quarterly; cap 90 days</td>
+          </tr>
+          <tr>
+            <td>Workday Extend <code>XBC_RelocationCorridor</code></td>
+            <td>Read corridor row for <code>(home, dest, level)</code></td>
+            <td>Read-only</td>
+            <td>Refreshed quarterly</td>
+          </tr>
+          <tr>
+            <td>Workday Extend <code>XBC_BenefitsParityRule</code></td>
+            <td>Read reconciliation rule per category</td>
+            <td>Read-only</td>
+            <td>Refreshed quarterly</td>
+          </tr>
+          <tr>
+            <td>Workday Extend <code>XBC_TaxRule</code></td>
+            <td>Read routine rule for corridor &times; employment type</td>
+            <td>Read-only</td>
+            <td>Annual re-confirmation by external tax advisor required</td>
+          </tr>
+          <tr>
+            <td>Microsoft Teams</td>
+            <td>Post adaptive card to Total Rewards / hiring manager</td>
+            <td>Write-only</td>
+            <td>Audience-aware masking; hiring-manager card omits band inputs</td>
+          </tr>
+          <tr>
+            <td>Equal-pay audit log</td>
+            <td>Append one row per recommendation</td>
+            <td>Write-only</td>
+            <td>7-year retention; surfaced to HRD + CFO + Legal quarterly</td>
+          </tr>
+          <tr>
+            <td>External tax advisor referral</td>
+            <td>Structured hand-off for non-routine tax cases</td>
+            <td>Write-only</td>
+            <td>v1 = structured email; v2 = API</td>
+          </tr>
+          <tr style="opacity:0.65;">
+            <td><code>CrossBorderComp</code> (Workday Extend)</td>
+            <td>Write canonical record; advance state machine</td>
+            <td>Write-only</td>
+            <td><strong>Bold v2 only.</strong> Pragmatic v1 does not write this</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 4. Source of truth -->
+  <section>
+    <span class="section-num">04 — Source of truth</span>
+    <h2>The data lift is the project</h2>
+    <p class="section-intro">Today the six inputs live in Workday (bands, benefits) plus six SharePoint sites (FX, COL, relocation, benefits parity, tax rules, legacy policy archive) with conflicting versions. Consolidation into Workday Extend is the precondition for everything else &mdash; ~6 weeks of integration work running in parallel to the agent build.</p>
+
+    <ul>
+      <li><strong>FX</strong> &rarr; <code>XBC_FxRate</code>, refreshed weekly via Power Automate from a licensed feed.</li>
+      <li><strong>COL</strong> &rarr; <code>XBC_ColIndex</code>, refreshed quarterly from a named provider.</li>
+      <li><strong>Relocation matrix</strong> &rarr; <code>XBC_RelocationCorridor</code>, keyed on <code>(home, dest, level)</code>.</li>
+      <li><strong>Benefits parity rules</strong> &rarr; <code>XBC_BenefitsParityRule</code> (Workday Benefits still owns the catalogues; this object owns the reconciliation logic).</li>
+      <li><strong>Tax-equalisation rules</strong> &rarr; <code>XBC_TaxRule</code> (routine cases only; non-routine cases never enter this object).</li>
+      <li><strong>Legacy policy archive</strong> &rarr; stays on SharePoint as a read-only reference link from each <code>XBC_RelocationCorridor</code> row.</li>
+    </ul>
+
+    <p>Each object carries a <code>source_version</code> field stamped into every audit row so the quarterly fairness review can reproduce a recommendation against the exact input data that produced it.</p>
+
+    <div class="callout">
+      <span class="callout-label">Why Workday Extend, not a separate data platform</span>
+      The agent already reads Workday for bands, benefits, and HCM. Workday's audit retention and access-control model satisfies the 7-year equal-pay requirement out of the box. The Bold-v2 write surface (<code>CrossBorderComp</code>) lives in Workday Extend already &mdash; same governance plane, no parallel data estate to maintain.
+    </div>
+  </section>
+
+  <!-- 5. Draft pipeline -->
+  <section>
+    <span class="section-num">05 — Draft pipeline</span>
+    <h2>How a single draft gets built</h2>
+    <p class="section-intro">Short-circuit pipeline. Every step logs inputs and outcome; the first failed freshness or missing-input check aborts and surfaces a refusal with the specific stale field. Only an all-pass run produces a Teams card.</p>
+
+    <div class="cascade">
+      <div class="cascade-step">
+        <div class="cascade-num">1</div>
+        <div class="cascade-body">
+          <span class="cascade-rule">Resolve subject, requisition, corridor</span>
+          <span class="cascade-fail">Fail &rarr; refusal ("cannot resolve employee {id}" or "requisition {id} has no destination country").</span>
+          <span class="cascade-log">logs: subject_id, requisition_id, home_country, dest_country, level, role</span>
+        </div>
+      </div>
+      <div class="cascade-step">
+        <div class="cascade-num">2</div>
+        <div class="cascade-body">
+          <span class="cascade-rule">Freshness check across all six SoT objects</span>
+          <span class="cascade-fail">Fail &rarr; refusal with the offending field ("FX rate GBP-EUR is 35 days old (limit 30)"). No partial draft.</span>
+          <span class="cascade-log">logs: fx_age, col_age, band_age, relocation_age, benefits_age, tax_rule_age</span>
+        </div>
+      </div>
+      <div class="cascade-step">
+        <div class="cascade-num">3</div>
+        <div class="cascade-body">
+          <span class="cascade-rule">Read all inputs at clock-pin</span>
+          <span class="cascade-fail">Snapshot <code>source_version</code> per field. The remainder of the draft is deterministic against this snapshot.</span>
+          <span class="cascade-log">logs: source_versions map</span>
+        </div>
+      </div>
+      <div class="cascade-step">
+        <div class="cascade-num">4</div>
+        <div class="cascade-body">
+          <span class="cascade-rule">Classify tax case</span>
+          <span class="cascade-fail">Routine &rarr; rule engine computes gross-up. Non-routine &rarr; <code>flag_to_external_tax_advisor</code> called; agent stops calculating, draft proceeds with referral ID and no tax position.</span>
+          <span class="cascade-log">logs: tax.class, tax.rule_id, tax.referral_id</span>
+        </div>
+      </div>
+      <div class="cascade-step">
+        <div class="cascade-num">5</div>
+        <div class="cascade-body">
+          <span class="cascade-rule">Compute band position</span>
+          <span class="cascade-fail">If <code>position &lt; 25</code> or <code>position &gt; 75</code> &rarr; <code>justification_required = true</code>; adaptive card flags the justification field as mandatory.</span>
+          <span class="cascade-log">logs: band_position_pct, justification_required</span>
+        </div>
+      </div>
+      <div class="cascade-step">
+        <div class="cascade-num">6</div>
+        <div class="cascade-body">
+          <span class="cascade-rule">Draft the package</span>
+          <span class="cascade-fail">Assemble base + relocation + benefits delta + tax + COL delta + FX-normalised view into the audience-appropriate adaptive card.</span>
+          <span class="cascade-log">logs: package payload</span>
+        </div>
+      </div>
+      <div class="cascade-step terminal">
+        <div class="cascade-num">&#10003;</div>
+        <div class="cascade-body">
+          <span class="cascade-rule">Post + log</span>
+          <span class="cascade-fail">Post adaptive card to the audience. Append one row to the equal-pay audit log with all inputs, source versions, decision provenance.</span>
+          <span class="cascade-log">logs: card_id, audit_row_id, posted_at</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. Audit log schema -->
+  <section>
+    <span class="section-num">06 — Audit log</span>
+    <h2>Equal-pay audit row schema</h2>
+    <p class="section-intro">One row per recommendation &mdash; whether approved, edited, rejected, or referred to the external tax advisor. The schema is versioned because the quarterly fairness review (HRD + CFO + Legal) and any downstream Power BI dashboards depend on stable column names. 7-year retention.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Column</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>timestamp</code></td><td>ISO 8601 UTC; when the recommendation was produced</td></tr>
+          <tr><td><code>requisition_id</code></td><td>Workday Recruiting requisition; primary key for the package</td></tr>
+          <tr><td><code>subject_id</code></td><td>Workday HCM employee_id or candidate stub</td></tr>
+          <tr><td><code>corridor</code></td><td><code>{home_country, home_city, dest_country, dest_city}</code></td></tr>
+          <tr><td><code>role</code> / <code>level</code></td><td>Job role + level used in band lookup</td></tr>
+          <tr><td><code>band_position_pct</code></td><td>0–100; where the recommended base sits inside the band</td></tr>
+          <tr><td><code>justification_required</code></td><td>Boolean; true if position &lt; 25 or &gt; 75</td></tr>
+          <tr><td><code>justification</code></td><td>Free text; mandatory when <code>justification_required</code> is true; sealed on approval</td></tr>
+          <tr><td><code>tax_class</code></td><td><code>routine</code> / <code>non_routine</code> / <code>none</code></td></tr>
+          <tr><td><code>tax_rule_id</code> / <code>tax_referral_id</code></td><td>Whichever applies; mutually exclusive</td></tr>
+          <tr><td><code>source_versions</code></td><td>JSON map: <code>{fx, col, band, relocation, benefits, tax_rule}</code> source version strings at draft time</td></tr>
+          <tr><td><code>approval_path</code></td><td>Array of approvers required: <code>[total_rewards]</code>, <code>[total_rewards, hrd]</code>, <code>[total_rewards, cfo]</code>, or all three</td></tr>
+          <tr><td><code>decision</code></td><td><code>approved</code> / <code>edited</code> / <code>rejected</code> / <code>referred_to_advisor</code> / <code>withdrawn</code></td></tr>
+          <tr><td><code>decided_by</code></td><td>Worker IDs of all approvers who signed</td></tr>
+          <tr><td><code>schema_version</code></td><td>Semver; tracks audit-log schema evolution</td></tr>
+          <tr><td><code>retention_until</code></td><td><code>timestamp + 7 years</code>; enforced at the storage layer</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 7. Guardrails -->
+  <section>
+    <span class="section-num">07 — Guardrails</span>
+    <h2>Guardrails (technical)</h2>
+    <ul>
+      <li><strong>Freshness refusal.</strong> Any stale source &rarr; full refusal, no partial draft. Refusal copy names the field and its age vs. the cap. The agent does not produce a "best-effort" package when an input is past its limit.</li>
+      <li><strong>Tax routine-only.</strong> Hard rule: the agent never computes a tax position outside the rule engine. Non-routine inputs to <code>compute_routine_tax_equalisation</code> raise; the agent must call <code>flag_to_external_tax_advisor</code> instead.</li>
+      <li><strong>Confidentiality masking.</strong> Hiring-manager-audience messages are regex-scanned at post-time for band percentile labels, internal band IDs, source-version strings, "above band" / "below band". Any hit blocks the post.</li>
+      <li><strong>Idempotency.</strong> Draft pipeline keyed by <code>(requisition_id, attempt_id)</code>; a retry must not double-write to the audit log or double-post to Teams.</li>
+      <li><strong>Justification gating.</strong> Approval transitions are rejected at the tool boundary when <code>justification_required</code> is true and <code>justification</code> is empty. Cannot be bypassed by the agent or the reviewer.</li>
+      <li><strong>Audit retention.</strong> Every row carries <code>retention_until = timestamp + 7 years</code>, enforced at the storage layer. Justification text is sealed on approval; subsequent edits create a new row, not an in-place mutation.</li>
+      <li><strong>Kill switch.</strong> Total Rewards lead can disable draft posting globally via a config flag in minutes; the agent reverts to refusal-with-message on every request.</li>
+      <li><strong>Schema versioning.</strong> Audit log and (Bold v2) <code>CrossBorderComp</code> schemas are semver-versioned. Breaking changes require a coordinated bump &mdash; the quarterly fairness review consumes these schemas.</li>
+    </ul>
+  </section>
+
+  <!-- 8. Eval -->
+  <section>
+    <span class="section-num">08 — Evaluation</span>
+    <h2>Evaluation harness</h2>
+    <p class="section-intro">Replayable eval that gates ship of v1. 24 golden cases (12 UK&harr;IE + 12 UK&harr;PL) cover routine in-band drafts, justification-mandatory above/below-band, CFO-routing relocation, short-term assignment, and internal transfer. 12 adversarial cases cover every named guardrail: stale FX / COL / band / tax rule, missing band, equity-vesting non-routine, dual-citizenship non-routine, out-of-scope corridor, repatriation with band drift, collapsed-band pay edge, and a confidentiality-breach attempt.</p>
+
+    <p>Run in a Workday sandbox with clock pinning so freshness is deterministic. Pre-pilot gate (week 9): ≥22/24 golden, 12/12 adversarial, zero legal-flagged equal-pay issues. Re-runs on every change to agent prompt, tool config, or any <code>XBC_*</code> source row.</p>
+
+    <div class="callout info">
+      <span class="callout-label">Source</span>
+      Full case design, scoring rubric, fixture spec, and run cadence in <code>04-evaluation-harness.md</code> alongside this page in the repository.
+    </div>
+  </section>
+
+  <!-- 9. Build phases -->
+  <section>
+    <span class="section-num">09 — Build phases</span>
+    <h2>Build phases</h2>
+    <ul class="phase-list">
+      <li><span class="phase-name">Upstream &mdash; do regardless.</span> ~6 weeks. Consolidate the six inputs into Workday Extend (<code>XBC_*</code> objects). Refresh jobs, schema sign-off, Data Owner per object. The agent is meaningless without this; the consolidation is independently valuable even if v1 is descoped.</li>
+      <li><span class="phase-name">Pragmatic v1.</span> 10 weeks. UK&harr;IE + UK&harr;PL drafter. Read-only across Workday and SharePoint. Posts adaptive card; logs audit row. Total Rewards reviews, edits, approves, or refers. No write to <code>CrossBorderComp</code>.</li>
+      <li><span class="phase-name">Bold v2.</span> Adds the <code>CrossBorderComp</code> write surface and state machine, full jurisdictional coverage (UK&harr;DE, UK&harr;US, UK&harr;CA, IE&harr;PL, intra-EU), Workday Talent Mobility pairing, and the candidate-side comp transparency view required by the EU Pay Transparency Directive.</li>
+    </ul>
+  </section>
+
+  <p class="footer-note">Tool contracts, conversation transcripts, the full <code>CrossBorderComp</code> schema, and the source-of-truth migration plan live in the build briefs (<code>02-bold-build-brief.md</code>, <code>02-pragmatic-build-brief.md</code>) and the schema doc (<code>03-source-of-truth-schema.md</code>) in the repository. This page is the technical overview, not the build spec.</p>
+
+  <div class="footer">Internal &mdash; for CoE feedback. Do not share the URL externally.</div>
+</div>
+
+</body>
+</html>
