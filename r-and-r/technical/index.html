@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>R&amp;R Auto-Approver — Technical</title>
+<title>R&amp;R Agentic Approver — Technical</title>
 <style>
   :root {
     --color-ink: #1d1d1f;
@@ -466,20 +466,20 @@
 
 <div class="header">
   <span class="header-title">CoE Testing</span>
-  <span class="header-sub">R&amp;R Auto-Approver — Technical</span>
+  <span class="header-sub">R&amp;R Agentic Approver — Technical</span>
   <a class="header-back" href="/r-and-r">&larr; Back to R&amp;R</a>
 </div>
 
 <div class="container">
 
-  <h1>How would we build it</h1>
-  <p class="lede">An event-driven agent that reads R&amp;R nominations from Workday, applies versioned policy thresholds, completes the BP step for in-policy nominations, and writes every decision to a SharePoint Excel sheet or Workday worksheet via Microsoft Graph (or Workday RaaS write-back).</p>
+  <h1>How the agent works</h1>
+  <p class="lede">An event-driven agent that reads each R&amp;R nomination from Workday, resolves the recipient and project context, applies versioned policy checks, decides &mdash; auto-approving when checks are clean and handing exceptions to existing BP reviewers &mdash; and writes every decision with its reasoning to a SharePoint Excel sheet / Workday worksheet via Microsoft Graph (or Workday RaaS write-back).</p>
 
   <!-- 1. Architecture overview -->
   <section>
     <span class="section-num">01 — Architecture</span>
     <h2>Architecture overview</h2>
-    <p class="section-intro">Three Workday surfaces feed the agent core. The agent applies policy and fans out to two destinations: Workday for the BP write, SharePoint for the audit row. Exceptions are not re-routed — they fall back to the BP's existing reviewer routing.</p>
+    <p class="section-intro">Three Workday surfaces feed the agent. The agent resolves context, decides, and fans out: a Workday BP completion for in-policy nominations, a SharePoint Excel sheet / Workday worksheet audit row for every decision. The agent invents no new routing — exceptions inherit the BP's existing reviewer flow.</p>
 
     <div class="diagram">
       <!-- Top row: three input systems -->
@@ -528,7 +528,7 @@
         <div class="diagram-spacer"></div>
         <div class="diagram-col" style="flex: 0 0 220px;">
           <div class="arrow-vert"></div>
-          <div class="arrow-label">policy decision</div>
+          <div class="arrow-label">agent decision</div>
         </div>
         <div class="diagram-spacer"></div>
       </div>
@@ -558,7 +558,7 @@
         <div class="diagram-col">
           <div class="node node-out">
             <div class="node-system">Existing BP routing</div>
-            <div class="node-role">exceptions only &rarr; People Ops Inbox</div>
+            <div class="node-role">exceptions &rarr; existing BP reviewer (Workday inbox)</div>
           </div>
         </div>
       </div>
@@ -639,7 +639,7 @@
   <section>
     <span class="section-num">04 — Decision logic</span>
     <h2>Decision logic</h2>
-    <p class="section-intro">A short-circuit rule cascade. Any failure routes to exception with a tagged reason; only an all-pass result triggers an auto-approval. Every step is logged in the SharePoint row regardless of outcome.</p>
+    <p class="section-intro">The agent's decision process is a short-circuit policy cascade. Each check is logged with its outcome and the reasoning that produced it; the first failure routes the nomination to a human reviewer with a tagged reason; only an all-pass result triggers an auto-approval.</p>
 
     <div class="cascade">
       <div class="cascade-step">
@@ -744,8 +744,8 @@
     <ul class="phase-list">
       <li><span class="phase-name">MVP.</span> 3-rule threshold check (value cap, eligibility, frequency) plus exception routing via the existing BP and SharePoint append. One R&amp;R category, one cycle.</li>
       <li><span class="phase-name">Shadow mode (cycle 1).</span> <code>decision_mode = "shadow"</code> &mdash; rows logged only, no BP writes. Compare agent decisions against human decisions on the same nominations to calibrate before going live.</li>
-      <li><span class="phase-name">Phase 2.</span> Abuse-pattern detection (manager-self-loop, gaming patterns), multi-category rollout.</li>
-      <li><span class="phase-name">Phase 3.</span> Generalise into Agent #53 (Workday Approval Audit Agent) across other rubber-stamp BPs.</li>
+      <li><span class="phase-name">Phase 2.</span> Pattern-detection layer — the agent reads cross-nomination signals (reciprocity, ring detection, gaming patterns) the policy cascade alone can't see. Multi-category rollout.</li>
+      <li><span class="phase-name">Phase 3.</span> Generalise the agent pattern (Workday Approval Audit Agent) across other rubber-stamp Workday BPs.</li>
     </ul>
   </section>
 

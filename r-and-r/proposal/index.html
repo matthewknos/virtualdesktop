@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>R&amp;R Auto-Approver — Proposal</title>
+<title>R&amp;R Agentic Approver — Proposal</title>
 <style>
   :root {
     --color-ink: #1d1d1f;
@@ -491,15 +491,15 @@
 
 <div class="header">
   <span class="header-title">CoE Testing</span>
-  <span class="header-sub">R&amp;R Auto-Approver — Proposal</span>
+  <span class="header-sub">R&amp;R Agentic Approver — Proposal</span>
   <a class="header-back" href="/r-and-r">&larr; Back to R&amp;R</a>
 </div>
 
 <!-- ─── HERO ─── -->
 <section class="hero">
   <div class="hero-inner">
-    <h1 class="hero-title">R&amp;R Auto-Approver</h1>
-    <p class="hero-tag">An agent that clears the 95% of Reward &amp; Recognition approvals that are pure rubber-stamp, and surfaces the 5% that actually need a human.</p>
+    <h1 class="hero-title">R&amp;R Agentic Approver</h1>
+    <p class="hero-tag">An agent that triages every R&amp;R nomination — auto-clearing the 95% that fall inside policy, and handing the 5% that need human judgment to People Ops with the reasoning already attached.</p>
 
     <div class="stat-grid">
       <div class="stat stat-accent">
@@ -540,11 +540,11 @@
       <h2 class="h-section">What the agent does.</h2>
 
       <ol class="solution-list">
-        <li><span class="step">01</span><span>Reads each new R&amp;R nomination at submission.</span></li>
-        <li><span class="step">02</span><span>Auto-approves any nomination inside policy thresholds &mdash; value, frequency, recipient eligibility, nominator legitimacy.</span></li>
-        <li><span class="step">03</span><span>Surfaces the ~5% genuine exceptions to People Ops via the existing Workday BP routing, with the specific reason it was flagged.</span></li>
-        <li><span class="step">04</span><span>Watches for abuse patterns &mdash; same recipient four times on one project, off-policy values, suspicious manager-self-loops.</span></li>
-        <li><span class="step">05</span><span>Logs every decision to a SharePoint Excel sheet / Workday worksheet for full team transparency.</span></li>
+        <li><span class="step">01</span><span>Reads each new R&amp;R nomination at submission and resolves the recipient, nominator, and project context from Workday.</span></li>
+        <li><span class="step">02</span><span>Decides &mdash; auto-approves when the policy checks come back clean (value, frequency, recipient eligibility, nominator legitimacy); otherwise routes the nomination for human review with a tagged reason.</span></li>
+        <li><span class="step">03</span><span>Hands each exception to the existing Workday BP reviewer with the specific reason it was flagged and the context the reviewer would otherwise have to look up.</span></li>
+        <li><span class="step">04</span><span>Watches for patterns the rule cascade alone can&rsquo;t see &mdash; reciprocity, ring nominations, off-policy bursts (Phase 2).</span></li>
+        <li><span class="step">05</span><span>Writes every decision, with the agent&rsquo;s reasoning, to a SharePoint Excel sheet / Workday worksheet for full team transparency.</span></li>
       </ol>
     </div>
 
@@ -616,7 +616,7 @@
         </div>
         <div class="risk-cell mitigation">
           <span class="label">Mitigation</span>
-          Phase 2 detection layer; anomaly alerts routed to the People Ops lead.
+          Phase 2 detection layer; anomalies raised through the existing Workday BP routing and flagged on the SharePoint Excel sheet / Workday worksheet.
         </div>
       </div>
       <div class="risk-row">
@@ -645,11 +645,11 @@
       </div>
       <div class="phase">
         <div class="tag">Phase 2</div>
-        <div class="body">Abuse-pattern detection &mdash; frequency, off-policy values, gaming.</div>
+        <div class="body">Pattern-detection layer &mdash; the agent reads cross-nomination signals (reciprocity, frequency anomalies, off-policy values, gaming) the rule cascade alone can&rsquo;t see.</div>
       </div>
       <div class="phase">
         <div class="tag">Phase 3</div>
-        <div class="body">Generalise the pattern into Agent #53 across other rubber-stamp business processes.</div>
+        <div class="body">Generalise the agent pattern across other rubber-stamp Workday business processes.</div>
       </div>
     </div>
 

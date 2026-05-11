@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>R&amp;R Auto-Approver — Live Demo</title>
+<title>R&amp;R Agentic Approver — Live Demo</title>
 
 <!-- Tenant kit CSS (linked from sibling _tenant-kit folder) -->
 <link rel="preconnect" href="https://design.workdaycdn.com" crossorigin>
@@ -1180,7 +1180,7 @@
 <!-- ── Sticky CoE header ── -->
 <header class="coe-header">
   <span class="h-title">CoE Testing</span>
-  <span class="h-sub">R&amp;R Auto-Approver — Live Demo</span>
+  <span class="h-sub">R&amp;R Agentic Approver — Live Demo</span>
   <span class="h-spacer"></span>
   <a class="h-back" href="/r-and-r">&larr; Back to R&amp;R</a>
 </header>
@@ -2141,7 +2141,7 @@
   // ── LLM call ───────────────────────────────────────────────────────
   function buildPrompt(policy, nomination, history) {
     return [
-      'You are the Reward & Recognition Auto-Approver agent for an enterprise Workday tenant.',
+      'You are the Reward & Recognition Agentic Approver agent for an enterprise Workday tenant.',
       'You will be given (1) the active policy as JSON, (2) a single nomination, (3) recent-history context for the recipient.',
       'Apply each policy rule to the nomination. Decide whether to AUTO_APPROVE or ROUTE_FOR_REVIEW.',
       '',
