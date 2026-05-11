@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inbox — Workday</title>
+
+<link rel="preconnect" href="https://design.workdaycdn.com" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css-fonts@9.1.26/dist/canvas-kit-css-fonts.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css-core@9.1.26/dist/canvas-kit-css-core.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-tokens-web@4.3.0/css/base/_variables.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-tokens-web@4.3.0/css/brand/_variables.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-tokens-web@4.3.0/css/system/_variables.css">
+
+<link rel="stylesheet" href="/tenant/_shared/shell.css">
+<style>
+  .inbox-layout {
+    display: grid;
+    grid-template-columns: minmax(360px, 460px) 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  @media (max-width: 1100px) { .inbox-layout { grid-template-columns: 1fr; } }
+  .inbox-tabs {
+    display: flex;
+    gap: 24px;
+    border-bottom: 1px solid var(--wd-divider);
+    margin-bottom: 16px;
+  }
+  .inbox-tab {
+    background: none; border: none; padding: 10px 0; font-size: 13px; font-weight: 600;
+    color: var(--wd-text-muted); cursor: pointer; font-family: inherit;
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+  }
+  .inbox-tab.active { color: var(--wd-header-bg); border-bottom-color: var(--wd-header-bg); }
+  .inbox-detail {
+    background: #fff; border: 1px solid var(--wd-divider); border-radius: 12px;
+    padding: 22px 24px; min-height: 420px;
+  }
+  .inbox-detail h2 { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+  .inbox-detail .detail-meta { font-size: 12.5px; color: var(--wd-text-muted); margin-bottom: 18px; }
+  .inbox-detail .detail-section { margin-bottom: 18px; }
+  .inbox-detail .detail-section h4 {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--wd-text-muted); margin-bottom: 6px; font-weight: 600;
+  }
+  .inbox-detail .detail-section p { font-size: 13.5px; line-height: 1.55; }
+  .detail-actions { display: flex; gap: 8px; margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--wd-divider); }
+</style>
+</head>
+<body>
+
+<div class="tenant-page">
+  <div id="tenant-shell"></div>
+
+  <main class="tenant-content">
+
+    <div class="page-head">
+      <span class="page-head-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+      </span>
+      <h1>Inbox</h1>
+      <div class="page-actions">
+        <button class="btn-pill">Filter</button>
+        <button class="btn-pill">Sort</button>
+      </div>
+    </div>
+
+    <div class="inbox-tabs">
+      <button class="inbox-tab active">Actions <span style="opacity:0.6">(5)</span></button>
+      <button class="inbox-tab">Notifications <span style="opacity:0.6">(12)</span></button>
+      <button class="inbox-tab">Saved Searches</button>
+      <button class="inbox-tab">Manage Delegations</button>
+    </div>
+
+    <div class="inbox-layout">
+      <div class="data-card">
+        <ul class="task-list" id="task-list">
+          <li class="task-row active" data-task="t1">
+            <span class="task-icon task-icon-orange">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </span>
+            <div>
+              <div class="task-title">Approve Timesheet — Sam Patel</div>
+              <div class="task-sub">Time Tracking · Week of 5 May</div>
+            </div>
+            <div class="task-meta"><span class="due-tag due-overdue">Overdue</span></div>
+          </li>
+          <li class="task-row" data-task="t2">
+            <span class="task-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+            </span>
+            <div>
+              <div class="task-title">Review Expense Report — Client travel, Dublin</div>
+              <div class="task-sub">£427.10 · submitted 6 May</div>
+            </div>
+            <div class="task-meta"><span class="due-tag due-soon">Due tomorrow</span></div>
+          </li>
+          <li class="task-row" data-task="t3">
+            <span class="task-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+            </span>
+            <div>
+              <div class="task-title">Time Off Request — Aoife Byrne</div>
+              <div class="task-sub">Annual Leave · 18–22 May</div>
+            </div>
+            <div class="task-meta"><span class="due-tag due-soon">Due in 2 days</span></div>
+          </li>
+          <li class="task-row" data-task="t4">
+            <span class="task-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10M18 20V4M6 20v-6"/></svg>
+            </span>
+            <div>
+              <div class="task-title">Performance Check-in — Q2</div>
+              <div class="task-sub">Self review · 12 questions</div>
+            </div>
+            <div class="task-meta"><span class="due-tag due-normal">Due 31 May</span></div>
+          </li>
+          <li class="task-row" data-task="t5">
+            <span class="task-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </span>
+            <div>
+              <div class="task-title">Acknowledge Code of Conduct 2026</div>
+              <div class="task-sub">Compliance · 5 min read</div>
+            </div>
+            <div class="task-meta"><span class="due-tag due-normal">Due 30 Jun</span></div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="inbox-detail" id="inbox-detail">
+        <!-- Populated by JS based on selected task -->
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  const TASKS = {
+    t1: {
+      title: 'Approve Timesheet — Sam Patel',
+      meta: 'Time Tracking · Week of 5–11 May 2026 · Overdue 1 day',
+      route: 'Manager Approval (you) → Payroll',
+      summary: 'Sam Patel submitted 38.5 hours across 5 days. 0.5 hours discrepancy vs. last week’s pattern — flagged but auto-allowed.',
+      items: '5 days · 38.5 hours · No time off in period · 1 client-billable allocation',
+      primaryAction: 'Approve',
+      secondaryAction: 'Send Back'
+    },
+    t2: {
+      title: 'Review Expense Report — Client travel, Dublin',
+      meta: 'Expenses · £427.10 · Submitted 6 May 2026 by Aoife Byrne',
+      route: 'Manager Review (you) → Finance Audit',
+      summary: 'Trip from 28 Apr to 30 Apr. Receipts attached for hotel (£212), train (£98), meals (£117.10). All within policy thresholds.',
+      items: 'Hotel · Train · Per-diem meals · 0 flagged items',
+      primaryAction: 'Approve',
+      secondaryAction: 'Request Changes'
+    },
+    t3: {
+      title: 'Time Off Request — Aoife Byrne',
+      meta: 'Annual Leave · 18–22 May 2026 (5 working days)',
+      route: 'Manager Approval (you)',
+      summary: 'Submitted 4 May. Aoife has 18 days remaining of 25 annual. No team coverage conflicts detected for this week.',
+      items: '5 working days · No overlap with Sam Patel’s 12–13 May leave · Project NKAS-7 milestone is 26 May (after return)',
+      primaryAction: 'Approve',
+      secondaryAction: 'Decline'
+    },
+    t4: {
+      title: 'Performance Check-in — Q2',
+      meta: 'Self review · 12 questions · Due 31 May 2026',
+      route: 'Self → Manager (Priya Kapoor)',
+      summary: 'Mid-cycle check-in for the April–June period. Goals are auto-imported from your last review; rate progress and add a short reflection.',
+      items: '4 goals · 8 narrative prompts · Estimated 25 mins',
+      primaryAction: 'Open Form',
+      secondaryAction: 'Save for Later'
+    },
+    t5: {
+      title: 'Acknowledge Code of Conduct 2026',
+      meta: 'Compliance · 5 min read · Due 30 Jun 2026',
+      route: 'All Workers',
+      summary: 'Annual acknowledgement of the updated Code of Conduct, with new sections on AI use, hybrid working, and external communications.',
+      items: '11 sections · Read & acknowledge',
+      primaryAction: 'Read & Acknowledge',
+      secondaryAction: 'Save for Later'
+    }
+  };
+
+  function renderTask(id) {
+    const t = TASKS[id]; if (!t) return;
+    document.getElementById('inbox-detail').innerHTML = `
+      <h2>${t.title}</h2>
+      <div class="detail-meta">${t.meta}</div>
+
+      <div class="detail-section">
+        <h4>Routing</h4>
+        <p>${t.route}</p>
+      </div>
+
+      <div class="detail-section">
+        <h4>Summary</h4>
+        <p>${t.summary}</p>
+      </div>
+
+      <div class="detail-section">
+        <h4>Items</h4>
+        <p>${t.items}</p>
+      </div>
+
+      <div class="detail-actions">
+        <button class="btn-pill btn-pill-primary">${t.primaryAction}</button>
+        <button class="btn-pill">${t.secondaryAction}</button>
+        <button class="btn-pill" style="margin-left:auto;">More</button>
+      </div>
+    `;
+  }
+
+  document.querySelectorAll('.task-row').forEach(row => {
+    row.addEventListener('click', () => {
+      document.querySelectorAll('.task-row').forEach(r => r.classList.remove('active'));
+      row.classList.add('active');
+      renderTask(row.dataset.task);
+    });
+  });
+
+  renderTask('t1');
+</script>
+<script src="/tenant/_shared/shell.js" data-active="inbox"></script>
+<script src="/_tenant-kit/tenant-mock-launcher.js" defer></script>
+</body>
+</html>

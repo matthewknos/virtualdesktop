@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pay — Workday</title>
+
+<link rel="preconnect" href="https://design.workdaycdn.com" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css-fonts@9.1.26/dist/canvas-kit-css-fonts.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css-core@9.1.26/dist/canvas-kit-css-core.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-tokens-web@4.3.0/css/base/_variables.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-tokens-web@4.3.0/css/brand/_variables.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-tokens-web@4.3.0/css/system/_variables.css">
+
+<link rel="stylesheet" href="/tenant/_shared/shell.css">
+</head>
+<body>
+
+<div class="tenant-page">
+  <div id="tenant-shell"></div>
+
+  <main class="tenant-content">
+
+    <div class="page-head">
+      <span class="page-head-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="2"/><circle cx="12" cy="12.5" r="2.5"/><path d="M6 10v5M18 10v5"/></svg>
+      </span>
+      <h1>Pay</h1>
+      <div class="page-actions">
+        <button class="btn-pill">Tax Documents</button>
+        <button class="btn-pill btn-pill-primary">View Compensation</button>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-card-label">Next Pay Date</div>
+        <div class="stat-card-value">28 May</div>
+        <div class="stat-card-foot">In 20 days</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Last Net Pay</div>
+        <div class="stat-card-value">£3,847.22</div>
+        <div class="stat-card-foot">28 Apr 2026 · BACS</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">YTD Gross</div>
+        <div class="stat-card-value">£23,520.00</div>
+        <div class="stat-card-foot">Tax year 2026/27</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">YTD Tax &amp; NI</div>
+        <div class="stat-card-value">£6,148.30</div>
+        <div class="stat-card-foot">Tax code 1257L</div>
+      </div>
+    </div>
+
+    <div class="data-card">
+      <div class="data-card-head">
+        <h3>Recent Payslips</h3>
+        <a class="head-link" href="#">View all (24)</a>
+      </div>
+      <table class="tenant-table">
+        <thead>
+          <tr>
+            <th>Pay Date</th>
+            <th>Period</th>
+            <th class="num">Gross</th>
+            <th class="num">Tax</th>
+            <th class="num">NI</th>
+            <th class="num">Pension</th>
+            <th class="num">Net</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>28 Apr 2026</td><td>Apr 2026</td><td class="num">£5,880.00</td><td class="num">£1,118.00</td><td class="num">£412.00</td><td class="num">£294.00</td><td class="num"><strong>£3,847.22</strong></td><td><a href="#">View</a></td></tr>
+          <tr><td>28 Mar 2026</td><td>Mar 2026</td><td class="num">£5,880.00</td><td class="num">£1,118.00</td><td class="num">£412.00</td><td class="num">£294.00</td><td class="num"><strong>£3,847.22</strong></td><td><a href="#">View</a></td></tr>
+          <tr><td>28 Feb 2026</td><td>Feb 2026</td><td class="num">£5,880.00</td><td class="num">£1,118.00</td><td class="num">£412.00</td><td class="num">£294.00</td><td class="num"><strong>£3,847.22</strong></td><td><a href="#">View</a></td></tr>
+          <tr><td>28 Jan 2026</td><td>Jan 2026</td><td class="num">£5,880.00</td><td class="num">£1,118.00</td><td class="num">£412.00</td><td class="num">£294.00</td><td class="num"><strong>£3,847.22</strong></td><td><a href="#">View</a></td></tr>
+          <tr><td>28 Dec 2025</td><td>Dec 2025</td><td class="num">£5,640.00</td><td class="num">£1,070.00</td><td class="num">£395.00</td><td class="num">£282.00</td><td class="num"><strong>£3,691.40</strong></td><td><a href="#">View</a></td></tr>
+          <tr><td>28 Nov 2025</td><td>Nov 2025</td><td class="num">£5,640.00</td><td class="num">£1,070.00</td><td class="num">£395.00</td><td class="num">£282.00</td><td class="num"><strong>£3,691.40</strong></td><td><a href="#">View</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="home-grid" style="margin-top: 24px;">
+      <div class="data-card">
+        <div class="data-card-head">
+          <h3>Payment Method</h3>
+        </div>
+        <div style="padding: 18px;">
+          <div style="font-size: 13.5px; margin-bottom: 6px;"><strong>BACS — Personal Current Account</strong></div>
+          <div style="font-size: 12.5px; color: var(--wd-text-muted);">First Direct · Sort code 40-47-XX · Account ending ••2841</div>
+          <div style="margin-top: 14px;">
+            <button class="btn-pill">Edit Payment Elections</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="data-card">
+        <div class="data-card-head">
+          <h3>Tax Information (UK)</h3>
+        </div>
+        <div style="padding: 18px;">
+          <div style="font-size: 13.5px; margin-bottom: 4px;">Tax code: <strong>1257L</strong></div>
+          <div style="font-size: 12.5px; color: var(--wd-text-muted);">Cumulative · NI category: A · Effective from 6 Apr 2026</div>
+          <div style="margin-top: 14px;">
+            <button class="btn-pill">Tax Documents</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="/tenant/_shared/shell.js" data-active="pay"></script>
+<script src="/_tenant-kit/tenant-mock-launcher.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Home — Workday</title>
+
+<link rel="preconnect" href="https://design.workdaycdn.com" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css-fonts@9.1.26/dist/canvas-kit-css-fonts.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css-core@9.1.26/dist/canvas-kit-css-core.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-tokens-web@4.3.0/css/base/_variables.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-tokens-web@4.3.0/css/brand/_variables.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-tokens-web@4.3.0/css/system/_variables.css">
+
+<link rel="stylesheet" href="/tenant/_shared/shell.css">
+</head>
+<body>
+
+<div class="tenant-page">
+  <div id="tenant-shell"></div>
+
+  <main class="tenant-content">
+
+    <div class="welcome-banner">
+      <div class="welcome-banner-greeting" id="welcome-greeting">Good afternoon, Logan</div>
+      <div class="welcome-banner-sub">It's <span id="welcome-date">Friday, 8 May</span>. You have <strong>5 items</strong> awaiting action and <strong>2 announcements</strong>.</div>
+    </div>
+
+    <div class="section-head">
+      <h2>Your Top Apps</h2>
+      <a class="section-link" href="#">View all apps</a>
+    </div>
+
+    <div class="worklets">
+      <a class="worklet" href="/tenant/inbox">
+        <span class="worklet-icon worklet-icon-orange">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+        </span>
+        <div class="worklet-label">Inbox</div>
+        <div class="worklet-badge">5</div>
+      </a>
+
+      <a class="worklet" href="/tenant/pay">
+        <span class="worklet-icon worklet-icon-teal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="2"/><circle cx="12" cy="12.5" r="2.5"/><path d="M6 10v5M18 10v5"/></svg>
+        </span>
+        <div class="worklet-label">Pay</div>
+      </a>
+
+      <a class="worklet" href="/tenant/time-off">
+        <span class="worklet-icon worklet-icon-purple">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+        </span>
+        <div class="worklet-label">Time Off</div>
+      </a>
+
+      <a class="worklet" href="/tenant/profile">
+        <span class="worklet-icon worklet-icon-blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
+        </span>
+        <div class="worklet-label">Personal Information</div>
+      </a>
+
+      <a class="worklet" href="/tenant/directory">
+        <span class="worklet-icon worklet-icon-green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><circle cx="17.5" cy="9" r="2.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M15 20c0-2.3 1.6-4.3 3.7-4.8"/></svg>
+        </span>
+        <div class="worklet-label">Directory</div>
+      </a>
+
+      <a class="worklet" href="#">
+        <span class="worklet-icon worklet-icon-pink">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l3-3 4 4 8-8 3 3"/><path d="M21 8v6h-6"/></svg>
+        </span>
+        <div class="worklet-label">Career</div>
+      </a>
+
+      <a class="worklet" href="#">
+        <span class="worklet-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.5-1.5 3-3.6 3-6a5 5 0 0 0-9.5-2.2A5 5 0 0 0 3 8c0 5 7 9 9 10 .8-.4 2.4-1.3 4-2.6"/></svg>
+        </span>
+        <div class="worklet-label">Benefits</div>
+      </a>
+
+      <a class="worklet" href="#">
+        <span class="worklet-icon worklet-icon-orange">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </span>
+        <div class="worklet-label">Time Tracking</div>
+      </a>
+
+      <a class="worklet" href="#">
+        <span class="worklet-icon worklet-icon-purple">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        </span>
+        <div class="worklet-label">Learning</div>
+      </a>
+
+      <a class="worklet" href="#">
+        <span class="worklet-icon worklet-icon-teal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10M18 20V4M6 20v-6"/></svg>
+        </span>
+        <div class="worklet-label">Performance</div>
+      </a>
+
+      <a class="worklet" href="#">
+        <span class="worklet-icon worklet-icon-green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        </span>
+        <div class="worklet-label">Expenses</div>
+      </a>
+
+      <a class="worklet" href="#">
+        <span class="worklet-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </span>
+        <div class="worklet-label">Documents</div>
+      </a>
+    </div>
+
+    <div class="home-grid" style="margin-top: 28px;">
+
+      <div>
+        <div class="section-head">
+          <h2>Awaiting Your Action</h2>
+          <a class="section-link" href="/tenant/inbox">View inbox</a>
+        </div>
+
+        <div class="data-card">
+          <ul class="task-list">
+            <li class="task-row" onclick="location.href='/tenant/inbox'">
+              <span class="task-icon task-icon-orange">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              </span>
+              <div>
+                <div class="task-title">Approve Timesheet — Sam Patel</div>
+                <div class="task-sub">Time Tracking · Week of 5 May 2026</div>
+              </div>
+              <div class="task-meta"><span class="due-tag due-overdue">Overdue</span></div>
+            </li>
+            <li class="task-row" onclick="location.href='/tenant/inbox'">
+              <span class="task-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+              </span>
+              <div>
+                <div class="task-title">Review Expense Report — Client travel, Dublin</div>
+                <div class="task-sub">Expenses · £427.10 · submitted 6 May</div>
+              </div>
+              <div class="task-meta"><span class="due-tag due-soon">Due tomorrow</span></div>
+            </li>
+            <li class="task-row" onclick="location.href='/tenant/inbox'">
+              <span class="task-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+              </span>
+              <div>
+                <div class="task-title">Time Off Request — Aoife Byrne</div>
+                <div class="task-sub">Annual Leave · 18–22 May 2026</div>
+              </div>
+              <div class="task-meta"><span class="due-tag due-soon">Due in 2 days</span></div>
+            </li>
+            <li class="task-row" onclick="location.href='/tenant/inbox'">
+              <span class="task-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10M18 20V4M6 20v-6"/></svg>
+              </span>
+              <div>
+                <div class="task-title">Performance Check-in — Q2</div>
+                <div class="task-sub">Self review · 12 questions</div>
+              </div>
+              <div class="task-meta"><span class="due-tag due-normal">Due 31 May</span></div>
+            </li>
+            <li class="task-row" onclick="location.href='/tenant/inbox'">
+              <span class="task-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              </span>
+              <div>
+                <div class="task-title">Acknowledge Updated Code of Conduct (2026)</div>
+                <div class="task-sub">Compliance · 5 min read</div>
+              </div>
+              <div class="task-meta"><span class="due-tag due-normal">Due 30 Jun</span></div>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <aside>
+        <div class="section-head">
+          <h2>Announcements</h2>
+        </div>
+
+        <div class="data-card">
+          <ul class="announce-list">
+            <li class="announce-item">
+              <div class="announce-meta">8 May · People Team</div>
+              <div class="announce-title">Summer Bank Holidays — confirmed dates</div>
+              <div class="announce-body">Office closed 26 May and 25 Aug. Time off requests around these dates auto-deduct one day from balance.</div>
+            </li>
+            <li class="announce-item">
+              <div class="announce-meta">5 May · Finance</div>
+              <div class="announce-title">Expenses cut-off for May payroll: 19 May</div>
+              <div class="announce-body">Submit and get approval before EOD 19 May to be reimbursed in this month's pay.</div>
+            </li>
+            <li class="announce-item">
+              <div class="announce-meta">2 May · IT</div>
+              <div class="announce-title">Workday mobile app: passkey rollout</div>
+              <div class="announce-body">Touch ID / Face ID is now required for the mobile app. Re-enrol from My Account &gt; Security.</div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="section-head" style="margin-top: 22px;">
+          <h2>Timely Suggestions</h2>
+        </div>
+        <div class="data-card">
+          <ul class="announce-list">
+            <li class="announce-item">
+              <div class="announce-title">Schedule your Q2 1:1 with Priya</div>
+              <div class="announce-body">No 1:1 booked in the next 14 days.</div>
+            </li>
+            <li class="announce-item">
+              <div class="announce-title">25 days of annual leave remaining</div>
+              <div class="announce-body">3 days expire 31 Dec — book before October to avoid forfeit.</div>
+            </li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  (function setGreeting() {
+    const h = new Date().getHours();
+    const txt = h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+    const el = document.getElementById('welcome-greeting');
+    if (el) el.textContent = `${txt}, Logan`;
+    const dateEl = document.getElementById('welcome-date');
+    if (dateEl) {
+      dateEl.textContent = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+    }
+  })();
+</script>
+<script src="/tenant/_shared/shell.js" data-active="home"></script>
+<script src="/_tenant-kit/tenant-mock-launcher.js" defer></script>
+</body>
+</html>
