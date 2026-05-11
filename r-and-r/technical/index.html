@@ -34,50 +34,6 @@
     min-height: 100vh;
   }
 
-  /* ── Tenant rail (mirrors probation page) ──
-     Below the sticky header sits a left-hand vertical rail (64px wide)
-     and the existing page content to the right of it. */
-  .tenant-body {
-    display: flex;
-    align-items: stretch;
-    min-height: calc(100vh - 44px);
-  }
-  .wd-rail {
-    width: 64px;
-    flex-shrink: 0;
-    background: #fff;
-    border-right: 1px solid #e2e6eb;
-    padding: 12px 0;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    position: sticky;
-    top: 44px;
-    align-self: flex-start;
-    height: calc(100vh - 44px);
-  }
-  .wd-rail-spacer { flex: 1; }
-  .wd-rail-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 3px;
-    padding: 8px 4px;
-    color: #4a5562;
-    text-decoration: none;
-    cursor: pointer;
-    border-left: 3px solid transparent;
-    border-right: 3px solid transparent;
-    transition: background 0.12s, color 0.12s;
-    font-family: var(--font-text);
-  }
-  .wd-rail-item:hover { background: #f4f5f7; color: #1f3a52; }
-  .wd-rail-item.active { color: #1f3a52; border-left-color: #1f3a52; background: #f4f5f7; }
-  .wd-rail-item svg { width: 20px; height: 20px; }
-  .wd-rail-label { font-size: 10px; font-weight: 500; letter-spacing: 0.1px; }
-  .wd-rail-divider { height: 1px; background: #e2e6eb; margin: 8px 14px; }
-  .tenant-content { flex: 1; min-width: 0; }
-
   /* ── Sticky header ── */
   .header {
     position: sticky;
@@ -502,7 +458,6 @@
     .node-system { font-size: 11px; }
     .node-role { font-size: 11px; }
     .cascade-step { padding: 14px 16px; gap: 12px; grid-template-columns: 28px 1fr; }
-    .wd-rail { display: none; }
   }
 </style>
 </head>
@@ -513,40 +468,6 @@
   <span class="header-sub">R&amp;R Auto-Approver — Technical</span>
   <a class="header-back" href="/r-and-r">&larr; Back to R&amp;R</a>
 </div>
-
-<div class="tenant-body">
-
-  <!-- Left vertical rail (mirrors probation tenant rail) -->
-  <nav class="wd-rail" aria-label="Primary">
-    <a class="wd-rail-item active" href="#" title="Home">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5l9-7 9 7V20a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1z"/></svg>
-      <span class="wd-rail-label">Home</span>
-    </a>
-    <a class="wd-rail-item" href="#" title="Personal">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
-      <span class="wd-rail-label">Personal</span>
-    </a>
-    <a class="wd-rail-item" href="#" title="Team">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="6" r="3"/><circle cx="6" cy="14" r="2.5"/><circle cx="18" cy="14" r="2.5"/><path d="M12 9v3M9 13l2-1M15 13l-2-1"/></svg>
-      <span class="wd-rail-label">Team</span>
-    </a>
-    <a class="wd-rail-item" href="#" title="More">
-      <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="6" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18" cy="12" r="1.6"/></svg>
-      <span class="wd-rail-label">More</span>
-    </a>
-    <div class="wd-rail-spacer"></div>
-    <a class="wd-rail-item" href="#" title="Saved">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-      <span class="wd-rail-label">Saved</span>
-    </a>
-    <a class="wd-rail-item" href="#" title="Settings">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
-      <span class="wd-rail-label">Settings</span>
-    </a>
-  </nav>
-
-  <!-- Right-hand content area -->
-  <div class="tenant-content">
 
 <div class="container">
 
@@ -846,8 +767,6 @@
   <div class="footer">Internal &mdash; protected by site password. Do not share the URL externally.</div>
 </div>
 
-  </div><!-- /.tenant-content -->
-</div><!-- /.tenant-body -->
 
 </body>
 </html>
