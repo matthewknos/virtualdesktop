@@ -172,6 +172,82 @@
     color: var(--color-graphite);
   }
 
+  /* ── Password gate ── */
+  #password-gate {
+    position: fixed;
+    inset: 0;
+    background: var(--color-fog);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .gate-card {
+    background: var(--color-snow);
+    border-radius: 28px;
+    padding: 44px 40px 36px;
+    max-width: 420px;
+    width: 100%;
+  }
+  .gate-card h2 {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+    color: var(--color-ink);
+    margin-bottom: 10px;
+  }
+  .gate-card p {
+    font-family: var(--font-text);
+    font-size: 17px;
+    font-weight: 400;
+    line-height: 1.47;
+    letter-spacing: -0.1px;
+    color: var(--color-graphite);
+    margin-bottom: 24px;
+  }
+  .gate-card input {
+    width: 100%;
+    padding: 12px 14px;
+    background: var(--color-fog);
+    border: 1px solid var(--color-silver-mist);
+    border-radius: 12px;
+    font-family: var(--font-text);
+    font-size: 17px;
+    color: var(--color-ink);
+    margin-bottom: 16px;
+    outline: none;
+    transition: border-color 0.2s ease;
+  }
+  .gate-card input:focus { border-color: var(--color-ink); }
+
+  .gate-card button {
+    display: inline-block;
+    background: var(--color-azure);
+    color: #ffffff;
+    border: none;
+    border-radius: 999px;
+    padding: 8px 16px;
+    font-family: var(--font-text);
+    font-size: 17px;
+    font-weight: 400;
+    letter-spacing: -0.1px;
+    cursor: pointer;
+    transition: opacity 0.1s ease;
+  }
+  .gate-card button:hover { opacity: 0.92; }
+
+  .gate-error {
+    color: var(--color-caution);
+    font-family: var(--font-text);
+    font-size: 14px;
+    letter-spacing: -0.04px;
+    margin-top: 14px;
+    display: none;
+  }
+
   /* ── Responsive ── */
   @media (max-width: 720px) {
     .container { padding: 64px 22px 64px; }
@@ -184,6 +260,17 @@
 <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
+
+<!-- ── Password gate ── -->
+<div id="password-gate">
+  <div class="gate-card">
+    <h2>CoE Testing</h2>
+    <p>Internal use only. Enter the access password to continue.</p>
+    <input type="password" id="gate-pw" placeholder="Access password" onkeydown="if(event.key==='Enter')checkPassword()">
+    <button onclick="checkPassword()">Continue</button>
+    <div id="gate-error" class="gate-error">Incorrect password.</div>
+  </div>
+</div>
 
 <div class="header">
   <span class="header-title">CoE Testing</span>
@@ -213,5 +300,34 @@
 
   <div class="footer">Internal &mdash; for CoE feedback. Do not share the URL externally.</div>
 </div>
+<script>
+const PW_KEY = 'coe_site_pw';
+
+async function checkPassword() {
+  const pw = document.getElementById('gate-pw').value.trim();
+  if (!pw) return;
+  try {
+    const res = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${pw}` },
+    });
+    if (res.status === 401) {
+      document.getElementById('gate-error').style.display = 'block';
+      return;
+    }
+    sessionStorage.setItem(PW_KEY, pw);
+    document.getElementById('password-gate').style.display = 'none';
+  } catch (err) {
+    document.getElementById('gate-error').textContent = 'Network error: ' + err.message;
+    document.getElementById('gate-error').style.display = 'block';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (sessionStorage.getItem(PW_KEY)) {
+    document.getElementById('password-gate').style.display = 'none';
+  }
+});
+</script>
 </body>
 </html>
