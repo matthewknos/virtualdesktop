@@ -1248,7 +1248,7 @@ async function checkPassword() {
   const pw = document.getElementById('gate-pw').value.trim();
   if (!pw) return;
   try {
-    const res = await fetch('/api/claude', {
+    const res = await fetch('/api/llm', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${pw}` },
       body: JSON.stringify({ prompt: 'ping', max_tokens: 8 }),
@@ -1321,6 +1321,7 @@ function initSplitDrag() {
 
 <script src="/probation/copilot-data.js"></script>
 <script src="/probation/copilot-app.js"></script>
+<script src="/_tenant-kit/tenant-mock-launcher.js" defer></script>
 
 </body>
 </html>

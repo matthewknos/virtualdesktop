@@ -1,13 +1,13 @@
 /**
- * Vercel serverless function — proxies Claude API calls.
+ * Vercel serverless function — proxies LLM calls to Moonshot/Kimi (OpenAI-compatible).
  *
  * - Validates the password sent in the Authorization header
- * - Forwards the request to api.anthropic.com using the server-side API key
+ * - Forwards the request to api.moonshot.ai using the server-side API key
  * - Returns the LLM response text
  *
  * Required env vars (set in Vercel dashboard):
- *   ANTHROPIC_API_KEY — your sk-ant-... key
- *   SITE_PASSWORD     — the shared password for the demo site
+ *   LLM_KEY        — your Moonshot/Kimi API key
+ *   SITE_PASSWORD  — the shared password for the demo site
  */
 
 export default async function handler(req, res) {
@@ -21,22 +21,21 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return res.status(500).json({ error: 'Server missing ANTHROPIC_API_KEY' });
+  if (!process.env.LLM_KEY) {
+    return res.status(500).json({ error: 'Server missing LLM_KEY' });
   }
 
-  const { prompt, model = 'claude-sonnet-4-6', max_tokens = 2048 } = req.body || {};
+  const { prompt, model = 'kimi-k2-turbo-preview', max_tokens = 2048 } = req.body || {};
   if (!prompt) {
     return res.status(400).json({ error: 'Missing prompt' });
   }
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch('https://api.moonshot.ai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
+        'Authorization': `Bearer ${process.env.LLM_KEY}`,
       },
       body: JSON.stringify({
         model,
@@ -51,7 +50,7 @@ export default async function handler(req, res) {
     }
 
     const data = await response.json();
-    return res.status(200).json({ text: data.content[0].text });
+    return res.status(200).json({ text: data.choices[0].message.content });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }

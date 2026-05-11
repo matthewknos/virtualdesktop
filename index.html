@@ -294,6 +294,7 @@
 
   <div class="footer">Internal &mdash; protected by site password. Do not share the URL externally.</div>
 </div>
+<script src="/_tenant-kit/tenant-mock-launcher.js" defer></script>
 <script>
 const PW_KEY = 'coe_site_pw';
 
@@ -301,7 +302,7 @@ async function checkPassword() {
   const pw = document.getElementById('gate-pw').value.trim();
   if (!pw) return;
   try {
-    const res = await fetch('/api/claude', {
+    const res = await fetch('/api/llm', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${pw}` },
       body: JSON.stringify({ prompt: 'ping', max_tokens: 8 }),
