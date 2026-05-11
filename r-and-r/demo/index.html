@@ -1750,7 +1750,7 @@
   }
 
   async function callLLM(prompt) {
-    const pw = (typeof localStorage !== 'undefined') ? (localStorage.getItem('coe_site_pw') || '') : '';
+    const pw = (typeof sessionStorage !== 'undefined') ? (sessionStorage.getItem('coe_site_pw') || '') : '';
     const res = await fetch('/api/llm', {
       method: 'POST',
       headers: {
