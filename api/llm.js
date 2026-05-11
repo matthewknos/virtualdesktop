@@ -1,24 +1,16 @@
 /**
  * Vercel serverless function — proxies LLM calls to Moonshot/Kimi (OpenAI-compatible).
  *
- * - Validates the password sent in the Authorization header
- * - Forwards the request to api.moonshot.ai using the server-side API key
- * - Returns the LLM response text
+ * Forwards the request to api.moonshot.ai using the server-side API key
+ * and returns the LLM response text.
  *
  * Required env vars (set in Vercel dashboard):
- *   LLM_KEY        — your Moonshot/Kimi API key
- *   SITE_PASSWORD  — the shared password for the demo site
+ *   LLM_KEY — your Moonshot/Kimi API key
  */
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  const auth = req.headers.authorization || '';
-  const expected = `Bearer ${process.env.SITE_PASSWORD}`;
-  if (!process.env.SITE_PASSWORD || auth !== expected) {
-    return res.status(401).json({ error: 'Unauthorized' });
   }
 
   if (!process.env.LLM_KEY) {
