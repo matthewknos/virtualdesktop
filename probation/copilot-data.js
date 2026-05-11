@@ -369,7 +369,7 @@ const NUDGES = {
             info: "Based on your project work I'd suggest: Marcus Lee (your project lead) and Priya Patel (people partner). I can draft the request." },
           { label: 'Draft the request now', style: 'secondary', type: 'draftMessage',
             confirm: "Drafted. Review the message below before I send it.",
-            draft: "Hi Marcus, I'm 4 weeks into my probation at Kainos and I'd love your honest feedback on how I'm settling into the team. Anything I'm doing well? Anything I should change? No need to write a lot — even a couple of bullets would help. Thanks, Alice." },
+            draft: "Hi Marcus, I'm 4 weeks into my probation and I'd love your honest feedback on how I'm settling into the team. Anything I'm doing well? Anything I should change? No need to write a lot — even a couple of bullets would help. Thanks, Alice." },
           { label: 'Not yet', style: 'tertiary', type: 'dismiss', confirm: "OK — I'll re-check at week 6." }
         ]
       },

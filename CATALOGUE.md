@@ -20,6 +20,14 @@ A running map of CoE prototypes built in this repo and the reusable kit they sha
 - **Design guide:** [`probation/DESIGN_GUIDE.md`](probation/DESIGN_GUIDE.md) (also `.docx`).
 - **Built before the kit existed.** Chrome lives inline in `probation/index.html`; the kit was extracted from this prototype.
 
+### R&R Auto-Approver
+- **Path:** [`r-and-r/`](r-and-r/)
+- **Live:** coe-prototypes.vercel.app/r-and-r
+- **What it is:** Agent that auto-approves the ~190 in-policy R&R nominations per cycle in Workday, leaves the ~10 exceptions on the existing BP for People Ops, and surfaces every decision in a SharePoint Excel sheet for ambient transparency.
+- **Status:** Four-page prototype — landing (`/r-and-r`), live demo (`/r-and-r/demo`), proposal (`/r-and-r/proposal`), technical (`/r-and-r/technical`).
+- **Demo principle:** demo = production. Workday tenant on the left submits nominations live; SharePoint Excel sheet on the right shows the decision row appear with full rule trace.
+- **Demo page note:** overrides the tenant-kit body zoom/split-pane to fit the two-pane Workday + SharePoint layout (does not reuse `.panel-workday` / `.panel-chat`).
+
 ---
 
 ## Adding a new prototype

@@ -1,0 +1,1978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>R&amp;R Auto-Approver — Live Demo</title>
+
+<!-- Tenant kit CSS (linked from sibling _tenant-kit folder) -->
+<link rel="preconnect" href="https://design.workdaycdn.com" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css-fonts@9.1.26/dist/canvas-kit-css-fonts.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css-core@9.1.26/dist/canvas-kit-css-core.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-tokens-web@4.3.0/css/base/_variables.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-tokens-web@4.3.0/css/brand/_variables.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-tokens-web@4.3.0/css/system/_variables.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css@15.0.4/common.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css@15.0.4/button.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css@15.0.4/card.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css@15.0.4/avatar.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css@15.0.4/badge.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css@15.0.4/pill.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css@15.0.4/form-field.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css@15.0.4/text-input.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css@15.0.4/select.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@workday/canvas-kit-css@15.0.4/icon.css">
+<link rel="stylesheet" href="../../_tenant-kit/tenant-styles.css">
+
+<style>
+  /* ── CoE site palette (mirrors /coe-prototypes/index.html) ── */
+  :root {
+    --color-ink: #1d1d1f;
+    --color-graphite: #707070;
+    --color-fog: #f5f5f7;
+    --color-snow: #ffffff;
+    --color-silver-mist: #e8e8ed;
+    --color-azure: #0071e3;
+    --color-caution: #b64400;
+    --color-success: #1e6f3e;
+    --color-warning: #b88600;
+
+    --font-display: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-text: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+
+    /* SharePoint / Excel palette */
+    --sp-blue: #185abd;
+    --sp-blue-strong: #103f81;
+    --sp-bar: #f3f2f1;
+    --sp-bar-border: #e1dfdd;
+    --sp-grid: #d1d1d1;
+    --sp-grid-soft: #ebebeb;
+    --sp-header-fill: #f8f8f8;
+    --sp-row-hover: #f3f9ff;
+    --sp-highlight: #fff7d6;
+    --sp-highlight-fade: #fffbe9;
+    --excel-green: #107c41;
+  }
+
+  /* Override tenant-styles.css body sizing — we own the layout here */
+  html, body { height: 100%; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-text);
+    background: var(--color-fog);
+    color: var(--color-ink);
+    height: 100vh;
+    overflow: hidden;
+    zoom: 1;
+    display: flex;
+    flex-direction: column;
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Sticky CoE header ── */
+  .coe-header {
+    flex: 0 0 44px;
+    background: var(--color-fog);
+    border-bottom: 1px solid var(--color-silver-mist);
+    display: flex;
+    align-items: center;
+    padding: 0 22px;
+    gap: 14px;
+    z-index: 100;
+  }
+  .coe-header .h-title {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: -0.26px;
+    color: var(--color-ink);
+  }
+  .coe-header .h-sub {
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: -0.26px;
+    color: var(--color-graphite);
+  }
+  .coe-header .h-spacer { flex: 1; }
+  .coe-header .h-back {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-azure);
+    text-decoration: none;
+    letter-spacing: -0.1px;
+  }
+  .coe-header .h-back:hover { text-decoration: underline; }
+
+  /* Policy strip across top of main */
+  .policy-strip {
+    flex: 0 0 auto;
+    background: #fff;
+    border-bottom: 1px solid var(--color-silver-mist);
+    padding: 8px 22px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 11px;
+  }
+  .policy-strip .policy-label {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--color-graphite);
+  }
+  .policy-strip textarea {
+    flex: 1;
+    font-family: 'Consolas', 'Menlo', monospace;
+    font-size: 11px;
+    color: var(--color-ink);
+    border: 1px solid var(--color-silver-mist);
+    border-radius: 4px;
+    padding: 4px 8px;
+    background: #f9f9fb;
+    resize: vertical;
+    min-height: 26px;
+    line-height: 1.4;
+  }
+  .policy-strip textarea:focus {
+    outline: none;
+    border-color: var(--color-azure);
+    background: #fff;
+  }
+  .policy-strip .policy-status {
+    font-size: 10.5px;
+    color: var(--color-graphite);
+    min-width: 90px;
+  }
+  .policy-strip .policy-status.bad { color: var(--color-caution); }
+  .policy-strip .policy-status.ok { color: var(--color-success); }
+
+  /* ── Two-pane main ── */
+  .main {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+    background: var(--color-fog);
+  }
+  .pane {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .pane-left { flex: 0 0 53%; border-right: 1px solid var(--color-silver-mist); }
+  .pane-right { flex: 1; }
+
+  .pane-caption {
+    flex: 0 0 auto;
+    padding: 8px 18px;
+    background: var(--color-fog);
+    border-bottom: 1px solid var(--color-silver-mist);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--color-graphite);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .pane-caption .dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-graphite);
+  }
+  .pane-caption.workday .dot { background: #1f3a52; }
+  .pane-caption.sharepoint .dot { background: var(--sp-blue); }
+
+  .pane-body {
+    flex: 1;
+    overflow: auto;
+    background: var(--color-snow);
+  }
+
+  /* ── Workday pane content ── */
+  .wd-shell {
+    background: #f4f5f7;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .wd-shell .wd-header {
+    background: linear-gradient(180deg, #1f3a52 0%, #18334a 100%);
+    color: #fff;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  .wd-shell .wd-logo {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: #ff5f00;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 14px;
+  }
+  .wd-shell .wd-search {
+    flex: 1; max-width: 320px; position: relative;
+  }
+  .wd-shell .wd-search input {
+    width: 100%; padding: 6px 12px 6px 30px;
+    border: none; border-radius: 4px;
+    background: rgba(255,255,255,0.95);
+    font-family: inherit; font-size: 13px;
+    color: var(--color-ink);
+  }
+  .wd-shell .wd-search-icon {
+    position: absolute; left: 9px; top: 50%; transform: translateY(-50%);
+    color: rgba(42,42,42,0.45);
+    font-size: 12px;
+  }
+  .wd-shell .wd-icons {
+    margin-left: auto; display: flex; gap: 10px; align-items: center;
+  }
+  .wd-shell .wd-icon-btn {
+    width: 30px; height: 30px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 4px;
+    color: rgba(255,255,255,0.85);
+    cursor: pointer;
+  }
+  .wd-shell .wd-icon-btn:hover { background: rgba(255,255,255,0.10); }
+  .wd-shell .wd-profile-photo {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: #5b8fd8; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 600; font-size: 12px;
+  }
+
+  .wd-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px 22px 32px;
+  }
+
+  .wd-page-title {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.4px;
+    color: var(--color-ink);
+    margin-bottom: 4px;
+  }
+  .wd-page-sub {
+    font-size: 12.5px;
+    color: var(--color-graphite);
+    margin-bottom: 14px;
+  }
+
+  .wd-form-card {
+    background: #fff;
+    border: 1px solid #e1e3e6;
+    border-radius: 6px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+
+  .wd-form-grid {
+    display: grid;
+    grid-template-columns: 130px 1fr;
+    row-gap: 8px;
+    column-gap: 14px;
+    align-items: start;
+  }
+  .wd-field-label {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #3a3a3a;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding-top: 6px;
+  }
+  .wd-field-value {
+    font-size: 13px;
+    color: var(--color-ink);
+    background: #f7f8fa;
+    border: 1px solid #e1e3e6;
+    border-radius: 4px;
+    padding: 6px 9px;
+    min-height: 28px;
+    display: flex;
+    align-items: center;
+  }
+  .wd-field-value.multiline {
+    min-height: 48px;
+    align-items: flex-start;
+    line-height: 1.4;
+  }
+
+  /* Editable inputs (custom nomination form) */
+  .wd-input,
+  .wd-textarea,
+  .wd-select {
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--color-ink);
+    background: #fff;
+    border: 1px solid #c4c7cc;
+    border-radius: 4px;
+    padding: 6px 9px;
+    min-height: 28px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .wd-input:focus,
+  .wd-textarea:focus,
+  .wd-select:focus {
+    outline: none;
+    border-color: #1f3a52;
+    box-shadow: 0 0 0 2px rgba(31,58,82,0.15);
+  }
+  .wd-textarea {
+    min-height: 50px;
+    line-height: 1.4;
+    resize: vertical;
+    font-family: inherit;
+  }
+
+  .wd-section-divider {
+    height: 1px;
+    background: #e1e3e6;
+    margin: 12px 0;
+  }
+
+  .wd-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .wd-btn {
+    background: #fff;
+    border: 1px solid #1f3a52;
+    color: #1f3a52;
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.05s;
+    line-height: 1.2;
+  }
+  .wd-btn:hover { background: #eaf1f8; }
+  .wd-btn:active { transform: translateY(1px); }
+  .wd-btn.primary {
+    background: #1f3a52;
+    color: #fff;
+  }
+  .wd-btn.primary:hover { background: #173049; }
+  .wd-btn.warning {
+    background: #fff;
+    border-color: #c98c00;
+    color: #8a5f00;
+  }
+  .wd-btn.warning:hover { background: #fff8e6; }
+  .wd-btn.danger {
+    background: #fff;
+    border-color: #b64400;
+    color: #b64400;
+  }
+  .wd-btn.danger:hover { background: #fff1ea; }
+  .wd-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .wd-btn-sub {
+    display: block;
+    font-size: 10.5px;
+    font-weight: 400;
+    color: inherit;
+    opacity: 0.75;
+    margin-top: 2px;
+    letter-spacing: 0;
+  }
+
+  /* BP Timeline */
+  .bp-card {
+    background: #fff;
+    border: 1px solid #e1e3e6;
+    border-radius: 6px;
+    padding: 12px 16px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+  .bp-card-title {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #3a3a3a;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 10px;
+  }
+  .bp-timeline {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+  .bp-step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #f0f1f3;
+    color: #707070;
+    font-size: 12px;
+    font-weight: 500;
+    transition: background 0.4s ease, color 0.4s ease;
+  }
+  .bp-step .bp-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #b8bbc0;
+    transition: background 0.4s ease, box-shadow 0.4s ease;
+  }
+  .bp-step.active {
+    background: #e6effa;
+    color: #1f3a52;
+  }
+  .bp-step.active .bp-dot {
+    background: #1f3a52;
+    box-shadow: 0 0 0 4px rgba(31,58,82,0.12);
+  }
+  .bp-step.done {
+    background: #e3f1e9;
+    color: #1e6f3e;
+  }
+  .bp-step.done .bp-dot { background: #1e6f3e; }
+  .bp-step.warn {
+    background: #fff4d6;
+    color: #8a5f00;
+  }
+  .bp-step.warn .bp-dot { background: #c98c00; }
+  .bp-step.routed {
+    background: #fdecda;
+    color: #b64400;
+  }
+  .bp-step.routed .bp-dot { background: #b64400; }
+  .bp-step.error {
+    background: #fbe1e1;
+    color: #b40000;
+  }
+  .bp-step.error .bp-dot { background: #b40000; }
+
+  .bp-arrow {
+    color: #c4c7cc;
+    margin: 0 4px;
+    font-size: 12px;
+  }
+
+  .bp-status-line {
+    font-size: 12px;
+    color: var(--color-graphite);
+    margin-top: 4px;
+    min-height: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .routed-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #fdecda;
+    color: #8a3300;
+    border: 1px solid #f4c89c;
+    border-radius: 999px;
+    padding: 3px 10px 3px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: -0.05px;
+    opacity: 0;
+    transform: translateY(-2px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+  .routed-badge.show { opacity: 1; transform: translateY(0); }
+  .routed-badge .reviewer-avatar {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: #b64400;
+    color: #fff;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 9px;
+    font-weight: 700;
+  }
+
+  /* Demo / custom form layout */
+  .quick-demo-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+
+  .form-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 0;
+    border-bottom: 1px solid #e1e3e6;
+  }
+  .form-tab {
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-graphite);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .form-tab.active {
+    color: #1f3a52;
+    border-bottom-color: #1f3a52;
+  }
+  .form-tab:hover:not(.active) {
+    color: var(--color-ink);
+  }
+
+  .form-pane { display: none; padding-top: 12px; }
+  .form-pane.active { display: block; }
+
+  .demo-note {
+    font-size: 11px;
+    color: var(--color-graphite);
+    margin: 0 0 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    font-weight: 600;
+  }
+
+  /* ── SharePoint pane ── */
+  .sp-shell {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+  }
+
+  .sp-suite-bar {
+    background: var(--sp-blue-strong);
+    color: #fff;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 12px;
+    flex-shrink: 0;
+    font-size: 13px;
+  }
+  .sp-suite-bar .waffle {
+    display: inline-grid;
+    grid-template-columns: repeat(3, 4px);
+    grid-template-rows: repeat(3, 4px);
+    gap: 2px;
+  }
+  .sp-suite-bar .waffle span {
+    width: 4px; height: 4px;
+    background: #fff;
+    border-radius: 1px;
+  }
+  .sp-suite-bar .product-name {
+    font-weight: 600;
+    margin-left: 4px;
+    color: #fff;
+  }
+  .sp-suite-bar .doc-name {
+    font-weight: 400;
+    color: rgba(255,255,255,0.85);
+  }
+  .sp-suite-bar .doc-saved {
+    margin-left: auto;
+    font-size: 11px;
+    color: rgba(255,255,255,0.75);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .sp-suite-bar .doc-saved .check-circle {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: #2ea043;
+    color: #fff;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 700;
+  }
+
+  .sp-doc-bar {
+    background: var(--sp-bar);
+    border-bottom: 1px solid var(--sp-bar-border);
+    padding: 6px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    font-size: 12px;
+  }
+  .sp-doc-bar .excel-icon {
+    width: 18px; height: 18px;
+    background: var(--excel-green);
+    color: #fff;
+    border-radius: 2px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-weight: 700;
+    font-size: 10px;
+    font-family: 'Segoe UI', Calibri, sans-serif;
+  }
+  .sp-doc-bar .doc-title {
+    font-weight: 600;
+    color: #252423;
+  }
+  .sp-doc-bar .doc-loc {
+    color: #605e5c;
+  }
+  .sp-doc-bar .right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #605e5c;
+    font-size: 11px;
+  }
+  .sp-doc-bar .editor-pip {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: #5b8fd8;
+    color: #fff;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700;
+    border: 1px solid #fff;
+  }
+
+  .sp-ribbon {
+    background: #fff;
+    border-bottom: 1px solid var(--sp-bar-border);
+    padding: 4px 12px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 12px;
+    color: #252423;
+    flex-shrink: 0;
+  }
+  .sp-ribbon .tab {
+    padding: 4px 8px;
+    border-radius: 3px;
+    cursor: default;
+  }
+  .sp-ribbon .tab.active {
+    color: var(--sp-blue);
+    border-bottom: 2px solid var(--sp-blue);
+    border-radius: 0;
+  }
+
+  .sp-formula-bar {
+    background: #fff;
+    border-bottom: 1px solid var(--sp-bar-border);
+    padding: 4px 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    font-family: 'Segoe UI', Calibri, sans-serif;
+    font-size: 12px;
+  }
+  .sp-name-box {
+    width: 60px;
+    padding: 3px 6px;
+    border: 1px solid #d1d1d1;
+    border-radius: 2px;
+    color: #252423;
+    background: #fff;
+  }
+  .sp-fx {
+    color: #605e5c;
+    font-style: italic;
+    font-family: 'Cambria Math', serif;
+  }
+  .sp-formula-content {
+    flex: 1;
+    padding: 3px 6px;
+    border: 1px solid #d1d1d1;
+    border-radius: 2px;
+    color: #252423;
+    background: #fff;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .sp-grid-wrap {
+    flex: 1;
+    overflow: auto;
+    background: #fff;
+    font-family: 'Segoe UI', Calibri, 'Helvetica Neue', sans-serif;
+  }
+
+  .sp-table {
+    border-collapse: collapse;
+    width: 100%;
+    table-layout: fixed;
+    font-size: 12px;
+    color: #252423;
+  }
+  .sp-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    background: var(--sp-header-fill);
+    border: 1px solid var(--sp-grid);
+    border-top: none;
+    padding: 5px 8px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 11px;
+    color: #252423;
+    letter-spacing: 0.1px;
+  }
+  .sp-table thead tr.col-letters th {
+    background: #f3f2f1;
+    text-align: center;
+    font-weight: 400;
+    color: #605e5c;
+    font-size: 11px;
+    padding: 2px 4px;
+    border-right: 1px solid var(--sp-grid);
+    border-bottom: 1px solid var(--sp-grid);
+    height: 18px;
+  }
+  .sp-table thead tr.col-headers th {
+    border-bottom: 2px solid var(--sp-grid);
+  }
+
+  .sp-table tbody td {
+    border: 1px solid var(--sp-grid-soft);
+    border-right: 1px solid var(--sp-grid);
+    padding: 6px 8px;
+    vertical-align: middle;
+    background: #fff;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.35;
+  }
+  .sp-table tbody tr:hover td {
+    background: var(--sp-row-hover);
+  }
+  .sp-row-num {
+    background: var(--sp-header-fill) !important;
+    color: #605e5c;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 400;
+    width: 32px;
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    border-right: 1px solid var(--sp-grid) !important;
+  }
+
+  /* Decision cell pills */
+  .decision-pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.2px;
+  }
+  .decision-pill.approve {
+    background: #dff1e3;
+    color: #0b5d2c;
+    border: 1px solid #a8d4b6;
+  }
+  .decision-pill.close {
+    background: #fff4d6;
+    color: #6b4900;
+    border: 1px solid #e7c97a;
+  }
+  .decision-pill.routed {
+    background: #fbe1cf;
+    color: #7a2d00;
+    border: 1px solid #f0b389;
+  }
+  .decision-pill.error {
+    background: #fbd6d6;
+    color: #8a0000;
+    border: 1px solid #e89090;
+  }
+
+  .sp-link {
+    color: var(--sp-blue);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .ts-cell { color: #444; font-variant-numeric: tabular-nums; }
+  .nom-id { font-family: 'Consolas', 'Menlo', monospace; font-size: 11px; color: #444; }
+
+  /* Reasoning button per row */
+  .reasoning-btn {
+    background: none;
+    border: 1px solid #c4c7cc;
+    border-radius: 3px;
+    padding: 1px 6px;
+    font-size: 10.5px;
+    color: #1f3a52;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .reasoning-btn:hover { background: #eef3f8; border-color: #1f3a52; }
+
+  /* Row insertion animation */
+  @keyframes spRowFlash {
+    0%   { background: #fff7d6; box-shadow: inset 0 0 0 2px #ffc845; }
+    60%  { background: #fffbe9; box-shadow: inset 0 0 0 2px rgba(255,200,69,0.3); }
+    100% { background: #fff;    box-shadow: inset 0 0 0 0   rgba(255,200,69,0); }
+  }
+  .sp-table tbody tr.fresh td {
+    animation: spRowFlash 2.4s ease-out forwards;
+  }
+
+  @keyframes rowSlideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .sp-table tbody tr.slide-in {
+    animation: rowSlideIn 0.45s ease-out;
+  }
+
+  /* Reasoning expansion row */
+  .reasoning-row td {
+    background: #f9fbfd !important;
+    padding: 12px 16px !important;
+    white-space: normal;
+    border-top: none;
+  }
+  .reasoning-card {
+    border-left: 3px solid #1f3a52;
+    padding: 8px 12px;
+    background: #fff;
+    border-radius: 0 4px 4px 0;
+    border: 1px solid #d8e0e8;
+    border-left-width: 3px;
+  }
+  .reasoning-card .rc-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #1f3a52;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .reasoning-card .conf-pill {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 7px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .conf-pill.high   { background: #dff1e3; color: #0b5d2c; }
+  .conf-pill.medium { background: #fff4d6; color: #6b4900; }
+  .conf-pill.low    { background: #fbe1cf; color: #7a2d00; }
+  .reasoning-card .rc-summary {
+    font-size: 12.5px;
+    color: #1d1d1f;
+    line-height: 1.45;
+    margin-bottom: 8px;
+  }
+  .reasoning-card .rc-rules {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .reasoning-card .rc-rules li {
+    font-size: 11.5px;
+    line-height: 1.4;
+    padding: 4px 8px;
+    background: #f4f7fa;
+    border-radius: 3px;
+    display: grid;
+    grid-template-columns: 24px 160px 1fr;
+    gap: 8px;
+    align-items: baseline;
+  }
+  .reasoning-card .rc-rules .rc-mark { font-weight: 700; }
+  .reasoning-card .rc-rules .rc-pass .rc-mark { color: #0b5d2c; }
+  .reasoning-card .rc-rules .rc-fail .rc-mark { color: #8a0000; }
+  .reasoning-card .rc-rules .rc-warn .rc-mark { color: #6b4900; }
+  .reasoning-card .rc-rules .rc-rule-name {
+    font-weight: 600;
+    color: #444;
+    font-family: 'Consolas', 'Menlo', monospace;
+    font-size: 11px;
+  }
+  .reasoning-card .rc-rules .rc-rule-detail { color: #555; }
+  .reasoning-card .rc-raw {
+    margin-top: 8px;
+    padding: 6px 8px;
+    background: #fff7e6;
+    border: 1px solid #f0d9a8;
+    border-radius: 3px;
+    font-family: 'Consolas', 'Menlo', monospace;
+    font-size: 11px;
+    color: #5a4400;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  /* Status bar at bottom of SP pane */
+  .sp-status-bar {
+    background: var(--sp-bar);
+    border-top: 1px solid var(--sp-bar-border);
+    padding: 4px 14px;
+    font-size: 11px;
+    color: #605e5c;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
+  }
+  .sp-status-bar .right { margin-left: auto; }
+
+  /* Sheet tabs */
+  .sp-sheet-tabs {
+    background: var(--sp-bar);
+    border-top: 1px solid var(--sp-bar-border);
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    height: 26px;
+  }
+  .sp-sheet-tab {
+    padding: 4px 12px;
+    font-size: 11px;
+    color: #605e5c;
+    border-right: 1px solid var(--sp-bar-border);
+  }
+  .sp-sheet-tab.active {
+    background: #fff;
+    color: #252423;
+    font-weight: 600;
+    border-top: 2px solid var(--excel-green);
+    border-left: 1px solid var(--sp-bar-border);
+    border-right: 1px solid var(--sp-bar-border);
+    margin-top: -1px;
+  }
+
+  /* Submitting overlay on form */
+  .submitting-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.78);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1f3a52;
+    z-index: 5;
+    backdrop-filter: blur(1px);
+    flex-direction: column;
+    gap: 6px;
+  }
+  .submitting-overlay.show { display: flex; }
+  .submitting-overlay .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid #c4d3df;
+    border-top-color: #1f3a52;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin-right: 10px;
+    display: inline-block;
+    vertical-align: middle;
+  }
+  .submitting-overlay .row1 { display: flex; align-items: center; }
+  .submitting-overlay .substep {
+    font-size: 11px;
+    font-weight: 400;
+    color: #4a6a85;
+    letter-spacing: 0.1px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .form-card-wrap { position: relative; }
+
+  /* Cells that wrap nicely */
+  .rules-cell { white-space: normal; line-height: 1.4; font-size: 11.5px; color: #444; }
+  .name-cell { font-weight: 500; }
+  .value-cell { font-variant-numeric: tabular-nums; text-align: right; }
+  .version-cell { font-family: 'Consolas', 'Menlo', monospace; font-size: 11px; color: #605e5c; }
+
+  @media (max-width: 1100px) {
+    .pane-left { flex: 0 0 50%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Sticky CoE header ── -->
+<header class="coe-header">
+  <span class="h-title">CoE Testing</span>
+  <span class="h-sub">R&amp;R Auto-Approver — Live Demo</span>
+  <span class="h-spacer"></span>
+  <a class="h-back" href="/r-and-r">&larr; Back to R&amp;R</a>
+</header>
+
+<!-- ── Editable policy strip (lives at top so demo runners can tweak thresholds before submitting) ── -->
+<div class="policy-strip">
+  <span class="policy-label">Active policy (JSON)</span>
+  <textarea id="policy-json" rows="1" spellcheck="false">{ "value_cap_gbp": 250, "max_nominations_per_recipient_per_project_30d": 3, "recipient_must_be_active": true, "block_manager_self_loops": true }</textarea>
+  <span class="policy-status ok" id="policy-status">Valid JSON</span>
+</div>
+
+<!-- ── Two-pane main ── -->
+<div class="main">
+
+  <!-- ============ LEFT: Workday tenant ============ -->
+  <section class="pane pane-left">
+    <div class="pane-caption workday">
+      <span class="dot"></span>
+      Workday tenant — Reward &amp; Recognition
+    </div>
+    <div class="pane-body">
+      <div class="wd-shell">
+
+        <!-- Workday top header -->
+        <div class="wd-header">
+          <div class="wd-logo">K</div>
+          <div class="wd-search">
+            <span class="wd-search-icon">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+            </span>
+            <input placeholder="Search Workday" disabled>
+          </div>
+          <div class="wd-icons">
+            <div class="wd-icon-btn" title="Notifications">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+            </div>
+            <div class="wd-icon-btn" title="Inbox">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11Z"/></svg>
+            </div>
+            <div class="wd-profile-photo">M</div>
+          </div>
+        </div>
+
+        <!-- Workday content -->
+        <div class="wd-content">
+          <div class="wd-page-title">Reward &amp; Recognition — Submit Nomination</div>
+          <div class="wd-page-sub">Recognise a colleague for outstanding contribution. All nominations are screened automatically against the active R&amp;R policy.</div>
+
+          <div class="form-card-wrap">
+            <div class="wd-form-card" id="form-card">
+
+              <!-- Tabs: Quick demo (scripted) vs Custom nomination (LLM) -->
+              <div class="form-tabs" role="tablist">
+                <div class="form-tab active" data-tab="quick" role="tab">Quick demo</div>
+                <div class="form-tab" data-tab="custom" role="tab">Custom nomination (live agent)</div>
+              </div>
+
+              <!-- Quick demo pane (scripted, original behaviour) -->
+              <div class="form-pane active" id="pane-quick">
+                <div class="wd-form-grid">
+                  <div class="wd-field-label">Recipient</div>
+                  <div class="wd-field-value" id="f-recipient">Priya Ramanathan — Senior Consultant, Workday Practice</div>
+
+                  <div class="wd-field-label">Nominator</div>
+                  <div class="wd-field-value" id="f-nominator">Marcus Doyle — Engagement Manager</div>
+
+                  <div class="wd-field-label">Value (£)</div>
+                  <div class="wd-field-value value-cell" id="f-value" style="justify-content:flex-start; font-variant-numeric: tabular-nums;">£50.00</div>
+
+                  <div class="wd-field-label">Project</div>
+                  <div class="wd-field-value" id="f-project">Project Helios — HCM rollout, Tier 1 client</div>
+
+                  <div class="wd-field-label">Reason</div>
+                  <div class="wd-field-value multiline" id="f-reason">Stayed late on Thursday to debug a critical security configuration issue ahead of the client UAT kickoff. Calm, technically excellent, and a great example of putting the team first.</div>
+                </div>
+
+                <div class="wd-section-divider"></div>
+
+                <div class="demo-note">Scripted scenarios — canonical pre-recorded flow</div>
+                <div class="wd-actions quick-demo-row">
+                  <button class="wd-btn primary" data-scenario="inpolicy">
+                    Submit in-policy nomination
+                    <span class="wd-btn-sub">£50 · novel recipient · Project Helios</span>
+                  </button>
+                  <button class="wd-btn warning" data-scenario="borderline">
+                    Submit borderline nomination
+                    <span class="wd-btn-sub">£245 of £250 cap · novel recipient</span>
+                  </button>
+                  <button class="wd-btn danger" data-scenario="exception">
+                    Submit exception nomination
+                    <span class="wd-btn-sub">4th nomination this cycle · Project Atlas</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Custom nomination pane (LLM-powered) -->
+              <div class="form-pane" id="pane-custom">
+                <div class="wd-form-grid">
+                  <div class="wd-field-label">Recipient</div>
+                  <input class="wd-input" id="cf-recipient" placeholder="e.g. Priya Ramanathan" value="Priya Ramanathan">
+
+                  <div class="wd-field-label">Nominator</div>
+                  <input class="wd-input" id="cf-nominator" placeholder="e.g. Marcus Doyle" value="Marcus Doyle">
+
+                  <div class="wd-field-label">Value (£)</div>
+                  <input class="wd-input" id="cf-value" type="number" min="0" step="5" value="50" style="max-width:140px;">
+
+                  <div class="wd-field-label">Project</div>
+                  <input class="wd-input" id="cf-project" placeholder="e.g. Project Helios" value="Project Helios">
+
+                  <div class="wd-field-label">Reason</div>
+                  <textarea class="wd-textarea" id="cf-reason" rows="2" placeholder="Why is this person being recognised?">Owned the cutover weekend and kept the client calm throughout an unexpected database failover.</textarea>
+
+                  <div class="wd-field-label">Recent history</div>
+                  <select class="wd-select" id="cf-history">
+                    <option value="0">No prior nominations for this recipient on this project (last 30d)</option>
+                    <option value="1">1 prior nomination for this recipient on this project (last 30d)</option>
+                    <option value="2">2 prior nominations for this recipient on this project (last 30d)</option>
+                    <option value="3" selected>3 prior nominations — at the cap (last 30d)</option>
+                    <option value="4">4 prior nominations — over the cap (last 30d)</option>
+                    <option value="self">Recipient reports directly to nominator (manager self-loop)</option>
+                    <option value="inactive">Recipient is on long-term leave (inactive)</option>
+                  </select>
+                </div>
+
+                <div class="wd-section-divider"></div>
+
+                <div class="demo-note">Submit a live nomination — the R&amp;R agent will decide</div>
+                <div class="wd-actions">
+                  <button class="wd-btn primary" id="custom-submit">Submit to agent</button>
+                  <span style="font-size:11px; color:var(--color-graphite); align-self:center;">
+                    Calls <code style="background:#f0f1f3; padding:1px 4px; border-radius:2px;">/api/llm</code> with the policy above &amp; the form contents.
+                  </span>
+                </div>
+              </div>
+
+            </div>
+
+            <div class="submitting-overlay" id="submitting">
+              <div class="row1"><div class="spinner"></div><span id="submitting-label">Submitting nomination&hellip;</span></div>
+              <div class="substep" id="submitting-sub">&nbsp;</div>
+            </div>
+          </div>
+
+          <!-- BP Timeline -->
+          <div class="bp-card">
+            <div class="bp-card-title">Business Process — Reward &amp; Recognition Approval</div>
+            <div class="bp-timeline" id="bp-timeline">
+              <div class="bp-step" data-step="submitted"><span class="bp-dot"></span>Submitted</div>
+              <span class="bp-arrow">&rsaquo;</span>
+              <div class="bp-step" data-step="approval"><span class="bp-dot"></span>In Approval — Auto-screen</div>
+              <span class="bp-arrow">&rsaquo;</span>
+              <div class="bp-step" data-step="final"><span class="bp-dot"></span>Awaiting outcome</div>
+            </div>
+            <div class="bp-status-line" id="bp-status">
+              Idle — submit a nomination above to see the agent screen and route it.
+              <span class="routed-badge" id="routed-badge">
+                <span class="reviewer-avatar">SC</span>
+                Routed to: People Ops reviewer
+              </span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ RIGHT: SharePoint Excel ============ -->
+  <section class="pane pane-right">
+    <div class="pane-caption sharepoint">
+      <span class="dot"></span>
+      SharePoint — R&amp;R Agent Decision Log.xlsx
+    </div>
+    <div class="pane-body" style="overflow:hidden;">
+      <div class="sp-shell">
+
+        <!-- M365 suite bar -->
+        <div class="sp-suite-bar">
+          <span class="waffle"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span>
+          <span class="product-name">Excel</span>
+          <span class="doc-name">&nbsp;|&nbsp; R&amp;R Agent Decision Log &mdash; People Ops</span>
+          <span class="doc-saved">
+            <span class="check-circle">&#10003;</span>
+            Saved &middot; AutoSave on
+          </span>
+        </div>
+
+        <!-- File path / collaborators bar -->
+        <div class="sp-doc-bar">
+          <span class="excel-icon">X</span>
+          <span class="doc-title">R&amp;R Agent Decision Log.xlsx</span>
+          <span class="doc-loc">&nbsp;&mdash; People Ops &rsaquo; Reward &amp; Recognition</span>
+          <span class="right">
+            <span>Editing</span>
+            <span style="display:inline-flex; gap:0;">
+              <span class="editor-pip" style="background:#5b8fd8;" title="People Ops">PO</span>
+              <span class="editor-pip" style="background:#7a3e9b; margin-left:-6px;" title="People Ops Reviewer">PR</span>
+              <span class="editor-pip" style="background:#1e6f3e; margin-left:-6px;" title="R&amp;R Agent">AG</span>
+            </span>
+            <span>Share</span>
+          </span>
+        </div>
+
+        <!-- Excel ribbon -->
+        <div class="sp-ribbon">
+          <span class="tab">File</span>
+          <span class="tab active">Home</span>
+          <span class="tab">Insert</span>
+          <span class="tab">Draw</span>
+          <span class="tab">Page Layout</span>
+          <span class="tab">Formulas</span>
+          <span class="tab">Data</span>
+          <span class="tab">Review</span>
+          <span class="tab">View</span>
+          <span class="tab">Help</span>
+        </div>
+
+        <!-- Formula bar -->
+        <div class="sp-formula-bar">
+          <span class="sp-name-box">A1</span>
+          <span class="sp-fx">fx</span>
+          <span class="sp-formula-content" id="sp-formula">Timestamp</span>
+        </div>
+
+        <!-- Grid -->
+        <div class="sp-grid-wrap">
+          <table class="sp-table" id="sp-table">
+            <colgroup>
+              <col style="width:32px">
+              <col style="width:130px">
+              <col style="width:100px">
+              <col style="width:140px">
+              <col style="width:140px">
+              <col style="width:70px">
+              <col style="width:140px">
+              <col style="width:240px">
+              <col style="width:90px">
+              <col style="width:110px">
+            </colgroup>
+            <thead>
+              <tr class="col-letters">
+                <th></th>
+                <th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>F</th><th>G</th><th>H</th><th>I</th>
+              </tr>
+              <tr class="col-headers">
+                <th class="sp-row-num">1</th>
+                <th>Timestamp</th>
+                <th>Nomination ID</th>
+                <th>Recipient</th>
+                <th>Nominator</th>
+                <th>Value</th>
+                <th>Decision</th>
+                <th>Rule(s) applied</th>
+                <th>Ruleset ver.</th>
+                <th>Workday link</th>
+              </tr>
+            </thead>
+            <tbody id="sp-tbody">
+              <!-- Pre-seeded rows are injected by JS so row numbers stay correct -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Sheet tabs -->
+        <div class="sp-sheet-tabs">
+          <span class="sp-sheet-tab active">Decisions</span>
+          <span class="sp-sheet-tab">Ruleset history</span>
+          <span class="sp-sheet-tab">Cycle summary</span>
+        </div>
+
+        <!-- Status bar -->
+        <div class="sp-status-bar">
+          <span id="sp-row-count">Ready &middot; 3 rows</span>
+          <span class="right">100%</span>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  // ── State ───────────────────────────────────────────────────────────
+  const tbody = document.getElementById('sp-tbody');
+  const formulaBar = document.getElementById('sp-formula');
+  const rowCountEl = document.getElementById('sp-row-count');
+  const submittingOverlay = document.getElementById('submitting');
+  const submittingLabel = document.getElementById('submitting-label');
+  const submittingSub = document.getElementById('submitting-sub');
+  const bpStatus = document.getElementById('bp-status');
+  const routedBadge = document.getElementById('routed-badge');
+  const buttons = document.querySelectorAll('.wd-btn[data-scenario]');
+  const policyTextarea = document.getElementById('policy-json');
+  const policyStatus = document.getElementById('policy-status');
+  const customSubmit = document.getElementById('custom-submit');
+
+  let nextNomId = 2188;
+  let rowCounter = 0;
+  const rulesetVersion = 'v3.2.1';
+
+  // ── Pre-seed historical rows ───────────────────────────────────────
+  const seedRows = [
+    {
+      ts: '2026-05-08 14:22',
+      nomId: 'NOM-2185',
+      recipient: 'Joanne Whitcombe',
+      nominator: 'Daniel Park',
+      value: 75,
+      decision: 'AUTO-APPROVED',
+      decisionClass: 'approve',
+      rules: 'value≤cap, eligibility OK, frequency OK',
+      version: rulesetVersion,
+      link: 'NOM-2185'
+    },
+    {
+      ts: '2026-05-09 09:41',
+      nomId: 'NOM-2186',
+      recipient: 'Tomás Beltran',
+      nominator: 'Helen Ó Briain',
+      value: 100,
+      decision: 'AUTO-APPROVED',
+      decisionClass: 'approve',
+      rules: 'value≤cap, eligibility OK, frequency OK',
+      version: rulesetVersion,
+      link: 'NOM-2186'
+    },
+    {
+      ts: '2026-05-09 16:03',
+      nomId: 'NOM-2187',
+      recipient: 'Aoife Donnelly',
+      nominator: 'Marcus Doyle',
+      value: 250,
+      decision: 'ROUTED FOR REVIEW',
+      decisionClass: 'routed',
+      rules: 'manager-self-loop check failed (recipient reports to nominator)',
+      version: rulesetVersion,
+      link: 'NOM-2187'
+    }
+  ];
+
+  // ── Render helpers ─────────────────────────────────────────────────
+  function fmtMoney(v) {
+    return '£' + Number(v).toFixed(2);
+  }
+
+  function buildRowEl(row, isFresh) {
+    const tr = document.createElement('tr');
+    if (isFresh) tr.classList.add('fresh', 'slide-in');
+    rowCounter += 1;
+    const rowNum = rowCounter + 1;
+    const linkCellHtml = row.reasoning
+      ? `<a class="sp-link" data-action="toggle-reasoning">${row.link}</a>`
+      : `<a class="sp-link">${row.link}</a>`;
+    tr.innerHTML = `
+      <td class="sp-row-num">${rowNum}</td>
+      <td class="ts-cell">${row.ts}</td>
+      <td class="nom-id">${row.nomId}</td>
+      <td class="name-cell">${row.recipient}</td>
+      <td>${row.nominator}</td>
+      <td class="value-cell">${fmtMoney(row.value)}</td>
+      <td><span class="decision-pill ${row.decisionClass}">${row.decision}</span></td>
+      <td class="rules-cell">${row.rules}</td>
+      <td class="version-cell">${row.version}</td>
+      <td>${linkCellHtml}</td>
+    `;
+    if (row.reasoning) {
+      tr.dataset.hasReasoning = '1';
+      tr.dataset.reasoning = JSON.stringify(row.reasoning);
+    }
+    return tr;
+  }
+
+  function renumberRows() {
+    rowCounter = 0;
+    const trs = tbody.querySelectorAll('tr:not(.reasoning-row)');
+    trs.forEach(tr => {
+      rowCounter += 1;
+      const cell = tr.querySelector('.sp-row-num');
+      if (cell) cell.textContent = rowCounter + 1;
+    });
+  }
+
+  function updateRowCount() {
+    const n = tbody.querySelectorAll('tr:not(.reasoning-row)').length;
+    rowCountEl.textContent = `Ready · ${n} rows`;
+  }
+
+  function seedSheet() {
+    [...seedRows].reverse().forEach(r => {
+      tbody.appendChild(buildRowEl(r, false));
+    });
+    renumberRows();
+    updateRowCount();
+  }
+
+  // ── Reasoning expansion ────────────────────────────────────────────
+  function buildReasoningRowEl(reasoning, parsedOk, rawText) {
+    const tr = document.createElement('tr');
+    tr.classList.add('reasoning-row');
+    const td = document.createElement('td');
+    td.colSpan = 10;
+    const conf = (reasoning && reasoning.confidence) || 'medium';
+    const summary = (reasoning && reasoning.reason_summary) || '(no summary returned)';
+    const rules = (reasoning && Array.isArray(reasoning.rules_applied)) ? reasoning.rules_applied : [];
+    let rulesHtml = '';
+    rules.forEach(r => {
+      const result = String(r.result || '').toLowerCase();
+      const cls = result === 'pass' ? 'rc-pass'
+                : result === 'fail' ? 'rc-fail'
+                : 'rc-warn';
+      const mark = result === 'pass' ? '✓' : result === 'fail' ? '✗' : '!';
+      rulesHtml += `<li class="${cls}">
+        <span class="rc-mark">${mark}</span>
+        <span class="rc-rule-name">${escapeHtml(r.rule || '')}</span>
+        <span class="rc-rule-detail">${escapeHtml(r.detail || '')}</span>
+      </li>`;
+    });
+    if (!rulesHtml) rulesHtml = '<li class="rc-warn"><span class="rc-mark">!</span><span class="rc-rule-name">no rules returned</span><span class="rc-rule-detail">agent did not include a rules_applied array</span></li>';
+
+    let html = `
+      <div class="reasoning-card">
+        <div class="rc-title">
+          Agent reasoning
+          <span class="conf-pill ${conf}">confidence: ${conf}</span>
+        </div>
+        <div class="rc-summary">${escapeHtml(summary)}</div>
+        <ul class="rc-rules">${rulesHtml}</ul>`;
+    if (!parsedOk && rawText) {
+      html += `<div class="rc-raw">Raw model output (parse failed):\n${escapeHtml(rawText)}</div>`;
+    }
+    html += `</div>`;
+    td.innerHTML = html;
+    tr.appendChild(td);
+    return tr;
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // Click delegation: toggle reasoning row when "Workday link" clicked.
+  tbody.addEventListener('click', e => {
+    const a = e.target.closest('[data-action="toggle-reasoning"]');
+    if (!a) return;
+    const tr = a.closest('tr');
+    if (!tr || !tr.dataset.hasReasoning) return;
+    const next = tr.nextElementSibling;
+    if (next && next.classList.contains('reasoning-row')) {
+      next.remove();
+      return;
+    }
+    let reasoning = null;
+    let parsedOk = true;
+    let raw = '';
+    try {
+      reasoning = JSON.parse(tr.dataset.reasoning);
+      if (reasoning && reasoning.__parseFailed) {
+        parsedOk = false;
+        raw = reasoning.__raw || '';
+      }
+    } catch (err) {
+      parsedOk = false;
+    }
+    const rRow = buildReasoningRowEl(reasoning, parsedOk, raw);
+    tr.parentNode.insertBefore(rRow, tr.nextSibling);
+  });
+
+  // ── BP timeline animation ──────────────────────────────────────────
+  function resetBP() {
+    document.querySelectorAll('.bp-step').forEach(s => {
+      s.classList.remove('active', 'done', 'warn', 'routed', 'error');
+    });
+    const finalStep = document.querySelector('.bp-step[data-step="final"]');
+    finalStep.innerHTML = '<span class="bp-dot"></span>Awaiting outcome';
+    routedBadge.classList.remove('show');
+  }
+
+  function setBPStatus(text) {
+    const badge = bpStatus.querySelector('.routed-badge');
+    bpStatus.textContent = text + ' ';
+    if (badge) bpStatus.appendChild(badge);
+  }
+
+  function setStep(stepName, stateClass, label) {
+    const el = document.querySelector(`.bp-step[data-step="${stepName}"]`);
+    if (!el) return;
+    el.classList.remove('active', 'done', 'warn', 'routed', 'error');
+    if (stateClass) el.classList.add(stateClass);
+    if (label) el.innerHTML = '<span class="bp-dot"></span>' + label;
+  }
+
+  // ── Scripted scenarios (unchanged behaviour) ───────────────────────
+  const scenarios = {
+    inpolicy: {
+      formPatch: {
+        recipient: 'Priya Ramanathan — Senior Consultant, Workday Practice',
+        nominator: 'Marcus Doyle — Engagement Manager',
+        value: '£50.00',
+        project: 'Project Helios — HCM rollout, Tier 1 client',
+        reason: 'Stayed late on Thursday to debug a critical security configuration issue ahead of the client UAT kickoff. Calm, technically excellent, and a great example of putting the team first.'
+      },
+      row: () => ({
+        ts: nowStamp(),
+        nomId: 'NOM-' + (nextNomId++),
+        recipient: 'Priya Ramanathan',
+        nominator: 'Marcus Doyle',
+        value: 50,
+        decision: 'AUTO-APPROVED',
+        decisionClass: 'approve',
+        rules: 'value≤cap, eligibility OK, frequency OK',
+        version: rulesetVersion,
+        link: ''
+      }),
+      finalLabel: 'Approved',
+      finalClass: 'done',
+      bpStatus: 'Auto-approved by R&R agent · funds released · recipient notified.',
+      showRouted: false
+    },
+    borderline: {
+      formPatch: {
+        recipient: 'Owen Maguire — Lead Engineer, Workday Practice',
+        nominator: 'Niamh Costello — Senior Engagement Manager',
+        value: '£245.00',
+        project: 'Project Helios — HCM rollout, Tier 1 client',
+        reason: 'Owen rebuilt the integration test harness in his own time after the initial vendor delivery missed three sprints. Saved roughly two weeks of project effort and unblocked four downstream consultants.'
+      },
+      row: () => ({
+        ts: nowStamp(),
+        nomId: 'NOM-' + (nextNomId++),
+        recipient: 'Owen Maguire',
+        nominator: 'Niamh Costello',
+        value: 245,
+        decision: 'AUTO-APPROVED — close call',
+        decisionClass: 'close',
+        rules: 'value 98% of cap (£245 of £250) · eligibility OK · frequency OK',
+        version: rulesetVersion,
+        link: ''
+      }),
+      finalLabel: 'Approved',
+      finalClass: 'warn',
+      bpStatus: 'Auto-approved · flagged as a close call for the cycle review summary.',
+      showRouted: false
+    },
+    exception: {
+      formPatch: {
+        recipient: 'Aoife Donnelly — Consultant, Workday Practice',
+        nominator: 'Marcus Doyle — Engagement Manager',
+        value: '£150.00',
+        project: 'Project Atlas — Finance transformation, Tier 1 client',
+        reason: 'Aoife handled the cutover weekend support rota single-handed when two team members were unwell. Excellent client communication throughout.'
+      },
+      row: () => ({
+        ts: nowStamp(),
+        nomId: 'NOM-' + (nextNomId++),
+        recipient: 'Aoife Donnelly',
+        nominator: 'Marcus Doyle',
+        value: 150,
+        decision: 'ROUTED FOR REVIEW',
+        decisionClass: 'routed',
+        rules: 'frequency rule failed (4th nomination for recipient on Project Atlas in 30 days)',
+        version: rulesetVersion,
+        link: ''
+      }),
+      finalLabel: 'Awaiting reviewer',
+      finalClass: 'routed',
+      bpStatus: 'Routed to People Ops · sitting in the assigned reviewer’s Workday inbox awaiting decision.',
+      showRouted: true
+    }
+  };
+
+  function nowStamp() {
+    const d = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  function patchForm(patch) {
+    document.getElementById('f-recipient').textContent = patch.recipient;
+    document.getElementById('f-nominator').textContent = patch.nominator;
+    document.getElementById('f-value').textContent = patch.value;
+    document.getElementById('f-project').textContent = patch.project;
+    document.getElementById('f-reason').textContent = patch.reason;
+  }
+
+  // ── Submit pipeline ────────────────────────────────────────────────
+  let busy = false;
+
+  function showOverlay(label, sub) {
+    submittingLabel.innerHTML = label;
+    submittingSub.textContent = sub || '';
+    submittingOverlay.classList.add('show');
+  }
+  function hideOverlay() {
+    submittingOverlay.classList.remove('show');
+  }
+
+  function lockUI(lock) {
+    busy = lock;
+    buttons.forEach(b => b.disabled = lock);
+    customSubmit.disabled = lock;
+  }
+
+  async function runScenario(name) {
+    if (busy) return;
+    lockUI(true);
+
+    const sc = scenarios[name];
+    patchForm(sc.formPatch);
+
+    resetBP();
+    setBPStatus('Submitting nomination…');
+    showOverlay('Submitting nomination&hellip;', '');
+    await sleep(700);
+
+    hideOverlay();
+    setStep('submitted', 'done', 'Submitted');
+    setStep('approval', 'active', 'In Approval — Auto-screen');
+    setBPStatus('R&R agent screening against ruleset ' + rulesetVersion + '…');
+    await sleep(1500);
+
+    setStep('approval', 'done', 'Auto-screen complete');
+    setStep('final', sc.finalClass, sc.finalLabel);
+    setBPStatus(sc.bpStatus);
+
+    const row = sc.row();
+    row.link = row.nomId;
+    const tr = buildRowEl(row, true);
+    tbody.insertBefore(tr, tbody.firstChild);
+    renumberRows();
+    updateRowCount();
+    formulaBar.textContent = row.ts;
+
+    if (sc.showRouted) {
+      await sleep(250);
+      routedBadge.classList.add('show');
+    }
+
+    await sleep(1500);
+    lockUI(false);
+  }
+
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  // ── Policy JSON validation ─────────────────────────────────────────
+  function getPolicyOrDefault() {
+    try {
+      const p = JSON.parse(policyTextarea.value);
+      policyStatus.textContent = 'Valid JSON';
+      policyStatus.classList.remove('bad'); policyStatus.classList.add('ok');
+      return p;
+    } catch (e) {
+      policyStatus.textContent = 'Invalid JSON — using defaults';
+      policyStatus.classList.remove('ok'); policyStatus.classList.add('bad');
+      return {
+        value_cap_gbp: 250,
+        max_nominations_per_recipient_per_project_30d: 3,
+        recipient_must_be_active: true,
+        block_manager_self_loops: true
+      };
+    }
+  }
+  policyTextarea.addEventListener('input', getPolicyOrDefault);
+
+  // ── LLM call ───────────────────────────────────────────────────────
+  function buildPrompt(policy, nomination, history) {
+    return [
+      'You are the Reward & Recognition Auto-Approver agent for an enterprise Workday tenant.',
+      'You will be given (1) the active policy as JSON, (2) a single nomination, (3) recent-history context for the recipient.',
+      'Apply each policy rule to the nomination. Decide whether to AUTO_APPROVE or ROUTE_FOR_REVIEW.',
+      '',
+      'POLICY:',
+      JSON.stringify(policy, null, 2),
+      '',
+      'NOMINATION:',
+      JSON.stringify(nomination, null, 2),
+      '',
+      'RECENT HISTORY CONTEXT:',
+      history,
+      '',
+      'Decision rules:',
+      '- ROUTE_FOR_REVIEW if any policy rule fails (over value cap, over frequency cap, recipient inactive, manager self-loop).',
+      '- AUTO_APPROVED if all rules pass.',
+      '- If value is within 10% of the cap but still under, mark frequency/value rule as "warn" with a brief note, but still AUTO_APPROVED.',
+      '',
+      'Respond with ONLY a JSON object — no prose, no code fences. Schema:',
+      '{',
+      '  "decision": "AUTO_APPROVED" | "ROUTED_FOR_REVIEW",',
+      '  "rules_applied": [ { "rule": "<short_id>", "result": "pass" | "fail" | "warn", "detail": "<one short sentence>" } ],',
+      '  "reason_summary": "<one short sentence overall>",',
+      '  "confidence": "high" | "medium" | "low"',
+      '}'
+    ].join('\n');
+  }
+
+  function extractJson(text) {
+    if (!text) return null;
+    let t = text.trim();
+    // Strip code fences if present.
+    t = t.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
+    // First try direct parse.
+    try { return JSON.parse(t); } catch (e) { /* fall through */ }
+    // Try to find first {...} block.
+    const m = t.match(/\{[\s\S]*\}/);
+    if (m) {
+      try { return JSON.parse(m[0]); } catch (e) { /* fall through */ }
+    }
+    return null;
+  }
+
+  async function callLLM(prompt) {
+    const pw = (typeof localStorage !== 'undefined') ? (localStorage.getItem('coe_site_pw') || '') : '';
+    const res = await fetch('/api/llm', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + pw
+      },
+      body: JSON.stringify({ prompt, max_tokens: 800 })
+    });
+    if (!res.ok) {
+      let detail = '';
+      try { detail = (await res.json()).error || ''; } catch (e) { detail = await res.text(); }
+      const err = new Error('LLM HTTP ' + res.status + (detail ? ': ' + detail : ''));
+      err.status = res.status;
+      throw err;
+    }
+    const data = await res.json();
+    return data.text || '';
+  }
+
+  // ── Custom nomination submit ───────────────────────────────────────
+  async function runCustomNomination() {
+    if (busy) return;
+    lockUI(true);
+
+    const recipient = document.getElementById('cf-recipient').value.trim() || 'Unnamed Recipient';
+    const nominator = document.getElementById('cf-nominator').value.trim() || 'Unnamed Nominator';
+    const valueRaw = document.getElementById('cf-value').value;
+    const value = Number(valueRaw) || 0;
+    const project = document.getElementById('cf-project').value.trim() || '(no project)';
+    const reason = document.getElementById('cf-reason').value.trim() || '(no reason given)';
+    const histKey = document.getElementById('cf-history').value;
+
+    // Patch the visible quick-demo display to mirror the custom submission so the BP/timeline narrative makes sense.
+    patchForm({
+      recipient: recipient,
+      nominator: nominator,
+      value: fmtMoney(value),
+      project: project,
+      reason: reason
+    });
+
+    const policy = getPolicyOrDefault();
+    const historyMap = {
+      '0': 'Recipient has had 0 nominations on this project in the last 30 days. Recipient is active. Recipient does not directly report to nominator.',
+      '1': 'Recipient has had 1 nomination on this project in the last 30 days. Recipient is active. Recipient does not directly report to nominator.',
+      '2': 'Recipient has had 2 nominations on this project in the last 30 days. Recipient is active. Recipient does not directly report to nominator.',
+      '3': 'Recipient has had 3 nominations on this project in the last 30 days (at the policy cap). Recipient is active. Recipient does not directly report to nominator.',
+      '4': 'Recipient has had 4 nominations on this project in the last 30 days (one over the policy cap). Recipient is active. Recipient does not directly report to nominator.',
+      'self': 'Recipient has had 0 prior nominations on this project. Recipient is active. RECIPIENT DIRECTLY REPORTS TO THE NOMINATOR (manager self-loop).',
+      'inactive': 'Recipient has had 0 prior nominations on this project. RECIPIENT IS CURRENTLY ON LONG-TERM LEAVE (not active). Recipient does not directly report to nominator.'
+    };
+    const history = historyMap[histKey] || historyMap['0'];
+
+    const nomination = { recipient, nominator, value_gbp: value, project, reason };
+
+    resetBP();
+    setBPStatus('Submitting nomination…');
+    showOverlay('Submitting nomination&hellip;', 'Posting to /api/llm');
+    await sleep(350);
+
+    setStep('submitted', 'done', 'Submitted');
+    setStep('approval', 'active', 'In Approval — Auto-screen');
+    setBPStatus('R&R agent screening against ruleset ' + rulesetVersion + '…');
+    showOverlay('Agent thinking&hellip;', 'kimi-k2-turbo · screening against policy');
+
+    const prompt = buildPrompt(policy, nomination, history);
+
+    let llmText = '';
+    let parsed = null;
+    let parseFailed = false;
+    let networkError = null;
+    try {
+      llmText = await callLLM(prompt);
+      parsed = extractJson(llmText);
+      if (!parsed) parseFailed = true;
+    } catch (e) {
+      networkError = e;
+    }
+
+    hideOverlay();
+
+    // Build the row + reasoning card based on what we got back.
+    const ts = nowStamp();
+    const nomId = 'NOM-' + (nextNomId++);
+
+    if (networkError) {
+      setStep('approval', 'done', 'Auto-screen complete');
+      setStep('final', 'error', 'Agent error');
+      setBPStatus('Agent call failed: ' + networkError.message + ' — submission held for manual triage.');
+      const row = {
+        ts, nomId, recipient, nominator, value,
+        decision: 'ERROR',
+        decisionClass: 'error',
+        rules: 'agent unreachable — ' + networkError.message,
+        version: rulesetVersion,
+        link: nomId,
+        reasoning: {
+          __parseFailed: true,
+          __raw: networkError.message,
+          confidence: 'low',
+          reason_summary: 'Agent call failed before a decision could be made. Submission held for manual triage by People Ops.',
+          rules_applied: [
+            { rule: 'agent_call', result: 'fail', detail: networkError.message }
+          ]
+        }
+      };
+      const tr = buildRowEl(row, true);
+      tbody.insertBefore(tr, tbody.firstChild);
+      renumberRows();
+      updateRowCount();
+      formulaBar.textContent = ts;
+      await sleep(1200);
+      lockUI(false);
+      return;
+    }
+
+    let decisionText, decisionClass, finalLabel, finalClass, bpMsg, showRouted;
+    let rulesSummary;
+
+    if (parseFailed || !parsed || !parsed.decision) {
+      decisionText = 'PARSE ERROR';
+      decisionClass = 'error';
+      finalLabel = 'Agent error';
+      finalClass = 'error';
+      bpMsg = 'Agent returned non-JSON output — submission held for manual triage.';
+      showRouted = false;
+      rulesSummary = 'agent returned invalid JSON';
+    } else {
+      const dec = String(parsed.decision).toUpperCase();
+      if (dec === 'AUTO_APPROVED') {
+        // detect any "warn" rule for the close-call styling
+        const hasWarn = Array.isArray(parsed.rules_applied) && parsed.rules_applied.some(r => String(r.result).toLowerCase() === 'warn');
+        decisionText = hasWarn ? 'AUTO-APPROVED — close call' : 'AUTO-APPROVED';
+        decisionClass = hasWarn ? 'close' : 'approve';
+        finalLabel = 'Approved';
+        finalClass = hasWarn ? 'warn' : 'done';
+        bpMsg = hasWarn
+          ? 'Auto-approved · flagged as a close call for the cycle review summary.'
+          : 'Auto-approved by R&R agent · funds released · recipient notified.';
+        showRouted = false;
+      } else {
+        decisionText = 'ROUTED FOR REVIEW';
+        decisionClass = 'routed';
+        finalLabel = 'Awaiting reviewer';
+        finalClass = 'routed';
+        bpMsg = 'Routed to People Ops · sitting in the assigned reviewer’s Workday inbox awaiting decision.';
+        showRouted = true;
+      }
+      // Compact rules summary for the Excel rules cell
+      if (Array.isArray(parsed.rules_applied) && parsed.rules_applied.length) {
+        rulesSummary = parsed.rules_applied.map(r => {
+          const mark = String(r.result).toLowerCase() === 'pass' ? '✓'
+                     : String(r.result).toLowerCase() === 'fail' ? '✗'
+                     : '!';
+          return `${mark} ${r.rule}`;
+        }).join(' · ');
+      } else {
+        rulesSummary = parsed.reason_summary || 'agent returned no rules array';
+      }
+    }
+
+    setStep('approval', 'done', 'Auto-screen complete');
+    setStep('final', finalClass, finalLabel);
+    setBPStatus(bpMsg);
+
+    const reasoningPayload = parseFailed
+      ? { __parseFailed: true, __raw: llmText, confidence: 'low', reason_summary: 'Agent output could not be parsed as JSON.', rules_applied: [] }
+      : parsed;
+
+    const row = {
+      ts, nomId, recipient, nominator, value,
+      decision: decisionText,
+      decisionClass,
+      rules: rulesSummary,
+      version: rulesetVersion,
+      link: nomId,
+      reasoning: reasoningPayload
+    };
+    const tr = buildRowEl(row, true);
+    tbody.insertBefore(tr, tbody.firstChild);
+    renumberRows();
+    updateRowCount();
+    formulaBar.textContent = ts;
+
+    if (showRouted) {
+      await sleep(250);
+      routedBadge.classList.add('show');
+    }
+
+    // Auto-expand the reasoning card so the audience can see it without an extra click.
+    await sleep(450);
+    const linkEl = tr.querySelector('[data-action="toggle-reasoning"]');
+    if (linkEl) linkEl.click();
+
+    await sleep(1500);
+    lockUI(false);
+  }
+
+  // ── Wire up ────────────────────────────────────────────────────────
+  buttons.forEach(b => {
+    b.addEventListener('click', () => runScenario(b.dataset.scenario));
+  });
+  customSubmit.addEventListener('click', runCustomNomination);
+
+  // Form tabs
+  document.querySelectorAll('.form-tab').forEach(t => {
+    t.addEventListener('click', () => {
+      document.querySelectorAll('.form-tab').forEach(x => x.classList.remove('active'));
+      document.querySelectorAll('.form-pane').forEach(p => p.classList.remove('active'));
+      t.classList.add('active');
+      const pane = document.getElementById('pane-' + t.dataset.tab);
+      if (pane) pane.classList.add('active');
+    });
+  });
+
+  // Boot
+  seedSheet();
+  setStep('submitted', '', 'Submitted');
+  setStep('approval', '', 'In Approval — Auto-screen');
+  setStep('final', '', 'Awaiting outcome');
+  getPolicyOrDefault();
+</script>
+
+</body>
+</html>
