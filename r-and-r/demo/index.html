@@ -271,49 +271,21 @@
     overflow: hidden;
   }
 
-  /* Body: rail + main */
+  /* Body: main content fills full width below the top nav */
   .wd-shell .wd-body {
-    display: flex;
+    display: block;
     flex: 1;
     min-height: 0;
     min-width: 0;
+    overflow: hidden;
   }
-  .wd-shell .wd-rail {
-    width: 64px;
-    flex-shrink: 0;
-    background: #fff;
-    border-right: 1px solid #e2e6eb;
-    padding: 12px 0;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-  .wd-shell .wd-rail-spacer { flex: 1; }
-  .wd-shell .wd-rail-item {
-    display: flex; flex-direction: column; align-items: center;
-    gap: 3px;
-    padding: 8px 4px;
-    color: #4a5562;
-    text-decoration: none;
-    cursor: pointer;
-    border-left: 3px solid transparent;
-    border-right: 3px solid transparent;
-    transition: background 0.12s, color 0.12s;
-  }
-  .wd-shell .wd-rail-item:hover { background: #f4f5f7; color: #1f3a52; }
-  .wd-shell .wd-rail-item.active {
-    color: #1f3a52;
-    border-left-color: #1f3a52;
-    background: #f4f5f7;
-  }
-  .wd-shell .wd-rail-item svg { width: 20px; height: 20px; }
-  .wd-shell .wd-rail-label { font-size: 10px; font-weight: 500; letter-spacing: 0.1px; }
 
   .wd-content {
-    flex: 1;
+    height: 100%;
     overflow-y: auto;
     min-width: 0;
     padding: 18px 22px 32px;
+    box-sizing: border-box;
   }
 
   .wd-page-title {
@@ -1079,6 +1051,16 @@
     font-size: 11px;
     color: #605e5c;
     border-right: 1px solid var(--sp-bar-border);
+    cursor: pointer;
+    user-select: none;
+    height: 100%;
+    display: inline-flex;
+    align-items: center;
+    transition: background 0.12s, color 0.12s;
+  }
+  .sp-sheet-tab:hover:not(.active) {
+    background: #ebebeb;
+    color: #252423;
   }
   .sp-sheet-tab.active {
     background: #fff;
@@ -1088,6 +1070,37 @@
     border-left: 1px solid var(--sp-bar-border);
     border-right: 1px solid var(--sp-bar-border);
     margin-top: -1px;
+  }
+
+  /* Column resize handles on the inner header row */
+  .sp-table thead tr.col-headers th {
+    position: sticky;
+    top: 18px; /* sit below the col-letters row (which is height:18px) */
+  }
+  .col-resize-handle {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 5px;
+    height: 100%;
+    cursor: col-resize;
+    user-select: none;
+    background: transparent;
+    z-index: 4;
+  }
+  .col-resize-handle:hover {
+    background: rgba(24, 90, 189, 0.35);
+  }
+  .col-resize-handle.dragging,
+  body.col-resizing .col-resize-handle.dragging {
+    background: rgba(24, 90, 189, 0.6);
+  }
+  body.col-resizing {
+    cursor: col-resize !important;
+    user-select: none;
+  }
+  body.col-resizing * {
+    cursor: col-resize !important;
   }
 
   /* Submitting overlay on form */
@@ -1198,37 +1211,8 @@
           </div>
         </div>
 
-        <!-- Body: left rail + main content (mirrors probation prototype) -->
+        <!-- Body: full-width main content (left rail removed) -->
         <div class="wd-body">
-
-          <!-- Left vertical rail -->
-          <nav class="wd-rail" aria-label="Primary">
-            <a class="wd-rail-item active" href="#" title="Home" onclick="event.preventDefault()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5l9-7 9 7V20a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1z"/></svg>
-              <span class="wd-rail-label">Home</span>
-            </a>
-            <a class="wd-rail-item" href="#" title="Personal" onclick="event.preventDefault()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
-              <span class="wd-rail-label">Personal</span>
-            </a>
-            <a class="wd-rail-item" href="#" title="Team" onclick="event.preventDefault()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="6" r="3"/><circle cx="6" cy="14" r="2.5"/><circle cx="18" cy="14" r="2.5"/><path d="M12 9v3M9 13l2-1M15 13l-2-1"/></svg>
-              <span class="wd-rail-label">Team</span>
-            </a>
-            <a class="wd-rail-item" href="#" title="More" onclick="event.preventDefault()">
-              <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="6" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18" cy="12" r="1.6"/></svg>
-              <span class="wd-rail-label">More</span>
-            </a>
-            <div class="wd-rail-spacer"></div>
-            <a class="wd-rail-item" href="#" title="Saved" onclick="event.preventDefault()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-              <span class="wd-rail-label">Saved</span>
-            </a>
-            <a class="wd-rail-item" href="#" title="Settings" onclick="event.preventDefault()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
-              <span class="wd-rail-label">Settings</span>
-            </a>
-          </nav>
 
           <!-- Workday content -->
           <div class="wd-content">
@@ -1413,39 +1397,11 @@
           <span class="sp-formula-content" id="sp-formula">Timestamp</span>
         </div>
 
-        <!-- Grid -->
+        <!-- Grid (table is rebuilt by JS based on the active sheet) -->
         <div class="sp-grid-wrap">
           <table class="sp-table" id="sp-table">
-            <colgroup>
-              <col style="width:32px">
-              <col style="width:130px">
-              <col style="width:100px">
-              <col style="width:140px">
-              <col style="width:140px">
-              <col style="width:70px">
-              <col style="width:140px">
-              <col style="width:240px">
-              <col style="width:90px">
-              <col style="width:110px">
-            </colgroup>
-            <thead>
-              <tr class="col-letters">
-                <th></th>
-                <th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>F</th><th>G</th><th>H</th><th>I</th>
-              </tr>
-              <tr class="col-headers">
-                <th class="sp-row-num">1</th>
-                <th>Timestamp</th>
-                <th>Nomination ID</th>
-                <th>Recipient</th>
-                <th>Nominator</th>
-                <th>Value</th>
-                <th>Decision</th>
-                <th>Rule(s) applied</th>
-                <th>Ruleset ver.</th>
-                <th>Workday link</th>
-              </tr>
-            </thead>
+            <colgroup id="sp-colgroup"></colgroup>
+            <thead id="sp-thead"></thead>
             <tbody id="sp-tbody">
               <!-- Pre-seeded rows are injected by JS so row numbers stay correct -->
             </tbody>
@@ -1453,10 +1409,10 @@
         </div>
 
         <!-- Sheet tabs -->
-        <div class="sp-sheet-tabs">
-          <span class="sp-sheet-tab active">Decisions</span>
-          <span class="sp-sheet-tab">Ruleset history</span>
-          <span class="sp-sheet-tab">Cycle summary</span>
+        <div class="sp-sheet-tabs" id="sp-sheet-tabs">
+          <span class="sp-sheet-tab active" data-sheet="decisions">Decisions</span>
+          <span class="sp-sheet-tab" data-sheet="policy">Active policy</span>
+          <span class="sp-sheet-tab" data-sheet="weekly">Weekly summary</span>
         </div>
 
         <!-- Status bar -->
@@ -1474,6 +1430,8 @@
 <script>
   // ── State ───────────────────────────────────────────────────────────
   const tbody = document.getElementById('sp-tbody');
+  const thead = document.getElementById('sp-thead');
+  const colgroupEl = document.getElementById('sp-colgroup');
   const formulaBar = document.getElementById('sp-formula');
   const rowCountEl = document.getElementById('sp-row-count');
   const submittingOverlay = document.getElementById('submitting');
@@ -1530,6 +1488,63 @@
     }
   ];
 
+  // ── Sheet definitions ──────────────────────────────────────────────
+  // Each sheet owns: a colgroup (column widths, persisted via this object),
+  // a header row (column letters + names), and a body renderer.
+  const COL_LETTERS = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N'];
+
+  const sheets = {
+    decisions: {
+      label: 'Decisions',
+      // Decision rows are appended here as they come in; pre-seed below.
+      rows: [],
+      columns: [
+        { name: 'Timestamp',     width: 130 },
+        { name: 'Nomination ID', width: 100 },
+        { name: 'Recipient',     width: 140 },
+        { name: 'Nominator',     width: 140 },
+        { name: 'Value',         width: 70  },
+        { name: 'Decision',      width: 140 },
+        { name: 'Rule(s) applied', width: 240 },
+        { name: 'Ruleset ver.',  width: 90  },
+        { name: 'Workday link',  width: 110 }
+      ]
+    },
+    policy: {
+      label: 'Active policy',
+      columns: [
+        { name: 'Rule',      width: 220 },
+        { name: 'Threshold', width: 280 },
+        { name: 'Status',    width: 110 }
+      ],
+      rows: [
+        ['Value cap',             '£250',                                 'Active'],
+        ['Frequency cap',         '3 per recipient/project per 30 days',  'Active'],
+        ['Recipient eligibility', 'Must be active (not on long leave)',   'Active'],
+        ['Manager-self-loop',     'Refused (recipient cannot report to nominator)', 'Active']
+      ]
+    },
+    weekly: {
+      label: 'Weekly summary',
+      columns: [
+        { name: 'Week',                width: 130 },
+        { name: 'Nominations',         width: 110 },
+        { name: 'Auto-approved',       width: 120 },
+        { name: 'Routed for review',   width: 130 },
+        { name: 'Avg auto-approval',   width: 130 }
+      ],
+      rows: [
+        ['This week (W19)', '47', '44', '3',  '2.1s'],
+        ['W18',             '52', '49', '3',  '2.0s'],
+        ['W17',             '41', '38', '3',  '2.3s'],
+        ['W16',             '46', '43', '3',  '2.2s'],
+        ['W15',             '38', '36', '2',  '2.1s']
+      ]
+    }
+  };
+
+  let activeSheet = 'decisions';
+
   // ── Render helpers ─────────────────────────────────────────────────
   function fmtMoney(v) {
     return '£' + Number(v).toFixed(2);
@@ -1578,11 +1593,122 @@
   }
 
   function seedSheet() {
+    // Pre-seed the decisions sheet (newest at top — match the live insert order).
+    // sheets.decisions.rows is rendered top-to-bottom, so push in newest-first order.
     [...seedRows].reverse().forEach(r => {
-      tbody.appendChild(buildRowEl(r, false));
+      sheets.decisions.rows.push(r);
     });
+    renderSheet(activeSheet);
+  }
+
+  // ── Sheet rendering ────────────────────────────────────────────────
+  function renderSheet(name) {
+    activeSheet = name;
+    const sheet = sheets[name];
+
+    // Reflect active tab visually.
+    document.querySelectorAll('.sp-sheet-tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.sheet === name);
+    });
+
+    // Build colgroup: row-number col first, then one col per column.
+    let colHtml = '<col style="width:32px">';
+    sheet.columns.forEach(c => {
+      colHtml += `<col style="width:${c.width}px">`;
+    });
+    colgroupEl.innerHTML = colHtml;
+
+    // Build header: col-letters row + col-headers row.
+    let lettersHtml = '<tr class="col-letters"><th></th>';
+    sheet.columns.forEach((_, i) => {
+      lettersHtml += `<th>${COL_LETTERS[i] || ''}</th>`;
+    });
+    lettersHtml += '</tr>';
+
+    let headersHtml = '<tr class="col-headers"><th class="sp-row-num">1</th>';
+    sheet.columns.forEach((c, i) => {
+      headersHtml += `<th data-col-index="${i + 1}">${escapeHtml(c.name)}<span class="col-resize-handle" data-col-index="${i + 1}"></span></th>`;
+    });
+    headersHtml += '</tr>';
+    thead.innerHTML = lettersHtml + headersHtml;
+
+    // Body
+    tbody.innerHTML = '';
+    rowCounter = 0;
+    if (name === 'decisions') {
+      sheet.rows.forEach(r => {
+        tbody.appendChild(buildRowEl(r, false));
+      });
+    } else {
+      sheet.rows.forEach(rowArr => {
+        const tr = document.createElement('tr');
+        rowCounter += 1;
+        let cellsHtml = `<td class="sp-row-num">${rowCounter + 1}</td>`;
+        rowArr.forEach((val, i) => {
+          // Status cells get a green tint on the policy sheet.
+          if (name === 'policy' && i === 2) {
+            cellsHtml += `<td><span class="decision-pill approve">${escapeHtml(String(val))}</span></td>`;
+          } else {
+            cellsHtml += `<td>${escapeHtml(String(val))}</td>`;
+          }
+        });
+        tr.innerHTML = cellsHtml;
+        tbody.appendChild(tr);
+      });
+    }
+
     renumberRows();
     updateRowCount();
+    formulaBar.textContent = sheet.columns[0] ? sheet.columns[0].name : '';
+
+    // Re-attach resize handle listeners (handles are rebuilt with the header).
+    attachResizeHandles();
+  }
+
+  // ── Column resizing ────────────────────────────────────────────────
+  function attachResizeHandles() {
+    const handles = thead.querySelectorAll('.col-resize-handle');
+    handles.forEach(h => {
+      h.addEventListener('mousedown', startColResize);
+    });
+  }
+
+  function startColResize(e) {
+    e.preventDefault();
+    const handle = e.currentTarget;
+    const colIndex = Number(handle.dataset.colIndex); // 1-based (0 is row-num col)
+    const colEl = colgroupEl.children[colIndex];
+    if (!colEl) return;
+
+    const startX = e.clientX;
+    const startWidth = colEl.getBoundingClientRect().width;
+    const MIN = 60;
+    const MAX = 600;
+
+    handle.classList.add('dragging');
+    document.body.classList.add('col-resizing');
+
+    function onMove(ev) {
+      const delta = ev.clientX - startX;
+      let next = startWidth + delta;
+      if (next < MIN) next = MIN;
+      if (next > MAX) next = MAX;
+      colEl.style.width = next + 'px';
+      // Persist back to the sheet definition so widths survive sheet switches.
+      const sheet = sheets[activeSheet];
+      const sheetColIdx = colIndex - 1; // colgroup has the row-num col first
+      if (sheet && sheet.columns[sheetColIdx]) {
+        sheet.columns[sheetColIdx].width = next;
+      }
+    }
+    function onUp() {
+      handle.classList.remove('dragging');
+      document.body.classList.remove('col-resizing');
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    }
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
   }
 
   // ── Reasoning expansion ────────────────────────────────────────────
@@ -1590,7 +1716,8 @@
     const tr = document.createElement('tr');
     tr.classList.add('reasoning-row');
     const td = document.createElement('td');
-    td.colSpan = 10;
+    // colspan = row-num col (1) + decision-sheet column count
+    td.colSpan = 1 + sheets.decisions.columns.length;
     const conf = (reasoning && reasoning.confidence) || 'medium';
     const summary = (reasoning && reasoning.reason_summary) || '(no summary returned)';
     const rules = (reasoning && Array.isArray(reasoning.rules_applied)) ? reasoning.rules_applied : [];
@@ -1626,6 +1753,28 @@
     html += `</div>`;
     td.innerHTML = html;
     tr.appendChild(td);
+    return tr;
+  }
+
+  // Insert a freshly-decided row into the Decisions sheet.
+  // If the user is currently looking at a different sheet, switch back automatically
+  // so the new decision is visible.
+  function insertDecisionRow(row) {
+    sheets.decisions.rows.unshift(row);
+    if (activeSheet !== 'decisions') {
+      // renderSheet rebuilds the body from sheets.decisions.rows — the new row
+      // will be at the top. Mark it fresh so the flash/slide animations play.
+      renderSheet('decisions');
+      const firstTr = tbody.querySelector('tr:not(.reasoning-row)');
+      if (firstTr) firstTr.classList.add('fresh', 'slide-in');
+      formulaBar.textContent = row.ts;
+      return firstTr;
+    }
+    const tr = buildRowEl(row, true);
+    tbody.insertBefore(tr, tbody.firstChild);
+    renumberRows();
+    updateRowCount();
+    formulaBar.textContent = row.ts;
     return tr;
   }
 
@@ -1823,11 +1972,7 @@
 
     const row = sc.row();
     row.link = row.nomId;
-    const tr = buildRowEl(row, true);
-    tbody.insertBefore(tr, tbody.firstChild);
-    renumberRows();
-    updateRowCount();
-    formulaBar.textContent = row.ts;
+    insertDecisionRow(row);
 
     if (sc.showRouted) {
       await sleep(250);
@@ -2014,11 +2159,7 @@
           ]
         }
       };
-      const tr = buildRowEl(row, true);
-      tbody.insertBefore(tr, tbody.firstChild);
-      renumberRows();
-      updateRowCount();
-      formulaBar.textContent = ts;
+      insertDecisionRow(row);
       await sleep(1200);
       lockUI(false);
       return;
@@ -2086,11 +2227,7 @@
       link: nomId,
       reasoning: reasoningPayload
     };
-    const tr = buildRowEl(row, true);
-    tbody.insertBefore(tr, tbody.firstChild);
-    renumberRows();
-    updateRowCount();
-    formulaBar.textContent = ts;
+    const tr = insertDecisionRow(row);
 
     if (showRouted) {
       await sleep(250);
@@ -2120,6 +2257,15 @@
       t.classList.add('active');
       const pane = document.getElementById('pane-' + t.dataset.tab);
       if (pane) pane.classList.add('active');
+    });
+  });
+
+  // Sheet tabs
+  document.querySelectorAll('.sp-sheet-tab').forEach(t => {
+    t.addEventListener('click', () => {
+      const name = t.dataset.sheet;
+      if (!name || name === activeSheet) return;
+      renderSheet(name);
     });
   });
 
