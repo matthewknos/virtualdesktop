@@ -160,6 +160,9 @@
   .card-soon .card-desc { color: var(--color-graphite); }
   .card-soon:hover { background: var(--color-snow); }
 
+  /* Hidden by default; revealed via ⌘K. */
+  .card-hidden { display: none; }
+
   /* ── Footer ── */
   .footer {
     margin-top: 80px;
@@ -296,6 +299,11 @@
       <span class="card-status">Coming soon</span>
       <div class="card-title">Next prototype</div>
     </div>
+
+    <a class="card card-hidden" id="card-intl-comp-relo" href="/intl-comp-relo">
+      <span class="card-status" style="color:#b88600;">Candidate &middot; for CoE feedback</span>
+      <div class="card-title">International Comp &amp; Relocation</div>
+    </a>
   </div>
 
   <div class="footer">Internal &mdash; for CoE feedback. Do not share the URL externally.</div>
@@ -326,6 +334,15 @@ async function checkPassword() {
 document.addEventListener('DOMContentLoaded', () => {
   if (sessionStorage.getItem(PW_KEY)) {
     document.getElementById('password-gate').style.display = 'none';
+  }
+});
+
+// ⌘K / Ctrl+K reveals the candidate prototype card.
+document.addEventListener('keydown', (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+    e.preventDefault();
+    const card = document.getElementById('card-intl-comp-relo');
+    if (card) card.classList.toggle('card-hidden');
   }
 });
 </script>

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>International Comp &amp; Relocation Agent — CoE Testing</title>
+<style>
+  :root {
+    --color-ink: #1d1d1f;
+    --color-graphite: #707070;
+    --color-fog: #f5f5f7;
+    --color-snow: #ffffff;
+    --color-silver-mist: #e8e8ed;
+    --color-azure: #0071e3;
+    --color-caution: #b64400;
+    --font-display: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-text: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body { height: 100%; }
+
+  body {
+    font-family: var(--font-text);
+    background: var(--color-fog);
+    color: var(--color-ink);
+    font-size: 17px;
+    line-height: 1.47;
+    letter-spacing: -0.1px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+  }
+
+  /* ── Global nav ── */
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--color-fog);
+    border-bottom: 1px solid var(--color-silver-mist);
+    height: 44px;
+    display: flex;
+    align-items: center;
+    padding: 0 22px;
+    gap: 10px;
+  }
+  .header-title {
+    font-family: var(--font-text);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-ink);
+    letter-spacing: -0.26px;
+  }
+  .header-sub {
+    font-family: var(--font-text);
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--color-graphite);
+    letter-spacing: -0.26px;
+  }
+  .header-divider {
+    color: var(--color-silver-mist);
+    font-size: 12px;
+  }
+  .header-back {
+    margin-left: auto;
+    font-family: var(--font-text);
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--color-azure);
+    text-decoration: none;
+    letter-spacing: -0.26px;
+  }
+  .header-back:hover { text-decoration: underline; }
+
+  /* ── Page container ── */
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 120px 40px 80px;
+  }
+
+  /* ── Hero ── */
+  h1 {
+    font-family: var(--font-display);
+    font-size: 72px;
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -1.3px;
+    color: var(--color-ink);
+    margin-bottom: 20px;
+  }
+
+  .lede {
+    font-family: var(--font-text);
+    font-size: 22px;
+    font-weight: 300;
+    line-height: 1.4;
+    letter-spacing: -0.2px;
+    color: var(--color-ink);
+    max-width: 780px;
+    margin-bottom: 80px;
+  }
+
+  /* ── Card grid ── */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+  }
+
+  .card {
+    background: var(--color-snow);
+    border-radius: 28px;
+    padding: 40px 32px 36px;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: background-color 0.34s ease;
+    min-height: 240px;
+  }
+  .card:hover { background-color: #fafafa; }
+
+  .card-status {
+    display: inline-block;
+    font-family: var(--font-text);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--color-graphite);
+    margin-bottom: 18px;
+  }
+  .card-status.live { color: var(--color-ink); }
+
+  .card-title {
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.5px;
+    color: var(--color-ink);
+    margin-bottom: 10px;
+  }
+
+  .card-desc {
+    font-family: var(--font-text);
+    font-size: 17px;
+    font-weight: 400;
+    line-height: 1.47;
+    letter-spacing: -0.1px;
+    color: var(--color-graphite);
+  }
+
+  .card-soon {
+    cursor: default;
+    background: var(--color-snow);
+  }
+  .card-soon .card-title,
+  .card-soon .card-desc { color: var(--color-graphite); }
+  .card-soon:hover { background: var(--color-snow); }
+
+  /* ── Footer ── */
+  .footer {
+    margin-top: 80px;
+    padding-top: 40px;
+    text-align: center;
+    font-family: var(--font-text);
+    font-size: 12px;
+    line-height: 1.33;
+    letter-spacing: -0.26px;
+    color: var(--color-graphite);
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 720px) {
+    .container { padding: 64px 22px 64px; }
+    h1 { font-size: 48px; letter-spacing: -0.8px; }
+    .lede { font-size: 19px; margin-bottom: 56px; }
+    .footer { margin-top: 56px; }
+  }
+</style>
+<script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+
+<div class="header">
+  <span class="header-title">CoE Testing</span>
+  <span class="header-divider">/</span>
+  <span class="header-sub">International Comp &amp; Relocation Agent</span>
+  <span style="margin-left:10px;padding:2px 8px;border:1px solid #b88600;border-radius:3px;color:#b88600;font-size:10px;font-weight:600;letter-spacing:0.4px;text-transform:uppercase;">Candidate</span>
+  <a class="header-back" href="/">&larr; Back to gallery</a>
+</div>
+
+<div class="container">
+  <h1>International Comp &amp; Relocation Agent</h1>
+  <p class="lede">A Total Rewards drafter that returns a full cross-border comp package &mdash; band, FX-normalised offer, COL delta, tax flag, relocation policy, benefits parity, equal-pay justification &mdash; in under 90 seconds, against a consolidated Workday-resident source of truth. Time-to-offer drops from a 3-day median to 24 hours.</p>
+
+  <div class="grid">
+    <a class="card" href="/intl-comp-relo/proposal">
+      <span class="card-status live">Read</span>
+      <div class="card-title">Proposal</div>
+      <div class="card-desc">Problem, solution, business case.</div>
+    </a>
+
+    <div class="card card-soon">
+      <span class="card-status">Coming soon</span>
+      <div class="card-title">Technical</div>
+      <div class="card-desc">Architecture, integration surface, source-of-truth, eval harness.</div>
+    </div>
+
+    <div class="card card-soon">
+      <span class="card-status">Coming soon</span>
+      <div class="card-title">Demo</div>
+      <div class="card-desc">Walk the Teams adaptive-card flow with stubbed source-of-truth.</div>
+    </div>
+  </div>
+
+  <div class="footer">Internal &mdash; for CoE feedback. Do not share the URL externally.</div>
+</div>
+
+</body>
+</html>

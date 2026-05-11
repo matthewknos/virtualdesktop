@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>International Comp &amp; Relocation Agent — Proposal</title>
+<style>
+  :root {
+    --color-ink: #1d1d1f;
+    --color-graphite: #707070;
+    --color-fog: #f5f5f7;
+    --color-snow: #ffffff;
+    --color-silver-mist: #e8e8ed;
+    --color-azure: #0071e3;
+    --color-azure-soft: rgba(0, 113, 227, 0.08);
+    --color-caution: #b64400;
+    --color-caution-soft: rgba(182, 68, 0, 0.07);
+    --font-display: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-text: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+
+  body {
+    font-family: var(--font-text);
+    background: var(--color-fog);
+    color: var(--color-ink);
+    font-size: 17px;
+    line-height: 1.55;
+    letter-spacing: -0.1px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+  }
+
+  /* ── Sticky header ── */
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(245, 245, 247, 0.85);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 1px solid var(--color-silver-mist);
+    height: 44px;
+    display: flex;
+    align-items: center;
+    padding: 0 22px;
+    gap: 14px;
+  }
+  .header-title {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: -0.26px;
+  }
+  .header-sub {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--color-graphite);
+    letter-spacing: -0.26px;
+  }
+  .header-back {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--color-azure);
+    text-decoration: none;
+    letter-spacing: -0.26px;
+  }
+  .header-back:hover { text-decoration: underline; }
+
+  /* ── Bands ── */
+  .band {
+    width: 100%;
+    padding: 96px 32px;
+  }
+  .band-snow { background: var(--color-snow); }
+  .band-fog  { background: var(--color-fog); }
+  .band-ink  { background: var(--color-ink); color: var(--color-snow); }
+  .band-inner {
+    max-width: 1180px;
+    margin: 0 auto;
+  }
+
+  /* ── Section labels ── */
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    color: var(--color-graphite);
+    margin-bottom: 18px;
+  }
+  .band-ink .eyebrow { color: rgba(255,255,255,0.55); }
+
+  /* ── Headlines ── */
+  .h-section {
+    font-family: var(--font-display);
+    font-size: 40px;
+    font-weight: 600;
+    line-height: 1.1;
+    letter-spacing: -0.6px;
+    margin-bottom: 16px;
+  }
+  .h-lede {
+    font-family: var(--font-display);
+    font-size: 19px;
+    font-weight: 400;
+    line-height: 1.45;
+    color: var(--color-graphite);
+    max-width: 760px;
+    margin-bottom: 56px;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 88px 32px 96px;
+    background: linear-gradient(180deg, var(--color-snow) 0%, var(--color-fog) 100%);
+  }
+  .hero-inner {
+    max-width: 1180px;
+    margin: 0 auto;
+  }
+  .hero-title {
+    font-family: var(--font-display);
+    font-size: 64px;
+    font-weight: 700;
+    line-height: 1.02;
+    letter-spacing: -1.2px;
+    margin-bottom: 18px;
+  }
+  .hero-tag {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 400;
+    line-height: 1.4;
+    color: var(--color-graphite);
+    max-width: 800px;
+    margin-bottom: 56px;
+    letter-spacing: -0.3px;
+  }
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  .stat {
+    background: var(--color-snow);
+    border: 1px solid var(--color-silver-mist);
+    border-radius: 18px;
+    padding: 32px 28px 30px;
+  }
+  .stat-num {
+    font-family: var(--font-display);
+    font-size: 68px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -1.6px;
+    color: var(--color-ink);
+    margin-bottom: 10px;
+  }
+  .stat-num .unit {
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--color-graphite);
+    letter-spacing: -0.5px;
+    margin-left: 4px;
+  }
+  .stat-label {
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--color-graphite);
+    letter-spacing: -0.1px;
+  }
+  .stat-accent .stat-num { color: var(--color-azure); }
+
+  /* ── Two column: problem / solution ── */
+  .split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+    align-items: start;
+  }
+
+  .quote-card {
+    border-left: 3px solid var(--color-azure);
+    padding: 4px 0 4px 24px;
+    margin-bottom: 28px;
+  }
+  .quote-card .q {
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 500;
+    line-height: 1.32;
+    letter-spacing: -0.4px;
+  }
+  .quote-card .attr {
+    font-size: 13px;
+    color: var(--color-graphite);
+    margin-top: 14px;
+    letter-spacing: 0.1px;
+  }
+  .problem-num {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin-top: 20px;
+  }
+  .problem-num .big {
+    font-family: var(--font-display);
+    font-size: 56px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -1px;
+    color: var(--color-ink);
+  }
+  .problem-num .desc {
+    font-size: 16px;
+    color: var(--color-graphite);
+    line-height: 1.4;
+    max-width: 340px;
+  }
+
+  .solution-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .solution-list li {
+    display: flex;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--color-silver-mist);
+    font-size: 16px;
+    line-height: 1.45;
+    color: var(--color-ink);
+  }
+  .solution-list li:last-child { border-bottom: none; }
+  .solution-list .step {
+    flex: 0 0 26px;
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-azure);
+    letter-spacing: 0.3px;
+    padding-top: 2px;
+  }
+
+  /* ── Origin ladder ── */
+  .ladder {
+    display: grid;
+    gap: 12px;
+  }
+  .ladder-row {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    align-items: start;
+    background: var(--color-snow);
+    border: 1px solid var(--color-silver-mist);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .ladder-step {
+    background: var(--color-fog);
+    padding: 22px 24px;
+    border-right: 1px solid var(--color-silver-mist);
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+  }
+  .ladder-step .micro {
+    display: block;
+    font-family: var(--font-text);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.1px;
+    color: var(--color-graphite);
+    margin-bottom: 6px;
+  }
+  .ladder-body {
+    padding: 22px 26px;
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--color-ink);
+  }
+  .ladder-pull {
+    margin-top: 28px;
+    font-family: var(--font-display);
+    font-size: 20px;
+    line-height: 1.4;
+    color: var(--color-graphite);
+    letter-spacing: -0.3px;
+    max-width: 760px;
+  }
+  .ladder-pull em {
+    color: var(--color-ink);
+    font-style: normal;
+    font-weight: 600;
+  }
+
+  /* ── Before / After band ── */
+  .ba-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0;
+    background: var(--color-snow);
+    border: 1px solid var(--color-silver-mist);
+    border-radius: 18px;
+    overflow: hidden;
+  }
+  .ba-row {
+    display: grid;
+    grid-template-columns: 1.6fr 1.1fr 0.4fr 1.1fr;
+    align-items: center;
+    padding: 22px 28px;
+    border-bottom: 1px solid var(--color-silver-mist);
+  }
+  .ba-row:last-child { border-bottom: none; }
+  .ba-row.head {
+    background: var(--color-fog);
+    padding: 14px 28px;
+  }
+  .ba-row.head div {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--color-graphite);
+  }
+  .ba-metric {
+    font-size: 15px;
+    color: var(--color-ink);
+    font-weight: 500;
+    letter-spacing: -0.1px;
+  }
+  .ba-today {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--color-graphite);
+    letter-spacing: -0.3px;
+  }
+  .ba-arrow {
+    color: var(--color-azure);
+    font-size: 22px;
+    text-align: center;
+    font-weight: 400;
+  }
+  .ba-after {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--color-azure);
+    letter-spacing: -0.5px;
+  }
+
+  /* ── Risk table ── */
+  .risk-list {
+    display: grid;
+    gap: 12px;
+  }
+  .risk-row {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: 0;
+    border: 1px solid var(--color-silver-mist);
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--color-snow);
+  }
+  .risk-cell {
+    padding: 22px 26px;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  .risk-cell.risk {
+    background: var(--color-caution-soft);
+    border-right: 1px solid var(--color-silver-mist);
+  }
+  .risk-cell.risk .label,
+  .risk-cell.mitigation .label {
+    display: block;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    margin-bottom: 8px;
+  }
+  .risk-cell.risk .label { color: var(--color-caution); }
+  .risk-cell.mitigation .label { color: var(--color-azure); }
+
+  /* ── Build approach inline ── */
+  .phase-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+  .phase {
+    border: 1px solid var(--color-silver-mist);
+    border-radius: 14px;
+    padding: 22px 22px 24px;
+    background: var(--color-snow);
+  }
+  .phase .tag {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--color-azure);
+    margin-bottom: 10px;
+  }
+  .phase .body {
+    font-size: 15px;
+    line-height: 1.45;
+    color: var(--color-ink);
+  }
+  .phase-note {
+    font-size: 14px;
+    color: var(--color-graphite);
+    line-height: 1.5;
+  }
+
+  /* ── Ask band ── */
+  .ask-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-top: 8px;
+  }
+  .ask-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 18px;
+    padding: 32px 28px;
+  }
+  .ask-num {
+    font-family: var(--font-display);
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--color-snow);
+    letter-spacing: -1px;
+    margin-bottom: 18px;
+    opacity: 0.5;
+  }
+  .ask-text {
+    font-family: var(--font-display);
+    font-size: 19px;
+    font-weight: 500;
+    line-height: 1.35;
+    letter-spacing: -0.3px;
+    color: var(--color-snow);
+  }
+  .ask-footnote {
+    margin-top: 36px;
+    font-family: var(--font-display);
+    font-size: 18px;
+    line-height: 1.4;
+    color: rgba(255,255,255,0.6);
+    letter-spacing: -0.3px;
+    max-width: 720px;
+  }
+  .ask-footnote em {
+    color: var(--color-snow);
+    font-style: normal;
+    font-weight: 600;
+  }
+  .band-ink .h-section { color: var(--color-snow); }
+  .band-ink .h-lede { color: rgba(255,255,255,0.6); }
+
+  /* ── Footer ── */
+  .footer {
+    padding: 28px 32px 36px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--color-graphite);
+    letter-spacing: -0.1px;
+    background: var(--color-fog);
+    border-top: 1px solid var(--color-silver-mist);
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 980px) {
+    .stat-grid { grid-template-columns: 1fr; }
+    .split { grid-template-columns: 1fr; gap: 48px; }
+    .phase-row { grid-template-columns: 1fr; }
+    .ask-grid { grid-template-columns: 1fr; }
+    .ba-row { grid-template-columns: 1fr; gap: 6px; padding: 18px 22px; }
+    .ba-row.head { display: none; }
+    .ba-arrow { display: none; }
+    .ba-today::before { content: "Today: "; color: var(--color-graphite); font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px; }
+    .ba-after::before { content: "With agent: "; color: var(--color-azure); font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px; }
+    .risk-row { grid-template-columns: 1fr; }
+    .risk-cell.risk { border-right: none; border-bottom: 1px solid var(--color-silver-mist); }
+    .ladder-row { grid-template-columns: 1fr; }
+    .ladder-step { border-right: none; border-bottom: 1px solid var(--color-silver-mist); }
+    .hero-title { font-size: 44px; letter-spacing: -0.8px; }
+    .hero-tag { font-size: 18px; }
+    .h-section { font-size: 30px; }
+    .stat-num { font-size: 56px; }
+    .band { padding: 64px 22px; }
+    .hero { padding: 56px 22px 64px; }
+  }
+</style>
+<script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+
+<div class="header">
+  <span class="header-title">CoE Testing</span>
+  <span class="header-sub">International Comp &amp; Relocation Agent — Proposal</span>
+  <span style="margin-left:10px;padding:2px 8px;border:1px solid #b88600;border-radius:3px;color:#b88600;font-size:10px;font-weight:600;letter-spacing:0.4px;text-transform:uppercase;">Candidate</span>
+  <a class="header-back" href="/intl-comp-relo">&larr; Back to overview</a>
+</div>
+
+<!-- ─── HERO ─── -->
+<section class="hero">
+  <div class="hero-inner">
+    <h1 class="hero-title">International Comp &amp; Relocation Agent</h1>
+    <p class="hero-tag">A Total Rewards drafter that returns a full cross-border comp package &mdash; band, FX-normalised offer, COL delta, tax flag, relocation policy, benefits parity, equal-pay justification &mdash; in under 90 seconds, against a consolidated Workday-resident source of truth.</p>
+
+    <div class="stat-grid">
+      <div class="stat stat-accent">
+        <div class="stat-num">24<span class="unit">h</span></div>
+        <div class="stat-label">End-to-end time-to-offer. Today the median is 3 days, with the long tail drifting to 15.</div>
+      </div>
+      <div class="stat stat-accent">
+        <div class="stat-num">~250<span class="unit">days</span></div>
+        <div class="stat-label">Of HRBP + Total Rewards + Tax effort released each year, currently burned on package construction.</div>
+      </div>
+      <div class="stat stat-accent">
+        <div class="stat-num">&le;5<span class="unit">%</span></div>
+        <div class="stat-label">Target senior cross-border withdrawal rate, from ~10&ndash;15% today. Worth &euro;150&ndash;300k in avoided recruitment leakage.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── PROBLEM / SOLUTION ─── -->
+<section class="band band-snow">
+  <div class="band-inner split">
+
+    <div>
+      <h2 class="h-section">A consolidation problem before it is an agent problem.</h2>
+
+      <div class="quote-card">
+        <p class="q">&ldquo;Bands are in Workday. FX is in SharePoint. Cost-of-living is in another SharePoint. Relocation matrix in a third. Benefits in Workday. Tax is on email. The hiring manager sees none of it.&rdquo;</p>
+        <div class="attr">&mdash;</div>
+      </div>
+
+      <div class="problem-num">
+        <div class="big">3<span style="font-size:36px;color:var(--color-graphite);letter-spacing:-0.4px;"> days</span></div>
+        <div class="desc">median time-to-offer for cross-border packages today &mdash; ~60&ndash;80 packages a year, ~250 person-days burned.</div>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="h-section">What the agent does.</h2>
+
+      <ol class="solution-list">
+        <li><span class="step">01</span><span>Reads the requisition, resolves the subject&rsquo;s home and destination context, and runs a freshness check across all six source-of-truth feeds before drafting anything.</span></li>
+        <li><span class="step">02</span><span>Drafts a full package into a Teams adaptive card for Total Rewards &mdash; band positioning, FX-normalised base, COL delta, relocation policy, benefits parity, equal-pay justification field.</span></li>
+        <li><span class="step">03</span><span>Classifies the tax case. Routine (UK&harr;IE PAYE gross-up, UK&harr;PL PIT) runs through a versioned rule engine. Non-routine flags to the external tax advisor with the case attached. The agent never invents a tax position.</span></li>
+        <li><span class="step">04</span><span>Logs every recommendation against UK Equality Act 2010, Irish Employment Equality Acts, German Entgelttransparenzgesetz, and the EU Pay Transparency Directive &mdash; band position, justification, inputs snapshot, approver. 7-year retention.</span></li>
+        <li><span class="step">05</span><span>Refuses to produce a package if any input is stale (FX &gt; 30 days, COL &gt; 90 days, bands &gt; 1 quarter). Stops upstream rot from leaking into an offer.</span></li>
+      </ol>
+    </div>
+
+  </div>
+</section>
+
+<!-- ─── ORIGIN LADDER ─── -->
+<section class="band band-fog">
+  <div class="band-inner">
+    <h2 class="h-section">Walking up the ladder.</h2>
+    <p class="h-lede">Senior candidates withdrawing is the chaser. Six scattered sources are the originator. We fix the originator.</p>
+
+    <div class="ladder">
+      <div class="ladder-row">
+        <div class="ladder-step"><span class="micro">Chaser</span>Total Rewards specialist</div>
+        <div class="ladder-body">Building the package against the clock, triangulating bands + FX + COL + tax + benefits + relocation from six different sources.</div>
+      </div>
+      <div class="ladder-row">
+        <div class="ladder-step"><span class="micro">Requester</span>Hiring manager / TA partner</div>
+        <div class="ladder-body">Needs a number for the offer letter. Sees the output, not the inputs.</div>
+      </div>
+      <div class="ladder-row">
+        <div class="ladder-step"><span class="micro">Approver</span>HR Director &amp; CFO</div>
+        <div class="ladder-body">HRD signs off above-band packages. CFO signs off relocation spend over &pound;15k.</div>
+      </div>
+      <div class="ladder-row">
+        <div class="ladder-step"><span class="micro">Originator</span>The data itself</div>
+        <div class="ladder-body">No single owner. Bands in Workday. FX, COL, relocation, benefits parity rules scattered across six SharePoint sites with conflicting versions. Tax on email. Consolidate the inputs and the chaser disappears.</div>
+      </div>
+    </div>
+
+    <p class="ladder-pull">The chaser is the weather. The originator is the climate. <em>We fix the climate.</em></p>
+  </div>
+</section>
+
+<!-- ─── BEFORE / AFTER ─── -->
+<section class="band band-snow">
+  <div class="band-inner">
+    <h2 class="h-section">Today vs. with the agent.</h2>
+    <p class="h-lede">Same Total Rewards oversight. Same HRD and CFO sign-off paths. The construction work is what changes.</p>
+
+    <div class="ba-grid">
+      <div class="ba-row head">
+        <div>Metric</div>
+        <div>Today</div>
+        <div></div>
+        <div>With agent</div>
+      </div>
+      <div class="ba-row">
+        <div class="ba-metric">Median time-to-offer</div>
+        <div class="ba-today">3 days</div>
+        <div class="ba-arrow">&rarr;</div>
+        <div class="ba-after">24 hours</div>
+      </div>
+      <div class="ba-row">
+        <div class="ba-metric">Time to draft a package</div>
+        <div class="ba-today">2&ndash;5 days</div>
+        <div class="ba-arrow">&rarr;</div>
+        <div class="ba-after">~90 seconds</div>
+      </div>
+      <div class="ba-row">
+        <div class="ba-metric">Source-of-truth surface</div>
+        <div class="ba-today">6 SharePoint sites + email</div>
+        <div class="ba-arrow">&rarr;</div>
+        <div class="ba-after">1 Workday object set</div>
+      </div>
+      <div class="ba-row">
+        <div class="ba-metric">Equal-pay justification logging</div>
+        <div class="ba-today">Ad-hoc, recoverable</div>
+        <div class="ba-arrow">&rarr;</div>
+        <div class="ba-after">100%, 7-year retention</div>
+      </div>
+      <div class="ba-row">
+        <div class="ba-metric">Senior cross-border withdrawal</div>
+        <div class="ba-today">~10&ndash;15%</div>
+        <div class="ba-arrow">&rarr;</div>
+        <div class="ba-after">&le; 5%</div>
+      </div>
+      <div class="ba-row">
+        <div class="ba-metric">TR specialist effort per package</div>
+        <div class="ba-today">2&ndash;5 days</div>
+        <div class="ba-arrow">&rarr;</div>
+        <div class="ba-after">~5 min review</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── RISKS ─── -->
+<section class="band band-fog">
+  <div class="band-inner">
+    <h2 class="h-section">What could go wrong, and how we contain it.</h2>
+    <p class="h-lede">Equal-pay risk is the headline. Tax non-routine and stale data are the operational risks.</p>
+
+    <div class="risk-list">
+      <div class="risk-row">
+        <div class="risk-cell risk">
+          <span class="label">Risk</span>
+          A cross-border recommendation isn&rsquo;t defensible against UK Equality Act 2010, Irish Employment Equality Acts, German Entgelttransparenzgesetz, or the EU Pay Transparency Directive.
+        </div>
+        <div class="risk-cell mitigation">
+          <span class="label">Mitigation</span>
+          Every package logs band position, justification (mandatory outside the 25th&ndash;75th percentile), inputs snapshot, approver. 7-year retention. Quarterly fairness review with HRD + CFO + Legal against the underlying source versions.
+        </div>
+      </div>
+      <div class="risk-row">
+        <div class="risk-cell risk">
+          <span class="label">Risk</span>
+          The agent invents a tax position on a non-routine case (equity vesting cross-border, dual citizenship, US inbound).
+        </div>
+        <div class="risk-cell mitigation">
+          <span class="label">Mitigation</span>
+          Routine cases only via a versioned rule engine (UK&harr;IE PAYE gross-up, UK&harr;PL PIT) signed off annually by the external tax advisor. Non-routine cases hard-flag to the advisor with the case attached; the agent stops calculating.
+        </div>
+      </div>
+      <div class="risk-row">
+        <div class="risk-cell risk">
+          <span class="label">Risk</span>
+          Stale source data corrupts an offer &mdash; FX two months old, COL a year stale, a band re-published mid-cycle.
+        </div>
+        <div class="risk-cell mitigation">
+          <span class="label">Mitigation</span>
+          Single freshness regime: FX 30 days, COL 90 days, bands and policy quarterly, tax rules annual re-confirm. Any stale input &rarr; full refusal to draft, surfaced to TR with the offending field.
+        </div>
+      </div>
+      <div class="risk-row">
+        <div class="risk-cell risk">
+          <span class="label">Risk</span>
+          The hiring manager sees an internal band, percentile, or justification text they shouldn&rsquo;t.
+        </div>
+        <div class="risk-cell mitigation">
+          <span class="label">Mitigation</span>
+          Confidentiality masking on every hiring-manager-audience message. Total Rewards, HRD, CFO see everything. Hiring manager sees the package output only. Tested in the eval harness against a regex of leakable terms.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── BUILD APPROACH ─── -->
+<section class="band band-snow">
+  <div class="band-inner">
+    <h2 class="h-section">Three phases. The data work is the lift.</h2>
+
+    <div class="phase-row">
+      <div class="phase">
+        <div class="tag">Upstream &mdash; do regardless</div>
+        <div class="body">Consolidate bands, FX, COL, relocation matrix, benefits parity rules, and routine tax-equalisation rules into a single Workday-resident source of truth. ~6 weeks integration, sponsored by Total Rewards lead + Workday IT. Runs in parallel to the agent build.</div>
+      </div>
+      <div class="phase">
+        <div class="tag">Pragmatic &mdash; v1</div>
+        <div class="body">UK&harr;IE + UK&harr;PL drafter. Agent reads, drafts the package into a Teams adaptive card, logs the justification. Total Rewards reviews, edits, approves, or refers to the external advisor. TA still owns the candidate conversation. 10 weeks, ~1.9 FTE.</div>
+      </div>
+      <div class="phase">
+        <div class="tag">Bold &mdash; v2</div>
+        <div class="body">Total Rewards Co-pilot. Agent owns the package end-to-end, posts to the approval queue, then to the candidate with TA in the loop only on negotiation. Full jurisdictional coverage. Pairs with Workday Talent Mobility &mdash; TM surfaces the move, this agent prices it.</div>
+      </div>
+    </div>
+
+    <p class="phase-note">Workday Compensation and Benefits are read-only inputs in v1. Workday Talent Mobility (announced) pairs in v2. No portfolio overlap blocks v1.</p>
+  </div>
+</section>
+
+<!-- ─── THE ASK ─── -->
+<section class="band band-ink">
+  <div class="band-inner">
+    <span class="eyebrow">The Ask</span>
+    <h2 class="h-section">Two sponsors. Ten weeks. One source of truth.</h2>
+
+    <div class="ask-grid">
+      <div class="ask-card">
+        <div class="ask-num">01</div>
+        <div class="ask-text">Sponsor Total Rewards + Workday IT to consolidate the cross-border comp inputs into a single Workday-resident source of truth over the 10-week build.</div>
+      </div>
+      <div class="ask-card">
+        <div class="ask-num">02</div>
+        <div class="ask-text">Sponsor 1.9 FTE for 10 weeks across the CoE pod. The data work is the lift, not the agent.</div>
+      </div>
+    </div>
+
+    <p class="ask-footnote">Without (1), v2 is impossible. <em>Without (2), the consolidation is just another half-finished SharePoint replacement.</em></p>
+  </div>
+</section>
+
+<div class="footer">Internal &mdash; for CoE feedback. Do not share the URL externally.</div>
+
+</body>
+</html>
