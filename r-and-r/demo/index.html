@@ -342,6 +342,18 @@
     align-items: flex-start;
     line-height: 1.4;
   }
+  .wd-field-value.placeholder {
+    color: #9aa0a6;
+    font-style: italic;
+  }
+  @keyframes wd-field-flash {
+    0%   { background: #d8eaff; box-shadow: 0 0 0 2px #b3d5ff; }
+    60%  { background: #eaf4ff; box-shadow: 0 0 0 2px rgba(179, 213, 255, 0.4); }
+    100% { background: #f7f8fa; box-shadow: 0 0 0 2px transparent; }
+  }
+  .wd-field-value.flash {
+    animation: wd-field-flash 700ms ease-out;
+  }
 
   /* Editable inputs (custom nomination form) */
   .wd-input,
@@ -1232,19 +1244,19 @@
               <div class="form-pane active" id="pane-quick">
                 <div class="wd-form-grid">
                   <div class="wd-field-label">Recipient</div>
-                  <div class="wd-field-value" id="f-recipient">Priya Ramanathan — Senior Consultant, Workday Practice</div>
+                  <div class="wd-field-value placeholder" id="f-recipient">—</div>
 
                   <div class="wd-field-label">Nominator</div>
-                  <div class="wd-field-value" id="f-nominator">Marcus Doyle — Engagement Manager</div>
+                  <div class="wd-field-value placeholder" id="f-nominator">—</div>
 
                   <div class="wd-field-label">Value (£)</div>
-                  <div class="wd-field-value value-cell" id="f-value" style="justify-content:flex-start; font-variant-numeric: tabular-nums;">£50.00</div>
+                  <div class="wd-field-value value-cell placeholder" id="f-value" style="justify-content:flex-start; font-variant-numeric: tabular-nums;">—</div>
 
                   <div class="wd-field-label">Project</div>
-                  <div class="wd-field-value" id="f-project">Project Helios — HCM rollout, Tier 1 client</div>
+                  <div class="wd-field-value placeholder" id="f-project">—</div>
 
                   <div class="wd-field-label">Reason</div>
-                  <div class="wd-field-value multiline" id="f-reason">Stayed late on Thursday to debug a critical security configuration issue ahead of the client UAT kickoff. Calm, technically excellent, and a great example of putting the team first.</div>
+                  <div class="wd-field-value multiline placeholder" id="f-reason">Click a scenario below to populate the nomination.</div>
                 </div>
 
                 <div class="wd-section-divider"></div>
@@ -1923,11 +1935,23 @@
   }
 
   function patchForm(patch) {
-    document.getElementById('f-recipient').textContent = patch.recipient;
-    document.getElementById('f-nominator').textContent = patch.nominator;
-    document.getElementById('f-value').textContent = patch.value;
-    document.getElementById('f-project').textContent = patch.project;
-    document.getElementById('f-reason').textContent = patch.reason;
+    const fields = [
+      ['f-recipient', patch.recipient],
+      ['f-nominator', patch.nominator],
+      ['f-value',     patch.value],
+      ['f-project',   patch.project],
+      ['f-reason',    patch.reason]
+    ];
+    fields.forEach(([id, val]) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = val;
+      el.classList.remove('placeholder');
+      // Restart the flash animation each call
+      el.classList.remove('flash');
+      void el.offsetWidth; // force reflow so animation re-triggers
+      el.classList.add('flash');
+    });
   }
 
   // ── Submit pipeline ────────────────────────────────────────────────
