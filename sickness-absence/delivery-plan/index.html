@@ -444,7 +444,7 @@
 <div class="container">
 
   <h1>How the agent works</h1>
-  <p class="lede">A Workday-resident agent on two loops &mdash; event-driven on every UK absence close (Return-to-Work), and a nightly threshold watcher (Stage&nbsp;1 review) &mdash; reading absences and protected-characteristic exclusions, drafting framework-aligned conversations into the manager&rsquo;s Workday Inbox, and writing every decision to a transparency log + 7-year audit log. 10 weeks, ~1.9&nbsp;FTE, ~200-employee UK pilot, mandatory 4-week shadow before any Inbox write.</p>
+  <p class="lede">A Workday-resident agent on three loops &mdash; event-driven on every UK absence close (Return-to-Work), a nightly threshold watcher (Stage&nbsp;1 review), and statistical pattern detection (day-of-week + payday clustering) &mdash; reading absences and protected-characteristic exclusions, drafting framework-aligned conversations into the manager&rsquo;s Workday Inbox, and writing every decision to a transparency log + 7-year audit log. 10 weeks, ~1.9&nbsp;FTE, ~200-employee UK pilot, mandatory 4-week shadow before any Inbox write.</p>
 
   <!-- 01. The bet -->
   <section>
@@ -467,7 +467,7 @@
   <!-- 03. Architecture (lean) -->
   <section>
     <span class="section-num">03 &mdash; Architecture (lean)</span>
-    <p>A Workday-resident agent + Power Automate + Workday RaaS/REST + SharePoint (exclusion list v1, transparency log throughout) + Teams Graph API + Azure OpenAI for the GenAI surface. <strong>Two loops.</strong> <strong>Loop&nbsp;A</strong>: event-driven on UK Sickness Absence record close &rarr; drafts RTW task into manager&rsquo;s Workday Inbox. <strong>Loop&nbsp;B</strong>: nightly schedule &rarr; re-tallies every UK worker&rsquo;s rolling-12-month count&nbsp;+&nbsp;day against Stage&nbsp;1 threshold, exclusions applied &rarr; drafts stage-review task into manager&rsquo;s Inbox. Most of the work is deterministic threshold maths; the GenAI surface is narrow &mdash; WARM talking-point drafting, supportive-conversation prompt copy, and the &ldquo;Why was this flagged?&rdquo; explainability render.</p>
+    <p>A Workday-resident agent + Power Automate + Workday RaaS/REST + SharePoint (exclusion list v1, transparency log throughout) + Teams Graph API + Azure OpenAI for the GenAI surface. <strong>Three loops.</strong> <strong>Loop&nbsp;A</strong>: event-driven on UK Sickness Absence record close &rarr; drafts RTW task into manager&rsquo;s Workday Inbox. <strong>Loop&nbsp;B</strong>: nightly schedule &rarr; re-tallies every UK worker&rsquo;s rolling-12-month count&nbsp;+&nbsp;day against Stage&nbsp;1 threshold, exclusions applied &rarr; drafts stage-review task into manager&rsquo;s Inbox. <strong>Loop&nbsp;C</strong>: nightly pattern detection &mdash; day-of-week clustering and payday clustering across the UK BU &mdash; surfaces a <em>soft</em> signal when an individual&rsquo;s absence shape diverges from team baseline. Most of the work is deterministic threshold maths and statistical pattern detection; the GenAI surface is narrow &mdash; WARM talking-point drafting, supportive-conversation prompt copy, and the &ldquo;Why was this flagged?&rdquo; explainability render.</p>
   </section>
 
   <!-- 04. Architecture overview -->
@@ -481,7 +481,7 @@
         <div class="diagram-col">
           <div class="node">
             <div class="node-system">Workday Absence</div>
-            <div class="node-role">close event (Loop A) &middot; rolling tallies (Loop B)</div>
+            <div class="node-role">close event (Loop A) &middot; rolling tallies (Loop B) &middot; pattern signals (Loop C)</div>
           </div>
         </div>
         <div class="diagram-col">
@@ -515,8 +515,8 @@
         <div class="diagram-spacer"></div>
         <div class="diagram-col" style="flex: 0 0 360px;">
           <div class="node node-decision">
-            <div class="node-system">Agent core (Loop A + Loop B)</div>
-            <div class="node-role">resolve &middot; threshold maths &middot; exclusions &middot; draft</div>
+            <div class="node-system">Agent core (Loop A + Loop B + Loop C)</div>
+            <div class="node-role">resolve &middot; threshold maths &middot; exclusions &middot; pattern detection &middot; draft</div>
           </div>
         </div>
         <div class="diagram-spacer"></div>
@@ -803,9 +803,9 @@
   <section>
     <span class="section-num">10 &mdash; Build phases</span>
     <ul class="phase-list">
-      <li><span class="phase-name">MVP (weeks 1&ndash;8 &middot; shadow).</span> Loop&nbsp;A + Loop&nbsp;B Stage&nbsp;1 against seeded then live data. SharePoint exclusion list. Transparency log + audit log. Inbox + Teams writes suppressed. Pre-shadow dry-run on historical excluded cases is a hard gate before live data.</li>
-      <li><span class="phase-name">Phase 2 (weeks 9&ndash;10 &middot; cutover + live).</span> SharePoint &rarr; Workday Custom Field migration. Inbox writes flip on; Loop&nbsp;A goes live in parallel. Teams ambient nudges enabled. Manager ride-along + adoption monitoring. Decision gate on v2 build.</li>
-      <li><span class="phase-name">Phase 3 (v2 &middot; UK Absence Pattern Auditor).</span> Qualitative pattern detection (Monday/Friday clustering, peri-deadline patterns, post-leave returner patterns). Stage&nbsp;2/3 turned on. Cross-jurisdiction (IE on top of UK). Same agent shape, broader signal for People Partners.</li>
+      <li><span class="phase-name">MVP (weeks 1&ndash;8 &middot; shadow).</span> Loop&nbsp;A + Loop&nbsp;B Stage&nbsp;1 + <strong>Loop&nbsp;C (day-of-week + payday clustering)</strong> against seeded then live data. SharePoint exclusion list. Transparency log + audit log. Inbox + Teams writes suppressed. Pre-shadow dry-run on historical excluded cases is a hard gate before live data. Pattern signals also run in shadow with weekly People-Ops false-positive review.</li>
+      <li><span class="phase-name">Phase 2 (weeks 9&ndash;10 &middot; cutover + live).</span> SharePoint &rarr; Workday Custom Field migration. Inbox writes flip on; Loops&nbsp;A, B, and C go live in parallel. Teams ambient nudges enabled. Manager ride-along + adoption monitoring. Decision gate on v2 build.</li>
+      <li><span class="phase-name">Phase 3 (v2 &middot; UK Absence Pattern Auditor).</span> Advanced pattern detection (peri-deadline patterns, post-leave returner patterns, multi-pattern stacking). Stage&nbsp;2/3 turned on. Cross-jurisdiction (IE on top of UK). Same agent shape, broader signal for People Partners.</li>
     </ul>
   </section>
 
@@ -819,7 +819,7 @@
       <tbody>
         <tr><td>Product Lead</td><td>[AI CoE Owner]</td><td>PoC brief, scope cuts, success metric, exec ask, shadow&rarr;live gate</td></tr>
         <tr><td>Business Analyst</td><td>Agentic BA</td><td>As-is + to-be process, threshold maths walkthrough, exclusion taxonomy with PO</td></tr>
-        <tr><td>Solution Architect</td><td>[Company AI CoE] Eng</td><td>Two-loop architecture, configuration YAML, SharePoint &rarr; Custom Field cutover design</td></tr>
+        <tr><td>Solution Architect</td><td>[Company AI CoE] Eng</td><td>Three-loop architecture, configuration YAML, SharePoint &rarr; Custom Field cutover design</td></tr>
         <tr><td>AI / Agent Engineer</td><td>Workday-resident agent dev</td><td>Agent loop, prompt drafting (WARM + supportive-conversation), eval harness</td></tr>
         <tr><td>Data / Integration Engineer</td><td>Workday Absence + special-category data specialist</td><td>RaaS contracts, GDPR Article 9 minimisation, SharePoint exclusion reader, audit log</td></tr>
         <tr><td>UX Designer</td><td>[Company] Design</td><td>Workday Inbox task layout, transparency log + Power BI for People Partners</td></tr>
@@ -844,7 +844,7 @@
         <tr>
           <td>2&ndash;4</td>
           <td>Design (SA + UX)</td>
-          <td>Two-loop architecture (Loop&nbsp;A event-driven RTW, Loop&nbsp;B nightly threshold watcher). <code>sickness_absence_profile.yaml</code> schema. Workday Inbox task layout signed off. Transparency-log schema + Power BI wireframe. Missing-precondition behaviour spec&rsquo;d. SharePoint exclusion-list contract.</td>
+          <td>Three-loop architecture (Loop&nbsp;A event-driven RTW, Loop&nbsp;B nightly threshold watcher, Loop&nbsp;C nightly pattern detection). <code>sickness_absence_profile.yaml</code> schema. Workday Inbox task layout signed off. Transparency-log schema + Power BI wireframe. Missing-precondition behaviour spec&rsquo;d. SharePoint exclusion-list contract.</td>
         </tr>
         <tr>
           <td>4&ndash;7</td>
@@ -992,7 +992,7 @@
         <tr><th>Role</th><th>FTE</th><th>Commitment</th></tr>
       </thead>
       <tbody>
-        <tr><td>Solution Architect</td><td>0.4</td><td>10 weeks &mdash; two-loop architecture, YAML config, cutover design</td></tr>
+        <tr><td>Solution Architect</td><td>0.4</td><td>10 weeks &mdash; three-loop architecture, YAML config, cutover design</td></tr>
         <tr><td>AI / Agent Engineer</td><td>0.5</td><td>10 weeks &mdash; agent loop, prompt drafting, eval harness</td></tr>
         <tr><td>Data / Integration Engineer</td><td>0.4</td><td>8 weeks &mdash; RaaS, SharePoint list, audit log, Custom Field cutover</td></tr>
         <tr><td>UX Designer</td><td>0.2</td><td>5 weeks &mdash; Inbox task surface, transparency log + Power BI</td></tr>
@@ -1017,7 +1017,7 @@
         </tr>
         <tr>
           <td><strong>Stubbed for v1</strong></td>
-          <td>Loop&nbsp;B Stage&nbsp;2 + Stage&nbsp;3 (Stage&nbsp;1 only in v1; stages 2/3 designed but feature-flagged off). Teams ambient nudge (wired, feature-flagged off until manager-adoption signal is clean in shadow). UK Absence Pattern Auditor qualitative pattern detection (v2). Cross-jurisdiction policy support (UK only; IE has a different framework).</td>
+          <td>Loop&nbsp;B Stage&nbsp;2 + Stage&nbsp;3 (Stage&nbsp;1 only in v1; stages 2/3 designed but feature-flagged off). Teams ambient nudge (wired, feature-flagged off until manager-adoption signal is clean in shadow). Cross-jurisdiction policy support (UK only; IE has a different framework).</td>
         </tr>
         <tr>
           <td><strong>Build vs bridge boundary</strong></td>
@@ -1030,7 +1030,7 @@
   <!-- 20. v1 → v2 path -->
   <section>
     <span class="section-num">20 &mdash; v1 &rarr; v2 path</span>
-    <p>v1 (UK only, Pragmatic) ships Loop&nbsp;A end-to-end + Loop&nbsp;B Stage&nbsp;1 only, against the now-native Workday Custom Field for exclusions. <strong>Bold v2 &mdash; UK Absence Pattern Auditor</strong> &mdash; same agent shape, broader signal: qualitative pattern detection (Monday/Friday clustering, peri-deadline patterns, post-leave returner patterns) surfaced to People Partners as <em>proactive</em> intelligence rather than reactive threshold-hit alerts. Also: Stage&nbsp;2/3 feature-flag on; Teams ambient nudges live; cross-entity/jurisdiction support (IE framework, paired with the Probation work&rsquo;s UK&amp;I footprint).</p>
+    <p>v1 (UK only, Pragmatic) ships Loop&nbsp;A end-to-end + Loop&nbsp;B Stage&nbsp;1 + <strong>Loop&nbsp;C day-of-week + payday clustering</strong>, against the now-native Workday Custom Field for exclusions. <strong>Bold v2 &mdash; UK Absence Pattern Auditor</strong> &mdash; same agent shape, broader signal: advanced pattern detection (peri-deadline patterns, post-leave returner patterns, multi-pattern stacking) surfaced to People Partners as <em>proactive</em> intelligence rather than reactive threshold-hit alerts. Also: Stage&nbsp;2/3 feature-flag on; Teams ambient nudges live; cross-entity/jurisdiction support (IE framework, paired with the Probation work&rsquo;s UK&amp;I footprint).</p>
     <p>Gated on v1 pass criteria above + zero false-trigger rate against the Workday Custom Field across shadow cycle 2.</p>
   </section>
 
