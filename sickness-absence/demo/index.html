@@ -116,6 +116,19 @@
       fill: currentColor;
     }
 
+    /* Demo-active controls — info + restart — get a green tint so the user can spot them as the live affordances among the static Teams chrome. */
+    #infoBtn,
+    #restartBtn {
+      color: var(--teams-status-green);
+      background: rgba(110, 194, 101, 0.12);
+    }
+
+    #infoBtn:hover,
+    #restartBtn:hover {
+      background: rgba(110, 194, 101, 0.22);
+      color: var(--teams-status-green);
+    }
+
     #topSearchWrap {
       flex: 1;
       display: flex;
@@ -750,6 +763,99 @@
       color: var(--teams-text-muted);
     }
 
+    /* ── Adaptive-Card-style bot output ── */
+    .msg-card {
+      background: #252525;
+      border: 1px solid var(--teams-border);
+      border-radius: 6px;
+      padding: 0;
+      overflow: hidden;
+      max-width: 560px;
+    }
+    .msg-card-header {
+      padding: 10px 14px 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+    .msg-card-eyebrow {
+      font-size: 10.5px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--teams-text-dim);
+      margin-bottom: 2px;
+    }
+    .msg-card-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--teams-text);
+    }
+    .msg-card-body {
+      padding: 12px 14px 10px;
+      font-size: 14px;
+      line-height: 1.45;
+      color: var(--teams-text);
+    }
+    .msg-card-body p { margin: 0 0 8px; }
+    .msg-card-body p:last-child { margin-bottom: 0; }
+    .msg-card-body strong { color: #fff; font-weight: 600; }
+    .msg-card-body blockquote {
+      border-left: 3px solid var(--teams-accent);
+      padding: 4px 0 4px 10px;
+      margin: 8px 0;
+      color: #d1d1d8;
+      background: rgba(91, 95, 199, 0.06);
+      border-radius: 0 4px 4px 0;
+    }
+    .msg-card-fact-block {
+      background: rgba(255, 255, 255, 0.025);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+      padding: 8px 12px;
+      margin: 6px 0;
+    }
+    .msg-card-fact-name {
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--teams-text);
+      margin-bottom: 2px;
+    }
+    .msg-card-fact-sub {
+      font-size: 12px;
+      color: var(--teams-text-muted);
+      line-height: 1.4;
+    }
+    .msg-card-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 10px 14px 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      background: rgba(255, 255, 255, 0.015);
+    }
+    .msg-card-action {
+      background: transparent;
+      border: 1px solid #4a4a6a;
+      color: #d6d6e0;
+      padding: 5px 12px;
+      border-radius: 14px;
+      font-size: 12.5px;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease;
+      white-space: nowrap;
+    }
+    .msg-card-action:hover {
+      background: rgba(91, 95, 199, 0.12);
+      border-color: var(--teams-accent-light);
+    }
+    .msg-card-action.primary {
+      background: var(--teams-accent);
+      border-color: var(--teams-accent);
+      color: #fff;
+    }
+    .msg-card-action.primary:hover {
+      background: var(--teams-accent-light);
+      border-color: var(--teams-accent-light);
+    }
+
     /* ── Consecutive Message Grouping ── */
     .msg-row + .msg-row-agent .msg-avatar,
     .msg-row + .msg-row-user .msg-avatar {
@@ -899,7 +1005,7 @@
        ════════════════════════════════════════════ */
     #composeBox {
       flex-shrink: 0;
-      padding: 8px 20px 16px;
+      padding: 6px 20px 10px;
       border-top: 1px solid var(--teams-border);
       background: var(--teams-pane-bg);
     }
@@ -942,18 +1048,21 @@
 
     .compose-input-row {
       display: flex;
-      align-items: flex-end;
+      align-items: center;
       gap: 8px;
       background: var(--teams-panel-bg);
       border-radius: 6px;
-      padding: 8px 10px;
+      padding: 4px 8px;
       border: 1px solid var(--teams-border);
       transition: border-color 0.15s ease;
     }
 
-    .compose-input-row:focus-within {
-      border-color: var(--teams-accent);
+    /* When the textarea grows past a single line, bottom-align the send button so it sits next to the last line of text. */
+    .compose-input-row:has(#composeInput[style*="height"]:not([style*="height: 20px"])) {
+      align-items: flex-end;
     }
+
+    /* Keep resting border on focus — no purple highlight inside the compose box. */
 
     #composeInput {
       flex: 1;
@@ -962,10 +1071,10 @@
       color: var(--teams-text);
       background: transparent;
       resize: none;
-      field-sizing: content;
+      height: 20px;
       min-height: 20px;
       max-height: 110px;
-      overflow-y: auto;
+      overflow-y: hidden;
     }
 
     #composeInput::placeholder {
@@ -973,8 +1082,8 @@
     }
 
     #sendBtn {
-      width: 32px;
-      height: 32px;
+      width: 28px;
+      height: 28px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -999,26 +1108,267 @@
     }
 
     /* ════════════════════════════════════════════
-       Floating Back Link — #demoBackLink
+       Demo chrome — badge, nav, scene modal, info panel
        ════════════════════════════════════════════ */
-    #demoBackLink {
+    #demoBadge {
       position: fixed;
-      top: 56px;
-      left: 8px;
-      z-index: 1000;
-      opacity: 0.4;
+      top: 12px;
+      right: 220px;
+      z-index: 60;
+      background: rgba(45, 44, 44, 0.92);
+      border: 1px solid rgba(127, 133, 245, 0.35);
+      padding: 5px 12px;
+      border-radius: 14px;
       font-size: 11px;
-      color: var(--teams-text-muted);
-      text-decoration: none;
-      padding: 4px 8px;
-      border-radius: 4px;
-      background: rgba(0, 0, 0, 0.4);
-      pointer-events: auto;
-      transition: opacity 0.2s ease;
+      letter-spacing: 0.4px;
+      color: var(--teams-accent-light);
+      user-select: none;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
     }
 
-    #demoBackLink:hover {
-      opacity: 0.85;
+    #demoBadge .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--teams-accent-light);
+      box-shadow: 0 0 6px rgba(127, 133, 245, 0.6);
+    }
+
+    #demoBadge .badge-sep {
+      width: 1px;
+      height: 12px;
+      background: var(--teams-border);
+    }
+
+    #demoBadge a {
+      color: var(--teams-text-muted);
+      text-decoration: none;
+      font-size: 11px;
+      font-weight: 400;
+      letter-spacing: 0;
+      transition: color 0.15s ease;
+    }
+
+    #demoBadge a:hover {
+      color: var(--teams-text);
+    }
+
+    #demoNav { display: none; }
+
+    #demoNav a {
+      font-size: 11px;
+      opacity: 0.55;
+      color: var(--teams-text-muted);
+      text-decoration: none;
+      transition: opacity 0.15s ease;
+    }
+
+    #demoNav a:hover {
+      opacity: 1;
+    }
+
+    #sceneCard {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: rgba(15, 15, 20, 0.78);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 200ms ease;
+    }
+
+    #sceneCard.fading {
+      opacity: 0;
+    }
+
+    #sceneCard .scene-inner {
+      width: 480px;
+      max-width: calc(100vw - 32px);
+      background: #2d2c2c;
+      border: 1px solid #424242;
+      border-radius: 8px;
+      padding: 32px;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55);
+      color: var(--teams-text);
+    }
+
+    #sceneCard h2 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 14px;
+    }
+
+    #sceneCard p {
+      font-size: 13px;
+      line-height: 1.55;
+      margin-bottom: 12px;
+    }
+
+    #sceneCard p.muted {
+      color: var(--teams-text-muted);
+      font-size: 12px;
+    }
+
+    #piiNotice {
+      width: 480px;
+      max-width: calc(100vw - 32px);
+      margin: 0 auto 12px;
+      background: rgba(214, 167, 70, 0.10);
+      border: 1px solid rgba(214, 167, 70, 0.45);
+      border-radius: 6px;
+      padding: 10px 14px;
+      color: #e8c275;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    #piiNotice strong { color: #f3d28a; }
+
+    #startChatBtn,
+    #pollyIntroBtn {
+      margin-top: 12px;
+      background: #5b5fc7;
+      color: #ffffff;
+      padding: 8px 20px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    #startChatBtn:hover,
+    #pollyIntroBtn:hover {
+      background: #6a6ed1;
+    }
+
+    /* First-time popup explaining the Polly chat — reuses scene-card styling. */
+    #pollyIntro {
+      position: fixed;
+      inset: 0;
+      z-index: 210;
+      background: rgba(15, 15, 20, 0.78);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 200ms ease;
+    }
+
+    #pollyIntro.open { display: flex; }
+    #pollyIntro.fading { opacity: 0; }
+
+    #pollyIntro .scene-inner {
+      width: 480px;
+      max-width: calc(100vw - 32px);
+      background: #2d2c2c;
+      border: 1px solid #424242;
+      border-radius: 8px;
+      padding: 32px;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55);
+      color: var(--teams-text);
+    }
+
+    #pollyIntro h2 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 14px;
+    }
+
+    #pollyIntro p {
+      font-size: 13px;
+      line-height: 1.55;
+      margin-bottom: 12px;
+    }
+
+    #infoPanel {
+      position: fixed;
+      top: 48px;
+      right: 0;
+      bottom: 0;
+      width: 380px;
+      max-width: 90vw;
+      background: var(--teams-panel-bg);
+      border-left: 1px solid var(--teams-border);
+      padding: 24px;
+      z-index: 90;
+      transform: translateX(100%);
+      transition: transform 250ms ease;
+      overflow-y: auto;
+    }
+
+    #infoPanel.open {
+      transform: translateX(0);
+    }
+
+    #infoPanel h2 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      padding-right: 32px;
+    }
+
+    #infoPanel h3 {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--teams-text-muted);
+      margin: 18px 0 8px;
+      font-weight: 600;
+    }
+
+    #infoPanel ul {
+      list-style: disc;
+      padding-left: 18px;
+    }
+
+    #infoPanel li {
+      font-size: 13px;
+      line-height: 1.5;
+      margin-bottom: 6px;
+    }
+
+    #infoPanel .closing {
+      margin-top: 18px;
+      font-size: 12px;
+      font-style: italic;
+      color: var(--teams-text-muted);
+      line-height: 1.5;
+    }
+
+    #infoPanelClose {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      color: var(--teams-text-muted);
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    #infoPanelClose:hover {
+      background: var(--teams-hover);
+      color: var(--teams-text);
+    }
+
+    #typingIndicator .typing-label {
+      font-size: 11px;
+      font-style: italic;
+      color: var(--teams-text-dim);
+      margin-left: 8px;
     }
 
     /* ════════════════════════════════════════════
@@ -1055,15 +1405,13 @@
         width: 100vw;
         padding-top: 48px;
       }
-
-      #demoBackLink {
-        top: 52px;
-        left: 6px;
-      }
     }
 
     /* ════════════════════════════════════════════
        Focus-visible accessibility
+       Keyboard focus on buttons/inputs gets a subtle accent outline.
+       Compose textarea + top search are excluded — the caret/border
+       already indicate focus and a coloured outline breaks the Teams look.
        ════════════════════════════════════════════ */
     button:focus-visible,
     input:focus-visible,
@@ -1071,12 +1419,25 @@
       outline: 2px solid var(--teams-accent);
       outline-offset: -1px;
     }
+
+    #composeInput:focus,
+    #composeInput:focus-visible,
+    #topSearch:focus,
+    #topSearch:focus-visible {
+      outline: none;
+    }
   </style>
 </head>
 <body>
 
-  <!-- ═══════ Floating Demo Navigation ═══════ -->
-  <a href="../../" id="demoBackLink">&larr; Back</a>
+  <!-- ═══════ Demo chrome — badge + nav cluster ═══════ -->
+  <div id="demoBadge">
+    <span class="badge-dot" aria-hidden="true"></span>
+    <span>DEMO · Sickness Absence Coach</span>
+    <span class="badge-sep" aria-hidden="true"></span>
+    <a href="/">&larr; AI CoE</a>
+    <a href="/sickness-absence/agent-design">Agent design &#8599;</a>
+  </div>
 
   <!-- ═══════ Root App Container ═══════ -->
   <div id="app">
@@ -1099,6 +1460,18 @@
         </svg>
         <input type="text" id="topSearch" placeholder="Search" autocomplete="off" />
       </div>
+      <button class="top-btn" id="infoBtn" title="What this agent can and can't do" aria-label="What this agent can and can't do" onclick="document.getElementById('infoPanel').classList.add('open')">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <circle cx="8" cy="8" r="6.25"/>
+          <path d="M8 7.25v4" stroke-linecap="round"/>
+          <circle cx="8" cy="4.9" r="0.6" fill="currentColor" stroke="none"/>
+        </svg>
+      </button>
+      <button class="top-btn" id="restartBtn" title="Restart conversation" aria-label="Restart conversation" onclick="if (typeof window.startDemo === 'function') window.startDemo(window.currentRole || 'manager');">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M3 8a5 5 0 0 1 8.66-3.39L13 6V3h-1v2.5a4 4 0 1 0 1.31 4.16l.94.34A5 5 0 1 1 3 8z" fill="currentColor" stroke="none"/>
+        </svg>
+      </button>
       <button class="top-btn" aria-label="More options">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
@@ -1272,14 +1645,24 @@
 
         <!-- Chats Section -->
         <div class="chat-section-label">Chats</div>
-        <div class="chat-entry active" id="chatEntryCoach">
-          <div class="ce-avatar" style="background:var(--teams-accent);">SC</div>
+        <div class="chat-entry active" id="chat-manager" data-role="manager">
+          <div class="ce-avatar" style="background:#5b5fc7;">SC</div>
           <div class="ce-body">
             <div class="ce-row">
               <span class="ce-name">Sickness Absence Coach</span>
               <span class="ce-date">Today</span>
             </div>
-            <div class="ce-preview">Good morning — three updates from last night's run.</div>
+            <div class="ce-preview">Two updates from last night's run.</div>
+          </div>
+        </div>
+        <div class="chat-entry" id="chat-peopleops" data-role="people_ops">
+          <div class="ce-avatar" style="background:#4caab0;">SC2</div>
+          <div class="ce-body">
+            <div class="ce-row">
+              <span class="ce-name">Sickness Absence Coach (People Operations)</span>
+              <span class="ce-date">Today</span>
+            </div>
+            <div class="ce-preview">Three overnight outputs.</div>
           </div>
         </div>
       </div>
@@ -1297,7 +1680,7 @@
               <span class="conv-header-name">Sickness Absence Coach</span>
               <span class="conv-header-pill">Workday</span>
             </div>
-            <span class="conv-header-sub">Sickness Absence Framework Coach · UK People Ops</span>
+            <span class="conv-header-sub" id="convSubtitle">Sickness Absence Framework Coach · UK People Operations</span>
           </div>
         </div>
         <div class="conv-header-right">
@@ -1343,15 +1726,17 @@
 
       <!-- Messages Container (populated by JS agent) -->
       <div id="messagesContainer">
-        <div class="day-separator">
-          <span>Today</span>
-        </div>
         <!-- JS_AGENT_INSERTION_POINT: messages will be injected here -->
       </div>
 
       <!-- Suggested Replies (populated by JS agent) -->
       <div id="suggestedReplies">
         <!-- JS_AGENT_INSERTION_POINT: reply chips will be injected here -->
+      </div>
+
+      <!-- Persistent Follow-up Chips Row (populated by JS agent after replies) -->
+      <div id="followupRow" style="display:flex; flex-wrap:nowrap; overflow-x:auto; gap:6px; padding:8px 16px;">
+        <!-- JS_AGENT_INSERTION_POINT: persistent follow-up chips -->
       </div>
 
       <!-- Typing Indicator -->
@@ -1361,6 +1746,7 @@
           <span></span>
           <span></span>
         </div>
+        <span class="typing-label">Thinking&hellip;</span>
       </div>
 
       <!-- Compose Box -->
@@ -1422,13 +1808,64 @@
 
   </div><!-- /#app -->
 
+  <!-- ═══════ Scene-setting modal (page-load gate) ═══════ -->
+  <div id="pollyIntro" role="dialog" aria-modal="true" aria-labelledby="pollyIntroHeading">
+    <div class="scene-inner">
+      <h2 id="pollyIntroHeading">Switching to the People Operations view</h2>
+      <p>You&rsquo;re now Polly Newman, People Operations Lead. Same agent, different audience &mdash; Polly is the technical owner of the framework, so the agent uses precise terminology (Loop A/B/C, &sect;18 exclusions, statistical evidence) and shows information that&rsquo;s withheld from line managers.</p>
+      <button id="pollyIntroBtn" type="button">Continue as Polly</button>
+    </div>
+  </div>
+
+  <div id="sceneCard" role="dialog" aria-modal="true" aria-labelledby="sceneCardHeading">
+    <div id="piiNotice" role="note">
+      <strong>Reminder &mdash; no PII.</strong> Please don&rsquo;t paste real names, employee IDs, or other identifying details into the chat. This is a shared demo environment; the worker scenarios below are fictional.
+    </div>
+    <div class="scene-inner">
+      <h2 id="sceneCardHeading">Sickness Absence Coach &mdash; demo</h2>
+      <p>You are Mark Davies, a UK line manager with 12 direct reports. It's the morning of 13 May 2026, 09:14. The Sickness Absence Coach has run overnight against your team's Workday data and has updates for you.</p>
+      <p class="muted">Every reply is generated live by an AI agent. The three chips below the agent's opener are starters, not a script &mdash; ask it anything: how the policy works, OH referrals, reasonable adjustments, why a pattern fired, what counts as an absence, anything you'd want a real coach to answer.</p>
+      <button id="startChatBtn" type="button">Start chat</button>
+    </div>
+  </div>
+
+  <!-- ═══════ Info slide-over panel ═══════ -->
+  <aside id="infoPanel" aria-labelledby="infoPanelHeading">
+    <button id="infoPanelClose" type="button" aria-label="Close info panel">&times;</button>
+    <h2 id="infoPanelHeading">Sickness Absence Coach &mdash; rules</h2>
+
+    <h3>What it does</h3>
+    <ul>
+      <li>Drafts return-to-work and Stage 1 conversation prompts based on policy thresholds</li>
+      <li>Surfaces pattern signals (Loop C &mdash; day-of-week, payday, post-weekend clustering)</li>
+      <li>Drafts Occupational Health referrals to the OH vendor portal when a health angle warrants it</li>
+      <li>Drafts reasonable-adjustment letters (Equality Act 2010) for the worker, for manager or People Operations review</li>
+      <li>Cites the UK Sickness Absence Framework (Policy v8.0 Appendix A)</li>
+    </ul>
+
+    <h3>Connects to</h3>
+    <ul>
+      <li>Workday Absence (record of truth for spells, half-days, exclusions)</li>
+      <li>SharePoint policy library (Sickness Absence Framework v8.0 Appendix A)</li>
+      <li>OH vendor portal (referral submissions, returned recommendations)</li>
+      <li>Microsoft Teams (this surface) and the manager's Workday Inbox</li>
+    </ul>
+
+    <h3>What it will refuse to do</h3>
+    <ul>
+      <li>Produce Stage 2 or Stage 3 drafts</li>
+      <li>Disclose absence reason text</li>
+      <li>Name an exclusion category (e.g. protected-characteristic reasons)</li>
+      <li>Use escalation language (&ldquo;warn&rdquo;, &ldquo;escalate&rdquo;, &ldquo;discipline&rdquo;, &ldquo;PIP&rdquo;)</li>
+      <li>Speculate about a worker's medical situation</li>
+    </ul>
+
+    <p class="closing">Estimated time saved: ~30 minutes per case (drafting, threshold checks, evidence assembly) &mdash; freeing managers and People Operations to spend that time in the conversation itself.</p>
+    <p class="closing">If the agent refuses something, that's by design &mdash; the rules above are load-bearing for a defensible HR surface.</p>
+  </aside>
+
   <!-- ═══════ JS Agent Insertion Point ═══════ -->
   <script>
-/* JS_AGENT_INSERTION_POINT */
-  </script>
-
-</body>
-</html>
 /* ============================================================
    Sickness Absence Coach — Teams Dark Chat Controller
    ============================================================ */
@@ -1468,14 +1905,15 @@ const SYSTEM_PROMPT = `You are the **Sickness Absence Framework Coach**, an inte
 - After exclusions: 2 spells / 2 days. Stage 1 threshold not crossed.
 - Loop C suppressed on excluded spells.
 - **You did NOT write anything to the manager's Inbox.** The decision and full evidence trail are written to the transparency log, accessible to People Operations only.
-- If People Ops decides any conversation is appropriate for non-pregnancy-related absences (the two unrelated spells), they will route it themselves. Mark Davies, the line manager, sees nothing.
-- The agent will explain its no-fire decision to Mark transparently but will NOT name the exclusion reason. If asked "why didn't you flag her?" the agent says: "Three of her spells are PO-flagged under an Equality Act 2010 §18 exclusion. After exclusions she's below threshold. I'm not going to name the underlying reason — that's properly held with People Ops." The agent never says the word "pregnancy" or any synonym.
+- If People Operations decides any conversation is appropriate for non-pregnancy-related absences (the two unrelated spells), they will route it themselves. Mark Davies, the line manager, sees nothing.
+- The agent will explain its no-fire decision to Mark transparently but will NOT name the exclusion reason. If asked "why didn't you flag her?" the agent says: "Three of her spells are PO-flagged under an Equality Act 2010 §18 exclusion. After exclusions she's below threshold. I'm not going to name the underlying reason — that's properly held with People Operations." The agent never says the word "pregnancy" or any synonym.
 
 ## What you know about the framework + your own architecture
 - **Loop A — RTW**: Workday absence record closes → you draft a Return-to-Work prompt with a warm, supportive template.
 - **Loop B — Stage thresholds**: nightly re-tally of rolling-12-month count + day against Stage 1 (and only Stage 1 in v1). Half-day appointments excluded automatically. PO-flagged exclusions applied BEFORE the threshold is evaluated.
-- **Loop C — Pattern detection (v1 — new this release)**: nightly statistical detection across the UK BU. v1 ships two pattern types: (a) day-of-week clustering (Friday/Monday concentration); (b) payday clustering (spells ±1 working day of payroll cut-off). Fire criteria: n≥4 spells, ratio ≥3× team baseline, binomial p<0.05.
-- Loop C deferred to v2: post-weekend clusters, return-to-work short-spell clustering (Bradford-adjacent — locked out by design), peri-deadline patterns.
+- **Loop C — Pattern detection (v1 — new this release)**: nightly statistical detection across the UK BU. v1 ships three pattern types: (a) day-of-week clustering (Friday/Monday concentration); (b) payday clustering (spells ±1 working day of payroll cut-off); (c) post-weekend clusters (spells starting on the first working day after a weekend or bank holiday, beyond Monday DOW baseline). Fire criteria: n≥4 spells, ratio ≥3× team baseline, binomial p<0.05.
+- Loop C deferred to v2: return-to-work short-spell clustering (Bradford-adjacent — locked out by design), peri-deadline patterns.
+- **Occupational Health (OH) referrals and reasonable-adjustment drafting**: when an absence or pattern raises a possible health or workplace-adjustment angle, you can (a) recommend an OH referral and draft the referral request to the OH vendor portal, and (b) draft a reasonable-adjustment letter to the worker proposing specific adjustments (phased return, flexible hours, workstation changes, etc.). Both are drafts for the manager or People Operations to review and send — you never submit autonomously. Use plain English for the manager; cite the Equality Act 2010 duty to make reasonable adjustments when explaining to People Operations.
 - The PO exclusion list currently lives in a People-Ops-maintained SharePoint with access control, encryption at rest, and audited reads. Cuts over to a native effective-dated Workday Custom Field on the Worker record before live Inbox writes flip on. Cutover is non-negotiable.
 - You are running in shadow mode currently — Inbox + Teams writes suppressed; everything is written only to the transparency log. (For the purposes of this demo, behave as though you ARE writing to Mark's Inbox; explain shadow mode if asked.)
 - Stage 2/3 detection is NOT in v1. If asked about Stage 2/3, say it's gated on v1 shadow-phase pass criteria.
@@ -1505,22 +1943,133 @@ const SYSTEM_PROMPT = `You are the **Sickness Absence Framework Coach**, an inte
 
 You are now connected to Mark Davies. The system has just rendered your opening morning summary; await his first message and respond conversationally from there.`;
 
-const OPENING_MESSAGE = `Good morning, Mark. I ran overnight against your 12 reports. Three updates worth your time.
+// Role-keyed openers (manager view never mentions Priya — see PO §18 disclosure rule)
+window.OPENERS = {
+  manager: `Good morning, Mark. I checked in on your team overnight. Two of your reports are worth a look this morning.
 
-**Eve Hart** — Stage 1 threshold crossed. 4 spells / 9 days in the last 12 months. I've drafted an RTW conversation (she returned this morning) and a Stage 1 prompt — both ready for your Inbox when you say go.
+**Eve Hart** — She's had 4 absences (9 days off) in the past year, which puts her at the point where the framework asks for a supportive conversation. She came back to work this morning, so a return-to-work chat is also due in the next few days. I've drafted both messages — they're ready in your Inbox whenever you want to send them.
 
-**Tom Reed** — Pattern signal, no stage trigger. 3 of his last 4 spells started on a Friday. Below the count threshold so I'm not drafting a Stage 1 — but the shape is worth a soft check-in before he hits the threshold.
+**Tom Reed** — Just a soft heads-up, nothing formal. 3 of his last 4 absences have started on a Friday. Could be coincidence, could be something worth a friendly check-in before it builds up. He hasn't crossed any threshold, so no formal action is needed.
 
-**Priya M.** — Threshold count crossed on the raw record, but three of her spells are PO-flagged under §18. After exclusions she's well below threshold. **I did not draft anything for your Inbox.** The decision and audit trail are with People Ops.
+Which would you like to walk through?
 
-Which would you like to walk through?`;
+<<ACTIONS>>["Walk me through Eve", "Help me write the message to Eve", "Should I check in with Tom?"]<<END>>`,
 
-const SUGGESTED_CHIPS = [
-  'Walk me through Eve',
-  "Show me Tom's pattern math",
-  "Why didn't you flag Priya?",
-  "What's in the transparency log?"
+  people_ops: `Good morning, Polly. Three overnight outputs for your review.
+
+**Eve Hart** (under Mark Davies) — Stage 1 fired. 4 spells / 9 days. RTW + Stage 1 prompts drafted to Mark's Inbox.
+
+**Tom Reed** (under Mark Davies) — Loop C pattern signal, no stage trigger. 3 of 4 spells Friday-starts (p=0.020 after correction). Soft check-in suggested; no Stage 1.
+
+**Priya M.** (under Mark Davies) — Threshold count crossed on the raw record. 3 spells PO-flagged under §18 exclusion (effective 2025-12-01, renewal 2026-12-01, reviewer: People Operations Lead). After exclusions: 2 spells / 2 days, below threshold. **No write to manager Inbox. Mark sees nothing.** Loop C suppressed on excluded spells.
+
+The full evidence trail is in the transparency log. Where would you like to start?
+
+<<ACTIONS>>["Show the §18 audit trail for Priya", "Walk me through Eve", "Open the transparency log"]<<END>>`
+};
+
+window.SUGGESTED_CHIPS_BY_ROLE = {
+  manager: [
+    "Walk me through Eve",
+    "Help me write the message to Eve",
+    "Should I check in with Tom?"
+  ],
+  people_ops: [
+    "Show the Priya §18 audit trail",
+    "Walk me through Eve",
+    "Open the transparency log"
+  ]
+};
+
+// Fallbacks (point at manager view) — preserved for any legacy reference
+const OPENING_MESSAGE = window.OPENERS.manager;
+const SUGGESTED_CHIPS = window.SUGGESTED_CHIPS_BY_ROLE.manager;
+
+// Follow-up keyword map for persistent #followupRow.
+// Each rule scores against the most recent user message (weight 3) and the
+// most recent agent reply (weight 2). Top-scoring rules contribute one chip each.
+const FOLLOWUP_MAP = [
+  { id: 'eve',          match: /\beve\b/i, chips: {
+    manager:    ["Help me write the message to Eve", "When do I need to talk to her?", "Show me Eve's absence dates"],
+    people_ops: ["Draft the RTW prompt for Eve", "Show Eve's absence history", "What triggered Eve's Stage 1?"]
+  }},
+  { id: 'tom',          match: /\btom\b/i, chips: {
+    manager:    ["Should I check in with Tom?", "How would I bring this up with him?", "What if I leave it for now?"],
+    people_ops: ["Show me Tom's pattern math", "Loop C false-positive rate", "Why no Stage 1 for Tom?"]
+  }},
+  { id: 'priya',        match: /\bpriya\b/i, chips: {
+    manager:    [],
+    people_ops: ["Show the §18 audit trail for Priya", "What did Loop C suppress?", "Who can review the §18 flag?"]
+  }},
+  { id: 'rtw',          match: /\brtw\b|return[\s-]to[\s-]work/i, chips: {
+    manager:    ["Help me write the return-to-work chat", "What's a good way to open it?", "When does it need to happen by?"],
+    people_ops: ["Show the RTW template", "What's the 5-day deadline rule?", "Loop A trigger criteria"]
+  }},
+  { id: 'stage1',       match: /stage\s*1|threshold/i, chips: {
+    manager:    ["Why has she crossed the line?", "What does the conversation look like?", "What happens if I don't act?"],
+    people_ops: ["Show Policy v8.0 Appendix A thresholds", "How is rolling 12mo calculated?", "Why count+day, not Bradford?"]
+  }},
+  { id: 'stage23',      match: /stage\s*[23]/i, chips: {
+    manager:    ["When would Stage 2 happen?", "Who decides Stage 2?"],
+    people_ops: ["Why isn't Stage 2 in v1?", "What gates Stage 2/3?"]
+  }},
+  { id: 'pattern',      match: /loop\s*c|pattern|cluster|friday|payday/i, chips: {
+    manager:    ["Should I worry about this?", "How would I raise it gently?", "What if it's nothing?"],
+    people_ops: ["What patterns does Loop C check?", "Show the binomial test", "Why isn't Bradford in stage logic?"]
+  }},
+  { id: 'exclusion',    match: /exclus|protected|§\s*1[58]|equality act/i, chips: {
+    manager:    [],
+    people_ops: ["How does the exclusion list work?", "Who maintains the §-flags?", "SharePoint→Workday cutover plan"]
+  }},
+  { id: 'shadow',       match: /shadow/i, chips: {
+    manager:    ["What does shadow mode mean for me?"],
+    people_ops: ["What flips on when shadow ends?", "Show shadow-mode pass criteria", "Who signs off shadow→live?"]
+  }},
+  { id: 'transparency', match: /transparency|audit/i, chips: {
+    manager:    ["Can I see what was decided?", "Who else sees this?"],
+    people_ops: ["Who can read the transparency log?", "Show a log entry", "How long are entries retained?"]
+  }},
+  { id: 'policy',       match: /policy|framework|appendix/i, chips: {
+    manager:    ["What does the framework actually say?", "Where can I read it?"],
+    people_ops: ["Show Policy v8.0 Appendix A", "What changed in v8.0?", "Policy versioning"]
+  }},
+  { id: 'inbox',        match: /inbox|draft/i, chips: {
+    manager:    ["Can I edit the draft first?", "How do I send it?", "Will she know it came from a draft?"],
+    people_ops: ["How are Inbox writes tracked?", "Draft → send audit chain", "Manager Inbox shadow behaviour"]
+  }},
+  { id: 'oh',           match: /\boh\b|occupational health|referral|vendor portal/i, chips: {
+    manager:    ["Should I refer her to OH?", "What does an OH referral look like?", "How long does OH take?"],
+    people_ops: ["Draft an OH referral for Eve", "OH vendor portal handoff", "When does OH override Stage 1?"]
+  }},
+  { id: 'adjustment',   match: /adjust|reasonable[\s-]?adjust|phased return|accommodation|equality act/i, chips: {
+    manager:    ["What's a reasonable adjustment?", "Can I offer her flexible hours?", "Draft the message about adjustments"],
+    people_ops: ["Reasonable-adjustment letter template", "§20 duty under Equality Act 2010", "Phased-return adjustment patterns"]
+  }},
+  { id: 'half_day',     match: /half[-\s]?day|appointment/i, chips: {
+    manager:    ["Are half-days counted?", "What if someone leaves at lunch?"],
+    people_ops: ["Half-day exclusion rule", "Where half-days are filtered"]
+  }},
+  { id: 'bradford',     match: /bradford/i, chips: {
+    manager:    ["What's Bradford?"],
+    people_ops: ["Why is Bradford locked out of stage logic?", "Where does Bradford still apply?"]
+  }},
+  { id: 'spell',        match: /spell|absence record/i, chips: {
+    manager:    ["What counts as an absence?", "Do back-to-back days count once or twice?"],
+    people_ops: ["Spell definition under v8.0", "Rolling-12mo window calculation"]
+  }},
+  { id: 'reason',       match: /reason|why\s+(?:was|were|did)|medical|condition/i, chips: {
+    manager:    ["Can you tell me why she's been off?", "What am I allowed to ask her?"],
+    people_ops: ["Reason-text disclosure rules", "What managers can see vs PO"]
+  }},
+  { id: 'difficult',    match: /worry|concern|nervous|how do i|what do i say|tough|hard/i, chips: {
+    manager:    ["What if she gets upset?", "Can I have HR there?", "What if I just leave it?"],
+    people_ops: []
+  }}
 ];
+const FALLBACK_FOLLOWUPS = {
+  manager:    ["What do I need to do today?", "Help me with what to say", "Can someone from HR sit in?"],
+  people_ops: ["Show the policy", "Show shadow-mode pass criteria", "Open the transparency log"]
+};
 
 // ------------------------------------------------------------------
 // 2. State
@@ -1622,10 +2171,13 @@ function renderMarkdown(text) {
   const blocks = [];
   let i = 0;
 
+  // Note: lines have already been HTML-escaped, so a markdown blockquote prefix
+  // arrives as `&gt; ` rather than `> `. Detect both forms.
+  const BQ_PREFIX = /^(?:&gt;|>)\s?/;
   const isBlockStart = (line, idx) => {
     return /^\s*[-*]\s+/.test(line) ||
            /^\s*\d+\.\s+/.test(line) ||
-           line.startsWith('> ') ||
+           BQ_PREFIX.test(line) ||
            (line.includes('|') && lines[idx + 1] && /^\s*\|?[:\-\s|]+\|?\s*$/.test(lines[idx + 1]));
   };
 
@@ -1643,10 +2195,10 @@ function renderMarkdown(text) {
       continue;
     }
 
-    if (line.startsWith('> ')) {
+    if (BQ_PREFIX.test(line)) {
       const quoteLines = [];
-      while (i < lines.length && lines[i].startsWith('> ')) {
-        quoteLines.push(lines[i].slice(2));
+      while (i < lines.length && BQ_PREFIX.test(lines[i])) {
+        quoteLines.push(lines[i].replace(BQ_PREFIX, ''));
         i++;
       }
       blocks.push({ type: 'blockquote', content: quoteLines.join('\n') });
@@ -1726,7 +2278,65 @@ function appendDateSeparator(label) {
   messagesContainer.appendChild(wrapper);
 }
 
-function appendAgentBubble(content, timestamp) {
+// Parse out an optional trailing action-hint block from an LLM reply.
+// Expected protocol: ...narrative... <<ACTIONS>>["a","b","c"]<<END>>
+// Returns { text, actions } — actions is [] if none found or unparseable.
+function parseAgentReply(raw) {
+  const m = (raw || '').match(/<<\s*ACTIONS\s*>>\s*([\s\S]*?)\s*<<\s*END\s*>>/i);
+  if (!m) return { text: raw, actions: [] };
+  let actions = [];
+  try {
+    const parsed = JSON.parse(m[1]);
+    if (Array.isArray(parsed)) actions = parsed.filter(s => typeof s === 'string').slice(0, 4);
+  } catch (e) {
+    // Fall back: try splitting on commas / newlines / bullets
+    actions = m[1].split(/[\n,]/).map(s => s.replace(/^["'\s\-*]+|["'\s]+$/g, '')).filter(Boolean).slice(0, 4);
+  }
+  const text = raw.replace(/<<\s*ACTIONS\s*>>[\s\S]*?<<\s*END\s*>>/i, '').trim();
+  return { text, actions };
+}
+
+// Suggest fallback actions from the keyword map when the LLM didn't supply any.
+function suggestActionsFromKeywords(agentText, userText) {
+  const role = window.currentRole || 'manager';
+  const at = agentText || '';
+  const ut = userText || _getLastUserMessage();
+  const chipsFor = (rule) => (rule.chips && rule.chips[role]) || [];
+  const scored = (Array.isArray(FOLLOWUP_MAP) ? FOLLOWUP_MAP : [])
+    .map((rule, idx) => {
+      let s = 0;
+      if (ut && rule.match.test(ut)) s += 3;
+      if (at && rule.match.test(at)) s += 2;
+      return { rule, score: s, idx };
+    })
+    .filter(r => r.score > 0 && chipsFor(r.rule).length > 0)
+    .sort((a, b) => b.score - a.score || a.idx - b.idx);
+  const picked = [];
+  const usedIds = new Set();
+  for (const { rule } of scored) {
+    if (picked.length >= 3) break;
+    if (usedIds.has(rule.id)) continue;
+    for (const chip of chipsFor(rule)) {
+      if (!picked.includes(chip)) { picked.push(chip); usedIds.add(rule.id); break; }
+    }
+  }
+  if (picked.length < 3 && scored.length > 0) {
+    for (const chip of chipsFor(scored[0].rule)) {
+      if (picked.length >= 3) break;
+      if (!picked.includes(chip)) picked.push(chip);
+    }
+  }
+  if (picked.length < 2) {
+    const fallbacks = (FALLBACK_FOLLOWUPS && FALLBACK_FOLLOWUPS[role]) || [];
+    for (const chip of fallbacks) {
+      if (picked.length < 3 && !picked.includes(chip)) picked.push(chip);
+    }
+  }
+  return picked.slice(0, 3);
+}
+
+// Build a Teams-Adaptive-Card-styled container for agent output with action buttons.
+function appendAgentCard({ content, actions, timestamp, title, eyebrow }) {
   const row = document.createElement('div');
   row.className = 'msg-row msg-row-agent';
 
@@ -1737,28 +2347,107 @@ function appendAgentBubble(content, timestamp) {
     const avatar = document.createElement('div');
     avatar.className = 'msg-avatar';
     avatar.textContent = 'SC';
-    avatar.style.backgroundColor = '#5b5fc7';
-    avatar.style.color = '#ffffff';
-    avatar.style.display = 'flex';
-    avatar.style.alignItems = 'center';
-    avatar.style.justifyContent = 'center';
-    avatar.style.fontSize = '0.75rem';
-    avatar.style.fontWeight = '600';
+    avatar.style.cssText = 'background:#5b5fc7;color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:600;';
+    const meta = document.createElement('div');
+    meta.className = 'msg-meta';
+    meta.textContent = `Sickness Absence Coach · ${timestamp || formatTime(new Date())}`;
+    meta.style.cssText = 'font-size:0.7rem;color:#9ea0a6;margin-bottom:4px;';
+    bubble.appendChild(meta);
+    row.appendChild(avatar);
+  }
 
+  const card = document.createElement('div');
+  card.className = 'msg-card';
+
+  if (title || eyebrow) {
+    const header = document.createElement('div');
+    header.className = 'msg-card-header';
+    if (eyebrow) {
+      const eb = document.createElement('div');
+      eb.className = 'msg-card-eyebrow';
+      eb.textContent = eyebrow;
+      header.appendChild(eb);
+    }
+    if (title) {
+      const tt = document.createElement('div');
+      tt.className = 'msg-card-title';
+      tt.textContent = title;
+      header.appendChild(tt);
+    }
+    card.appendChild(header);
+  }
+
+  const body = document.createElement('div');
+  body.className = 'msg-card-body';
+  body.innerHTML = renderMarkdown(content);
+  card.appendChild(body);
+
+  if (Array.isArray(actions) && actions.length > 0) {
+    const actionsRow = document.createElement('div');
+    actionsRow.className = 'msg-card-actions';
+    actions.slice(0, 4).forEach((label, idx) => {
+      const btn = document.createElement('button');
+      btn.className = 'msg-card-action' + (idx === 0 ? ' primary' : '');
+      btn.textContent = label;
+      btn.addEventListener('click', () => {
+        composeInput.value = label;
+        sendMessage();
+      });
+      actionsRow.appendChild(btn);
+    });
+    card.appendChild(actionsRow);
+  }
+
+  bubble.appendChild(card);
+  row.appendChild(bubble);
+  messagesContainer.appendChild(row);
+
+  lastSender = 'agent';
+  scrollToBottom();
+}
+
+function appendAgentBubble(content, timestamp) {
+  // Mixed-mode rendering: if the reply carries an action hint (LLM-supplied
+  // <<ACTIONS>>...<<END>> block) OR keyword analysis suggests strong follow-ups,
+  // render as a Teams-Adaptive-Card-style card with action buttons. Otherwise
+  // fall through to a plain text bubble (streaming-feel narrative).
+  const parsed = parseAgentReply(content);
+  let actions = parsed.actions;
+  let body = parsed.text;
+
+  if (actions.length === 0) {
+    const suggested = suggestActionsFromKeywords(body, _getLastUserMessage());
+    if (suggested.length >= 2) actions = suggested;
+  }
+
+  if (actions.length > 0) {
+    appendAgentCard({ content: body, actions, timestamp });
+    return;
+  }
+
+  // Plain narrative bubble (no decisions to surface).
+  const row = document.createElement('div');
+  row.className = 'msg-row msg-row-agent';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble';
+
+  if (lastSender !== 'agent') {
+    const avatar = document.createElement('div');
+    avatar.className = 'msg-avatar';
+    avatar.textContent = 'SC';
+    avatar.style.cssText = 'background:#5b5fc7;color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:600;';
     const meta = document.createElement('div');
     meta.className = 'msg-meta';
     meta.textContent = `Sickness Absence Coach · ${timestamp}`;
-    meta.style.fontSize = '0.7rem';
-    meta.style.color = '#9ea0a6';
-    meta.style.marginBottom = '4px';
-
+    meta.style.cssText = 'font-size:0.7rem;color:#9ea0a6;margin-bottom:4px;';
     bubble.appendChild(meta);
     row.appendChild(avatar);
   }
 
   const contentDiv = document.createElement('div');
   contentDiv.className = 'msg-content';
-  contentDiv.innerHTML = renderMarkdown(content);
+  contentDiv.innerHTML = renderMarkdown(body);
 
   bubble.appendChild(contentDiv);
   row.appendChild(bubble);
@@ -1841,11 +2530,14 @@ function appendErrorBubble(message) {
   scrollToBottom();
 }
 
-function renderSuggestedChips() {
+function renderSuggestedChips(role) {
   suggestedReplies.innerHTML = '';
   suggestedReplies.style.display = 'flex';
 
-  SUGGESTED_CHIPS.forEach(text => {
+  const r = role || window.currentRole || 'manager';
+  const chips = (window.SUGGESTED_CHIPS_BY_ROLE && window.SUGGESTED_CHIPS_BY_ROLE[r]) || SUGGESTED_CHIPS;
+
+  chips.forEach(text => {
     const btn = document.createElement('button');
     btn.className = 'suggested-chip';
     btn.textContent = text;
@@ -1886,13 +2578,54 @@ function hideTyping() {
 // 7. Core Logic
 // ------------------------------------------------------------------
 
+function getSystemPromptForRole(role) {
+  const addendum = role === 'people_ops'
+    ? `
+
+## Current speaker — override
+You are now speaking with **Polly Newman**, People Operations Lead — not Mark Davies. She is the technical owner of the framework and defends decisions to HR and legal. With Polly:
+- Use precise framework terminology (Loop A/B/C, exclusion mechanism, shadow mode, binomial p-value, Bradford lock-out, §15/§18, transparency log).
+- Show your working when she asks — numbers, dates, audit trail.
+- She CAN see exclusion categories and reason context where the policy permits.
+- She CAN ask about Stage 2/3 architecture and shadow-phase pass criteria; explain them.
+- The "never say pregnancy to the manager" rule does NOT apply here — Polly is the PO Lead reviewer. You can name §18 exclusions in context.`
+    : `
+
+## Current speaker — register
+You are speaking with **Mark Davies**, a UK line manager. He is not technical and not an HR specialist. Adapt your register accordingly:
+- Use plain, conversational English. Sound like a thoughtful HR colleague, not a system output.
+- AVOID jargon unless Mark uses it first: do not say "Loop A/B/C", "binomial", "p-value", "Bradford", "stage logic", "shadow mode", "rolling 12-month window", "PO-flagged", "§15/§18". If a concept is unavoidable, translate first then add a short plain-English explanation.
+- Prefer "absence" or "time off" over "spell". Prefer "the point where the framework asks for a supportive conversation" over "Stage 1 threshold". Prefer "a heads-up" over "Loop C signal".
+- Don't show statistical detail unless Mark asks. If he asks "why?", give the human reason first, then offer the detail.
+- Focus answers on: what's happening with the person, what Mark needs to do, by when, and offer to help draft the message.
+- If Mark sounds worried or unsure, acknowledge it warmly and offer concrete next steps.`;
+
+  const actionsProtocol = `
+
+## Output protocol — Adaptive Card actions
+This chat is rendered as a Microsoft Teams Adaptive Card surface. When your reply offers the user a decision or natural next step, append a single trailing line in this exact form:
+
+<<ACTIONS>>["First option", "Second option", "Third option"]<<END>>
+
+Rules:
+- Up to 3 actions. Each ≤ 7 words.
+- The actions are short verbs/questions a user would tap — what THEY would say next, not what you'd say.
+- Phrase them in the user's voice ("Show me the dates", "Help me draft it"), not the agent's ("I'll show you the dates").
+- Omit the block entirely on small narrative replies that don't lead anywhere obvious — a plain text turn is fine.
+- Do NOT wrap the block in code fences. Do NOT mention the block in your prose. The renderer strips it and displays buttons.
+- Match the register to the speaker (plain English for Mark; precise terminology for Polly).`;
+
+  return SYSTEM_PROMPT + addendum + actionsProtocol;
+}
+
 async function doApiCall() {
   if (isLoading) return;
   isLoading = true;
   showTyping();
 
+  const role = window.currentRole || 'manager';
   const apiMessages = [
-    { role: 'system', content: SYSTEM_PROMPT },
+    { role: 'system', content: getSystemPromptForRole(role) },
     ...conversation
       .filter(t => t.role !== 'system')
       .map(t => ({ role: t.role, content: t.content }))
@@ -1939,7 +2672,9 @@ function sendMessage() {
   composeInput.value = '';
   updateSendButton();
   autoResizeTextarea();
+  // Chips now live inside each Adaptive Card. The standalone rows stay hidden.
   hideSuggestedReplies();
+  if (typeof hideFollowupRow === 'function') hideFollowupRow();
 
   doApiCall();
 }
@@ -1949,10 +2684,25 @@ function sendMessage() {
 // ------------------------------------------------------------------
 
 function autoResizeTextarea() {
-  composeInput.style.height = 'auto';
-  const newHeight = Math.min(composeInput.scrollHeight, 120);
-  composeInput.style.height = newHeight + 'px';
-  composeInput.style.overflowY = composeInput.scrollHeight > 120 ? 'auto' : 'hidden';
+  const MAX_ROWS = 6;
+  const LINE_PX = 20;
+  const v = composeInput.value;
+  if (!v) {
+    composeInput.style.height = '';
+    composeInput.style.overflowY = 'hidden';
+    composeInput.rows = 1;
+    return;
+  }
+  const newlines = (v.match(/\n/g) || []).length + 1;
+  const wrapWidth = composeInput.clientWidth;
+  let wrapEstimate = newlines;
+  if (wrapWidth > 0) {
+    const approxCharsPerLine = Math.max(1, Math.floor(wrapWidth / 7));
+    wrapEstimate = v.split('\n').reduce((acc, line) => acc + Math.max(1, Math.ceil(line.length / approxCharsPerLine)), 0);
+  }
+  const rows = Math.min(MAX_ROWS, Math.max(1, Math.max(newlines, wrapEstimate)));
+  composeInput.style.height = (rows * LINE_PX) + 'px';
+  composeInput.style.overflowY = rows >= MAX_ROWS ? 'auto' : 'hidden';
 }
 
 function updateSendButton() {
@@ -1979,17 +2729,230 @@ sendBtn.addEventListener('click', sendMessage);
 // 9. Initialise
 // ------------------------------------------------------------------
 
-(function init() {
+function startDemo(role) {
+  role = role || 'manager';
+  window.currentRole = role;
+
+  // Idempotent reset
+  messagesContainer.innerHTML = '';
+  conversation = [];
+  lastSender = null;
+  resetFollowups();
+  hideFollowupRow();
+
+  const opener = (window.OPENERS && window.OPENERS[role]) || OPENING_MESSAGE;
+
   appendDateSeparator('Today');
 
-  conversation.push({ role: 'assistant', content: OPENING_MESSAGE, timestamp: '09:14' });
-  appendAgentBubble(OPENING_MESSAGE, '09:14');
+  // Opener content carries its own <<ACTIONS>> block → renders as a card with buttons.
+  // We persist the FULL opener (with the actions block) in the conversation array
+  // so the LLM can see the same context the user saw.
+  conversation.push({ role: 'assistant', content: opener, timestamp: '09:14' });
+  appendAgentBubble(opener, '09:14');
 
-  renderSuggestedChips();
+  // The two old chip rows are obsolete now — chips live inside each card.
+  hideSuggestedReplies();
+  hideFollowupRow();
+
   updateSendButton();
   autoResizeTextarea();
-})();
-</script>
+}
+
+window.startDemo = startDemo;
+window.currentRole = 'manager';
+
+// ------------------------------------------------------------------
+// 9b. Persistent follow-up chips (#followupRow)
+// ------------------------------------------------------------------
+
+const followupRow = document.getElementById('followupRow');
+
+function _getLastUserMessage() {
+  if (!Array.isArray(conversation)) return '';
+  for (let i = conversation.length - 1; i >= 0; i--) {
+    if (conversation[i] && conversation[i].role === 'user') return conversation[i].content || '';
+  }
+  return '';
+}
+
+function resetFollowups() {
+  if (followupRow) followupRow.innerHTML = '';
+}
+
+function renderFollowups(lastAgentText, lastUserText) {
+  if (!followupRow) return;
+  const agentText = lastAgentText || '';
+  const userText = lastUserText || _getLastUserMessage();
+  const role = window.currentRole || 'manager';
+  const chipsFor = (rule) => (rule.chips && rule.chips[role]) || [];
+
+  // Score each rule: user-message hits weighted higher than agent-reply hits.
+  const scored = FOLLOWUP_MAP
+    .map((rule, idx) => {
+      let score = 0;
+      if (userText && rule.match.test(userText)) score += 3;
+      if (agentText && rule.match.test(agentText)) score += 2;
+      return { rule, score, idx };
+    })
+    .filter(r => r.score > 0 && chipsFor(r.rule).length > 0)
+    .sort((a, b) => b.score - a.score || a.idx - b.idx);
+
+  const picked = [];
+  const usedRuleIds = new Set();
+  // Take one chip from each matched rule, in score order, until 3 chips.
+  for (const { rule } of scored) {
+    if (picked.length >= 3) break;
+    if (usedRuleIds.has(rule.id)) continue;
+    for (const chip of chipsFor(rule)) {
+      if (!picked.includes(chip)) {
+        picked.push(chip);
+        usedRuleIds.add(rule.id);
+        break;
+      }
+    }
+  }
+  // If only one or two rules matched, top up from the strongest rule's other chips.
+  if (picked.length < 3 && scored.length > 0) {
+    for (const chip of chipsFor(scored[0].rule)) {
+      if (picked.length >= 3) break;
+      if (!picked.includes(chip)) picked.push(chip);
+    }
+  }
+  // Fallbacks if we still don't have enough.
+  if (picked.length < 2) {
+    const fallbacks = (FALLBACK_FOLLOWUPS && FALLBACK_FOLLOWUPS[role]) || [];
+    for (const chip of fallbacks) {
+      if (picked.length < 3 && !picked.includes(chip)) picked.push(chip);
+    }
+  }
+  // Hard cap at 3.
+  picked.length = Math.min(picked.length, 3);
+
+  followupRow.innerHTML = '';
+  picked.forEach(textVal => {
+    const btn = document.createElement('button');
+    btn.className = 'suggested-chip';
+    btn.textContent = textVal;
+    btn.style.padding = '6px 12px';
+    btn.style.borderRadius = '16px';
+    btn.style.border = '1px solid #4a4a6a';
+    btn.style.background = '#252536';
+    btn.style.color = '#d1d1d8';
+    btn.style.cursor = 'pointer';
+    btn.style.fontSize = '0.85rem';
+    btn.style.whiteSpace = 'nowrap';
+    btn.style.flexShrink = '0';
+    btn.addEventListener('click', () => {
+      composeInput.value = textVal;
+      sendMessage();
+    });
+    followupRow.appendChild(btn);
+  });
+}
+
+window.renderFollowups = renderFollowups;
+
+// Visibility: hide #followupRow until after the first user turn, so the opener's
+// suggested-chips row and the persistent follow-ups never compete for attention.
+function showFollowupRow() {
+  if (followupRow) followupRow.style.display = 'flex';
+}
+function hideFollowupRow() {
+  if (followupRow) followupRow.style.display = 'none';
+}
+hideFollowupRow();
+
+// ------------------------------------------------------------------
+// 9c. Chat-list role switching
+// ------------------------------------------------------------------
+
+const _convSubtitle = document.getElementById('convSubtitle');
+const SUBTITLES = {
+  manager: 'Sickness Absence Framework Coach · UK People Operations',
+  people_ops: 'Sickness Absence Framework Coach · UK People Operations · Polly Newman view'
+};
+
+function updateSubtitle(role) {
+  if (_convSubtitle && SUBTITLES[role]) {
+    _convSubtitle.textContent = SUBTITLES[role];
+  }
+}
+
+function performRoleSwitch(el) {
+  const role = el.dataset.role || 'manager';
+  document.querySelectorAll('#chat-manager, #chat-peopleops').forEach(node => {
+    node.classList.toggle('active', node === el);
+  });
+  window.currentRole = role;
+  updateSubtitle(role);
+  if (typeof window.startDemo === 'function') {
+    window.startDemo(role);
+  }
+}
+
+function showPollyIntro(onContinue) {
+  const modal = document.getElementById('pollyIntro');
+  if (!modal) { onContinue(); return; }
+  modal.classList.add('open');
+  const btn = document.getElementById('pollyIntroBtn');
+  const close = () => {
+    modal.classList.add('fading');
+    setTimeout(() => {
+      modal.classList.remove('open');
+      modal.classList.remove('fading');
+      onContinue();
+    }, 200);
+  };
+  btn?.addEventListener('click', close, { once: true });
+}
+
+function wireChatEntry(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener('click', () => {
+    const role = el.dataset.role || 'manager';
+    if (role === 'people_ops' && !sessionStorage.getItem('pollyIntroSeen')) {
+      sessionStorage.setItem('pollyIntroSeen', '1');
+      showPollyIntro(() => performRoleSwitch(el));
+      return;
+    }
+    performRoleSwitch(el);
+  });
+}
+wireChatEntry('chat-manager');
+wireChatEntry('chat-peopleops');
+updateSubtitle(window.currentRole || 'manager');
+
+// Scene modal wiring — gate auto-start until user clicks "Start chat"
+document.body.style.overflow = 'hidden';
+const _sceneCard = document.getElementById('sceneCard');
+const _startBtn = document.getElementById('startChatBtn');
+if (_startBtn && _sceneCard) {
+  _startBtn.addEventListener('click', () => {
+    _sceneCard.classList.add('fading');
+    setTimeout(() => {
+      document.body.style.overflow = '';
+      startDemo(window.currentRole || 'manager');
+      if (_sceneCard && _sceneCard.parentNode) {
+        _sceneCard.parentNode.removeChild(_sceneCard);
+      }
+    }, 200);
+  });
+} else {
+  // Safety: if modal isn't in DOM for some reason, fall through
+  document.body.style.overflow = '';
+  startDemo('manager');
+}
+
+// Info panel close wiring
+const _infoPanelClose = document.getElementById('infoPanelClose');
+if (_infoPanelClose) {
+  _infoPanelClose.addEventListener('click', () => {
+    const p = document.getElementById('infoPanel');
+    if (p) p.classList.remove('open');
+  });
+}
+  </script>
 
 </body>
 </html>
