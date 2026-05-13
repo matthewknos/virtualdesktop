@@ -358,7 +358,7 @@ const NUDGES = {
         text: "Hi Alice, welcome to the team! 🎉 I'm your AI Probation Copilot. I'll help you stay on top of goals, feedback, and your self-assessment over the next 90 days.\n\nWant a quick walkthrough of what to expect?",
         actions: [
           { label: 'Show me the timeline', style: 'primary', type: 'info',
-            info: "Probation in 4 beats:\n• Week 1–4: get goals set, complete onboarding\n• Week 4–8: build feedback, make progress on goals\n• Week 8–12: gather peer feedback, prep self-assessment\n• Week 12: review meeting with Dave" },
+            info: "Probation in 5 beats (UK & Ireland, 6 months):\n• Week 1: welcome, start shaping goals\n• Week 4–5: first checkpoint — goals locked, early feedback\n• Week 13: midpoint — formal review touchpoint\n• Week 16: post-midpoint checkpoint\n• Week 26: end-of-probation review with Dave" },
           { label: 'I know the basics', style: 'tertiary', type: 'dismiss', confirm: "Cool — I'll check back at week 4." }
         ]
       },
@@ -416,7 +416,7 @@ const NUDGES = {
         text: "Hi Ben, welcome to the team! I'm your AI Probation Copilot. I'll help you stay on top of goals, feedback, and your self-assessment.\n\nWant a quick walkthrough?",
         actions: [
           { label: 'Show me the timeline', style: 'primary', type: 'info',
-            info: "Probation in 4 beats:\n• Week 1–4: get goals set, complete onboarding\n• Week 4–8: build feedback, make progress on goals\n• Week 8–12: gather peer feedback, prep self-assessment\n• Week 12: review meeting with Dave" },
+            info: "Probation in 5 beats (UK & Ireland, 6 months):\n• Week 1: welcome, start shaping goals\n• Week 4–5: first checkpoint — goals locked, early feedback\n• Week 13: midpoint — formal review touchpoint\n• Week 16: post-midpoint checkpoint\n• Week 26: end-of-probation review with Dave" },
           { label: "I'm fine", style: 'tertiary', type: 'dismiss', confirm: "Cool — I'll check back at week 4." }
         ]
       },

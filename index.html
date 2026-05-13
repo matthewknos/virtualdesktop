@@ -295,14 +295,10 @@
       <div class="card-title">R&amp;R Agentic Approver</div>
     </a>
 
-    <div class="card card-soon">
-      <span class="card-status">Coming soon</span>
-      <div class="card-title">Next prototype</div>
-    </div>
 
-    <a class="card card-hidden" id="card-intl-comp-relo" href="/intl-comp-relo">
+    <a class="card" id="card-sickness-absence" href="/sickness-absence">
       <span class="card-status" style="color:#b88600;">Candidate &middot; for CoE feedback</span>
-      <div class="card-title">International Comp &amp; Relocation</div>
+      <div class="card-title">Sickness Absence Framework Coach</div>
     </a>
   </div>
 
@@ -337,12 +333,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// ⌘K / Ctrl+K reveals the candidate prototype card.
+// ⌘K / Ctrl+K reveals the candidate prototype cards.
+const CANDIDATE_CARD_IDS = [];
 document.addEventListener('keydown', (e) => {
   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
     e.preventDefault();
-    const card = document.getElementById('card-intl-comp-relo');
-    if (card) card.classList.toggle('card-hidden');
+    CANDIDATE_CARD_IDS.forEach((id) => {
+      const card = document.getElementById(id);
+      if (card) card.classList.toggle('card-hidden');
+    });
   }
 });
 </script>

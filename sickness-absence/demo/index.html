@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sickness Absence Framework Coach &mdash; Live Demo</title>
+<script defer src="/_vercel/insights/script.js"></script>
+<style>
+  :root {
+    --color-ink: #1d1d1f;
+    --color-graphite: #707070;
+    --color-stone: #86868b;
+    --color-fog: #f5f5f7;
+    --color-snow: #ffffff;
+    --color-silver-mist: #e8e8ed;
+    --color-azure: #0071e3;
+    --color-purple: #5e3f9a;
+    --color-success: #1c7c3a;
+    --color-caution: #b64400;
+    --font-display: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-text: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-mono: 'SF Mono', ui-monospace, 'Menlo', 'Monaco', 'Consolas', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+
+  body {
+    font-family: var(--font-text);
+    background: var(--color-fog);
+    color: var(--color-ink);
+    font-size: 15px;
+    line-height: 1.5;
+    letter-spacing: -0.1px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+  }
+
+  /* ── Sticky header ── */
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(245, 245, 247, 0.85);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 1px solid var(--color-silver-mist);
+    height: 44px;
+    display: flex;
+    align-items: center;
+    padding: 0 22px;
+    gap: 10px;
+  }
+  .header-title { font-size: 12px; font-weight: 600; letter-spacing: -0.26px; }
+  .header-sub { font-size: 12px; font-weight: 400; color: var(--color-graphite); letter-spacing: -0.26px; }
+  .header-divider { color: var(--color-silver-mist); font-size: 12px; }
+  .draft-pill {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--color-caution);
+    background: rgba(182, 68, 0, 0.08);
+    border: 1px solid rgba(182, 68, 0, 0.25);
+    border-radius: 999px;
+    padding: 2px 8px;
+    margin-left: 4px;
+  }
+  .header-back { margin-left: auto; font-size: 12px; color: var(--color-azure); text-decoration: none; letter-spacing: -0.26px; }
+  .header-back:hover { text-decoration: underline; }
+
+  /* ── Intro band ── */
+  .intro {
+    background: var(--color-fog);
+    border-bottom: 1px solid var(--color-silver-mist);
+    padding: 32px 32px 28px;
+  }
+  .intro-inner { max-width: 820px; margin: 0 auto; }
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--color-graphite);
+    margin-bottom: 10px;
+  }
+  .intro h1 {
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.4px;
+    margin-bottom: 10px;
+  }
+  .intro p {
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--color-graphite);
+    max-width: 720px;
+  }
+
+  /* ── Chat shell ── */
+  .chat-wrap {
+    max-width: 820px;
+    margin: 28px auto 0;
+    padding: 0 24px;
+  }
+  .chat-surface {
+    background: var(--color-snow);
+    border: 1px solid var(--color-silver-mist);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  }
+  .chat-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--color-silver-mist);
+    background: var(--color-snow);
+  }
+  .chat-toolbar-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-ink);
+  }
+  .chat-toolbar-sub {
+    font-size: 12px;
+    color: var(--color-graphite);
+  }
+  .chat-toolbar-status {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--color-success);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--color-success);
+    display: inline-block;
+  }
+
+  /* ── Scenario picker ── */
+  .picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--color-silver-mist);
+    background: #fafafa;
+  }
+  .picker-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--color-graphite);
+    align-self: center;
+    margin-right: 4px;
+  }
+  .chip {
+    font-family: var(--font-text);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-ink);
+    background: var(--color-snow);
+    border: 1px solid var(--color-silver-mist);
+    border-radius: 999px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+  }
+  .chip:hover { border-color: var(--color-graphite); }
+  .chip:focus { outline: 2px solid var(--color-azure); outline-offset: 2px; }
+  .chip.active {
+    background: var(--color-ink);
+    color: var(--color-snow);
+    border-color: var(--color-ink);
+  }
+  .chip-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-left: 6px;
+    color: var(--color-graphite);
+  }
+  .chip.active .chip-tag { color: rgba(255,255,255,0.7); }
+  .chip[data-lane="b"] .chip-tag { color: var(--color-azure); }
+  .chip[data-lane="c"] .chip-tag { color: var(--color-purple); }
+  .chip[data-lane="excl"] .chip-tag { color: var(--color-success); }
+  .chip.active.chip[data-lane] .chip-tag { color: rgba(255,255,255,0.85); }
+
+  /* ── Chat stream ── */
+  .chat-stream {
+    padding: 20px 18px 24px;
+    min-height: 420px;
+    background: var(--color-snow);
+  }
+  .empty-state {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--color-graphite);
+    font-size: 14px;
+  }
+  .empty-state-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-ink);
+    margin-bottom: 6px;
+  }
+
+  .msg-group { margin-bottom: 18px; }
+  .msg-group.agent { display: flex; align-items: flex-start; gap: 10px; }
+  .msg-group.manager { display: flex; align-items: flex-start; gap: 10px; flex-direction: row-reverse; }
+
+  .avatar {
+    flex-shrink: 0;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+  .avatar.agent {
+    background: linear-gradient(135deg, #0071e3 0%, #5e3f9a 100%);
+    color: var(--color-snow);
+  }
+  .avatar.manager {
+    background: var(--color-silver-mist);
+    color: var(--color-ink);
+  }
+
+  .msg-col { max-width: 560px; min-width: 0; }
+  .msg-meta {
+    font-size: 11px;
+    color: var(--color-stone);
+    margin-bottom: 4px;
+    letter-spacing: 0.1px;
+  }
+  .msg-group.manager .msg-meta { text-align: right; }
+
+  .bubble {
+    border-radius: 14px;
+    padding: 10px 14px;
+    font-size: 14px;
+    line-height: 1.5;
+    word-wrap: break-word;
+  }
+  .bubble.agent {
+    background: #f2f2f5;
+    color: var(--color-ink);
+    border-top-left-radius: 4px;
+  }
+  .bubble.manager {
+    background: var(--color-azure);
+    color: var(--color-snow);
+    border-top-right-radius: 4px;
+  }
+  .bubble + .bubble { margin-top: 6px; }
+
+  /* ── Evidence card (inline in chat) ── */
+  .evidence {
+    margin-top: 8px;
+    border: 1px solid var(--color-silver-mist);
+    border-radius: 10px;
+    background: var(--color-snow);
+    overflow: hidden;
+  }
+  .evidence-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--color-silver-mist);
+    background: #fafafa;
+  }
+  .evidence-tag {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--color-silver-mist);
+    color: var(--color-graphite);
+  }
+  .evidence-tag.lane-b { background: rgba(0,113,227,0.1); color: var(--color-azure); }
+  .evidence-tag.lane-c { background: rgba(94,63,154,0.1); color: var(--color-purple); }
+  .evidence-tag.lane-excl { background: rgba(28,124,58,0.1); color: var(--color-success); }
+  .evidence-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-ink);
+  }
+  .evidence-body { padding: 10px 12px; font-size: 13px; }
+  .evidence-body table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .evidence-body th, .evidence-body td {
+    text-align: left;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--color-silver-mist);
+    vertical-align: top;
+  }
+  .evidence-body th {
+    font-weight: 600;
+    color: var(--color-graphite);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .evidence-body tr:last-child td { border-bottom: none; }
+  .evidence-footer {
+    padding: 8px 12px;
+    border-top: 1px solid var(--color-silver-mist);
+    background: #fafafa;
+    font-size: 11px;
+    color: var(--color-graphite);
+    font-family: var(--font-mono);
+  }
+  .kv {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 4px 12px;
+    font-size: 12px;
+  }
+  .kv dt { color: var(--color-graphite); font-weight: 500; }
+  .kv dd { color: var(--color-ink); }
+  .day-tag {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--color-purple);
+    background: rgba(94,63,154,0.12);
+    border-radius: 3px;
+    padding: 1px 4px;
+    margin-left: 4px;
+    letter-spacing: 0.4px;
+  }
+
+  /* ── Draft message block ── */
+  .draft {
+    margin-top: 8px;
+    border: 1px solid var(--color-silver-mist);
+    border-left: 3px solid var(--color-azure);
+    border-radius: 10px;
+    background: var(--color-snow);
+    overflow: hidden;
+  }
+  .draft.lane-c { border-left-color: var(--color-purple); }
+  .draft.lane-a { border-left-color: var(--color-success); }
+  .draft-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: #fafafa;
+    border-bottom: 1px solid var(--color-silver-mist);
+  }
+  .draft-head-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--color-graphite);
+  }
+  .draft-head-status {
+    font-size: 11px;
+    color: var(--color-graphite);
+  }
+  .draft-head-status.sent { color: var(--color-success); }
+  .draft-head-status.skipped { color: var(--color-caution); }
+  .draft-body {
+    padding: 12px 14px;
+    font-size: 14px;
+    font-style: italic;
+    color: var(--color-ink);
+    line-height: 1.55;
+  }
+  .draft-actions {
+    display: flex;
+    gap: 8px;
+    padding: 10px 12px;
+    border-top: 1px solid var(--color-silver-mist);
+    background: #fafafa;
+    flex-wrap: wrap;
+  }
+  .btn {
+    font-family: var(--font-text);
+    font-size: 12px;
+    font-weight: 500;
+    border-radius: 8px;
+    padding: 6px 12px;
+    cursor: pointer;
+    border: 1px solid var(--color-silver-mist);
+    background: var(--color-snow);
+    color: var(--color-ink);
+    transition: background-color 0.12s ease, border-color 0.12s ease;
+  }
+  .btn:hover { background: var(--color-fog); }
+  .btn:focus { outline: 2px solid var(--color-azure); outline-offset: 1px; }
+  .btn-primary {
+    background: var(--color-azure);
+    color: var(--color-snow);
+    border-color: var(--color-azure);
+  }
+  .btn-primary:hover { background: #0062c4; border-color: #0062c4; }
+  .btn-primary.lane-c { background: var(--color-purple); border-color: var(--color-purple); }
+  .btn-primary.lane-c:hover { background: #4e3380; border-color: #4e3380; }
+  .btn-primary.lane-a { background: var(--color-success); border-color: var(--color-success); }
+  .btn-primary.lane-a:hover { background: #166830; border-color: #166830; }
+  .btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+
+  /* ── Summary chip / decision pill ── */
+  .summary-chip {
+    margin-top: 10px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: #f7f7fa;
+    border: 1px solid var(--color-silver-mist);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--color-graphite);
+    letter-spacing: 0.1px;
+    line-height: 1.5;
+  }
+  .summary-chip strong { color: var(--color-ink); font-weight: 600; }
+
+  /* ── Action-button row for manager (replaces typed reply) ── */
+  .quick-actions {
+    margin-top: 8px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .quick-btn {
+    font-family: var(--font-text);
+    font-size: 13px;
+    font-weight: 500;
+    background: var(--color-snow);
+    border: 1px solid var(--color-azure);
+    color: var(--color-azure);
+    border-radius: 999px;
+    padding: 6px 14px;
+    cursor: pointer;
+  }
+  .quick-btn:hover { background: rgba(0,113,227,0.06); }
+
+  /* ── Transparency log ── */
+  .log-section {
+    max-width: 820px;
+    margin: 32px auto 0;
+    padding: 0 24px 60px;
+  }
+  .log-card {
+    background: var(--color-snow);
+    border: 1px solid var(--color-silver-mist);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .log-head {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--color-silver-mist);
+    background: #fafafa;
+  }
+  .log-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-ink);
+  }
+  .log-sub {
+    font-size: 12px;
+    color: var(--color-graphite);
+    margin-top: 2px;
+  }
+  .log-table-wrap { overflow-x: auto; }
+  .log-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    min-width: 720px;
+  }
+  .log-table th, .log-table td {
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--color-silver-mist);
+    vertical-align: top;
+  }
+  .log-table th {
+    font-weight: 600;
+    color: var(--color-graphite);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    background: #fafafa;
+  }
+  .log-table tr:last-child td { border-bottom: none; }
+  .log-id { font-family: var(--font-mono); font-size: 11px; color: var(--color-graphite); }
+  .lane-pill {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    border-radius: 4px;
+    padding: 2px 6px;
+  }
+  .lane-pill.fire { background: rgba(0,113,227,0.1); color: var(--color-azure); }
+  .lane-pill.pattern { background: rgba(94,63,154,0.1); color: var(--color-purple); }
+  .lane-pill.nofire { background: rgba(28,124,58,0.1); color: var(--color-success); }
+
+  /* ── Footer ── */
+  .footer {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 0 24px 40px;
+    font-size: 11px;
+    color: var(--color-stone);
+    text-align: center;
+  }
+
+  /* ── Fade-in for new messages ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .msg-group, .summary-chip { animation: fadeUp 0.25s ease both; }
+
+  /* ── Responsive ── */
+  @media (max-width: 720px) {
+    .intro { padding: 24px 20px; }
+    .chat-wrap, .log-section { padding-left: 16px; padding-right: 16px; }
+    .picker { padding: 12px; }
+    .chip { font-size: 12px; padding: 5px 10px; }
+    .msg-col { max-width: 78%; }
+    .kv { grid-template-columns: 110px 1fr; }
+    .avatar { width: 28px; height: 28px; font-size: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <span class="header-title">CoE Testing</span>
+  <span class="header-divider">/</span>
+  <span class="header-sub">Sickness Absence Framework Coach &mdash; Live Demo</span>
+  <span class="draft-pill">Draft</span>
+  <a class="header-back" href="/sickness-absence">&larr; Back to Sickness Absence</a>
+</header>
+
+<section class="intro">
+  <div class="intro-inner">
+    <div class="eyebrow">Walkthrough</div>
+    <h1>The morning after the agent's nightly run</h1>
+    <p>You're watching Mark Davies, a line manager at the UK business, chat with the Sickness Absence Coach in his Teams / Copilot side panel. Three scenarios are scripted from last night's run &mdash; a Stage 1 threshold catch, a pattern-detection signal (new in v1), and an exclusion refusal that prevents an Equality Act breach. Pick a scenario to step through.</p>
+  </div>
+</section>
+
+<div class="chat-wrap">
+  <div class="chat-surface" role="region" aria-label="Sickness Absence Coach chat surface">
+    <div class="chat-toolbar">
+      <div class="avatar agent" aria-hidden="true">SC</div>
+      <div>
+        <div class="chat-toolbar-title">Sickness Absence Coach</div>
+        <div class="chat-toolbar-sub">Run R-2026-05-13 &middot; 12 direct reports</div>
+      </div>
+      <div class="chat-toolbar-status"><span class="status-dot" aria-hidden="true"></span>Nightly run complete &middot; 04:12</div>
+    </div>
+
+    <div class="picker" role="tablist" aria-label="Scenario picker">
+      <span class="picker-label">Scenarios</span>
+      <button class="chip" data-scenario="eve" data-lane="b" role="tab" aria-selected="false">
+        Worker A &mdash; Eve Hart <span class="chip-tag">Stage 1 fire</span>
+      </button>
+      <button class="chip" data-scenario="tom" data-lane="c" role="tab" aria-selected="false">
+        Worker B &mdash; Tom Reed <span class="chip-tag">Pattern (new)</span>
+      </button>
+      <button class="chip" data-scenario="priya" data-lane="excl" role="tab" aria-selected="false">
+        Worker C &mdash; Priya M. <span class="chip-tag">Exclusion refusal</span>
+      </button>
+    </div>
+
+    <div class="chat-stream" id="chatStream" aria-live="polite">
+      <div class="empty-state">
+        <div class="empty-state-title">Pick a scenario to start the walkthrough</div>
+        <div>Each one is a separate conversation Mark could be having this morning.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="log-section" aria-label="Transparency log">
+  <div class="log-card">
+    <div class="log-head">
+      <div class="log-title">Transparency log &mdash; last night's run</div>
+      <div class="log-sub">Every decision the agent made is written here, whether or not anything reached the manager's Inbox. Visible to People Ops.</div>
+    </div>
+    <div class="log-table-wrap">
+      <table class="log-table">
+        <thead>
+          <tr>
+            <th>Run ID</th>
+            <th>Worker</th>
+            <th>Decision</th>
+            <th>Loop</th>
+            <th>Count / Days</th>
+            <th>Exclusions</th>
+            <th>Pattern</th>
+            <th>Inbox</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="log-id">R-2026-05-13-0001</td>
+            <td>Eve Hart <span class="log-id">(W-104882)</span></td>
+            <td><span class="lane-pill fire">Fire</span></td>
+            <td>A + B</td>
+            <td>4 spells / 9 days &mdash; Stage 1 crossed</td>
+            <td>0</td>
+            <td>&mdash;</td>
+            <td>RTW + Stage 1 drafted</td>
+          </tr>
+          <tr>
+            <td class="log-id">R-2026-05-13-0002</td>
+            <td>Tom Reed <span class="log-id">(W-118394)</span></td>
+            <td><span class="lane-pill pattern">Pattern</span></td>
+            <td>C</td>
+            <td>3 spells / 5 days &mdash; below threshold</td>
+            <td>0</td>
+            <td>Friday 3/4 &middot; p=0.014</td>
+            <td>Pattern signal (soft)</td>
+          </tr>
+          <tr>
+            <td class="log-id">R-2026-05-13-0003</td>
+            <td>Priya M. <span class="log-id">(W-129457)</span></td>
+            <td><span class="lane-pill nofire">No-fire</span></td>
+            <td>B + C</td>
+            <td>raw 5/11 &rarr; effective 2/2</td>
+            <td>3 (&sect;18)</td>
+            <td>Suppressed on excluded spells</td>
+            <td>(none)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<div class="footer">
+  Internal &mdash; for CoE feedback. Do not share the URL externally. All workers, dates, IDs are fictional.
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ── Helpers ──────────────────────────────────────────────────────────────
+  function el(tag, props, children) {
+    var n = document.createElement(tag);
+    if (props) {
+      for (var k in props) {
+        if (k === 'class') n.className = props[k];
+        else if (k === 'html') n.innerHTML = props[k];
+        else if (k === 'text') n.textContent = props[k];
+        else if (k.indexOf('on') === 0 && typeof props[k] === 'function') {
+          n.addEventListener(k.slice(2), props[k]);
+        } else if (k === 'attrs') {
+          for (var a in props.attrs) n.setAttribute(a, props.attrs[a]);
+        } else {
+          n.setAttribute(k, props[k]);
+        }
+      }
+    }
+    if (children) {
+      (Array.isArray(children) ? children : [children]).forEach(function (c) {
+        if (c == null) return;
+        n.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+      });
+    }
+    return n;
+  }
+
+  function agentMsg(time, htmlContent, extras) {
+    var col = el('div', { class: 'msg-col' }, [
+      el('div', { class: 'msg-meta', text: 'Sickness Absence Coach · ' + time }),
+      el('div', { class: 'bubble agent', html: htmlContent })
+    ]);
+    if (extras) extras.forEach(function (e) { col.appendChild(e); });
+    return el('div', { class: 'msg-group agent' }, [
+      el('div', { class: 'avatar agent', attrs: { 'aria-label': 'Sickness Absence Coach' }, text: 'SC' }),
+      col
+    ]);
+  }
+
+  function managerMsg(time, text) {
+    return el('div', { class: 'msg-group manager' }, [
+      el('div', { class: 'avatar manager', attrs: { 'aria-label': 'Mark Davies' }, text: 'MD' }),
+      el('div', { class: 'msg-col' }, [
+        el('div', { class: 'msg-meta', text: 'Mark Davies · ' + time }),
+        el('div', { class: 'bubble manager', text: text })
+      ])
+    ]);
+  }
+
+  function evidenceCard(opts) {
+    // opts: { lane, title, bodyHtml, footer }
+    var head = el('div', { class: 'evidence-head' }, [
+      el('span', { class: 'evidence-tag lane-' + opts.lane, text: opts.lane === 'b' ? 'Loop B' : opts.lane === 'c' ? 'Loop C' : 'Exclusion' }),
+      el('span', { class: 'evidence-title', text: opts.title })
+    ]);
+    var body = el('div', { class: 'evidence-body', html: opts.bodyHtml });
+    var kids = [head, body];
+    if (opts.footer) kids.push(el('div', { class: 'evidence-footer', text: opts.footer }));
+    return el('div', { class: 'evidence' }, kids);
+  }
+
+  function draftBlock(opts) {
+    // opts: { lane, label, body, primaryLabel, secondaryLabels }
+    var statusEl = el('span', { class: 'draft-head-status', text: 'Awaiting action' });
+
+    var primaryBtn = el('button', { class: 'btn btn-primary lane-' + opts.lane, attrs: { type: 'button' }, text: opts.primaryLabel });
+    primaryBtn.addEventListener('click', function () {
+      statusEl.textContent = '✓ Sent';
+      statusEl.className = 'draft-head-status sent';
+      [primaryBtn].concat(secondaryBtns).forEach(function (b) { b.setAttribute('disabled', 'true'); });
+    });
+
+    var secondaryBtns = (opts.secondaryLabels || []).map(function (lbl) {
+      var b = el('button', { class: 'btn', attrs: { type: 'button' }, text: lbl });
+      b.addEventListener('click', function () {
+        if (lbl.toLowerCase().indexOf('edit') === 0) {
+          statusEl.textContent = 'Editing…';
+          statusEl.className = 'draft-head-status';
+        } else if (lbl.toLowerCase().indexOf('dismiss') === 0) {
+          statusEl.textContent = 'Dismissed — logged with reason';
+          statusEl.className = 'draft-head-status skipped';
+          [primaryBtn].concat(secondaryBtns).forEach(function (x) { x.setAttribute('disabled', 'true'); });
+        } else {
+          statusEl.textContent = 'Skipped — logged with reason';
+          statusEl.className = 'draft-head-status skipped';
+          [primaryBtn].concat(secondaryBtns).forEach(function (x) { x.setAttribute('disabled', 'true'); });
+        }
+      });
+      return b;
+    });
+
+    var actions = el('div', { class: 'draft-actions' }, [primaryBtn].concat(secondaryBtns));
+
+    return el('div', { class: 'draft lane-' + opts.lane }, [
+      el('div', { class: 'draft-head' }, [
+        el('span', { class: 'draft-head-label', text: opts.label }),
+        statusEl
+      ]),
+      el('div', { class: 'draft-body', html: '&ldquo;' + opts.body + '&rdquo;' }),
+      actions
+    ]);
+  }
+
+  function summaryChip(htmlContent) {
+    return el('div', { class: 'summary-chip', html: htmlContent });
+  }
+
+  function quickActions(stream, items) {
+    // items: array of { label, next } where next is a function called with stream
+    var wrap = el('div', { class: 'quick-actions' });
+    items.forEach(function (it) {
+      var b = el('button', { class: 'quick-btn', attrs: { type: 'button' }, text: it.label });
+      b.addEventListener('click', function () {
+        // Replace quick-actions row with a manager bubble of the chosen label, then advance.
+        wrap.parentNode.replaceChild(managerMsg(it.time || '07:42', it.label), wrap);
+        it.next();
+      });
+      wrap.appendChild(b);
+    });
+    return wrap;
+  }
+
+  // ── Scenario renderers ───────────────────────────────────────────────────
+  var stream = document.getElementById('chatStream');
+
+  function clearStream() { stream.innerHTML = ''; }
+
+  function render(node) { stream.appendChild(node); node.scrollIntoView({ behavior: 'smooth', block: 'end' }); }
+
+  // ── Worker A: Eve Hart (Stage 1 fire) ───────────────────────────────────
+  function scenarioEve() {
+    clearStream();
+
+    render(agentMsg('07:40', 'Good morning, Mark. I ran overnight against your 12 reports. <strong>Three updates worth your time.</strong> Want me to walk through them?'));
+
+    var qa1 = quickActions(stream, [{ label: 'Yes, walk me through.', time: '07:41', next: step2 }]);
+    render(qa1);
+
+    function step2() {
+      render(agentMsg('07:41', 'Starting with <strong>Eve Hart</strong>. She returned today from a 2-day absence (9&ndash;12 May). That’s an RTW conversation due within 5 working days. I’ve drafted one &mdash; want to see it?'));
+      render(quickActions(stream, [{ label: 'Show me.', time: '07:41', next: step3 }]));
+    }
+
+    function step3() {
+      render(agentMsg('07:42',
+        'Here’s the RTW draft. Keep it short and supportive &mdash; the framework doesn’t want you fishing for detail.',
+        [
+          draftBlock({
+            lane: 'a',
+            label: 'RTW conversation — Loop A',
+            body: 'Welcome back, Eve. I wanted to check in on how you’re doing &mdash; no pressure on detail, just whether there’s anything I can do to support you settling back in. Shall we put 15 minutes in the diary this week?',
+            primaryLabel: 'Send to Eve',
+            secondaryLabels: ['Edit draft', 'Skip']
+          })
+        ]
+      ));
+      setTimeout(step4, 350);
+    }
+
+    function step4() {
+      render(agentMsg('07:42', 'Separately &mdash; Eve’s rolling-12-month record just crossed the Stage 1 threshold. <strong>4 spells, 9 days.</strong> That’s the trigger from Policy v8.0 Appendix A. The framework asks for a <em>supportive Stage 1 conversation</em> &mdash; not a warning, not a formal stage record.',
+        [
+          evidenceCard({
+            lane: 'b',
+            title: 'Absence record — rolling 12 months',
+            bodyHtml: '<table>' +
+              '<thead><tr><th>Start</th><th>End</th><th>Days</th><th>Reason</th></tr></thead>' +
+              '<tbody>' +
+                '<tr><td>2026-05-11</td><td>2026-05-12</td><td>2</td><td>Withheld &mdash; sensitive</td></tr>' +
+                '<tr><td>2026-02-23</td><td>2026-02-25</td><td>3</td><td>Withheld &mdash; sensitive</td></tr>' +
+                '<tr><td>2025-11-04</td><td>2025-11-05</td><td>2</td><td>Withheld &mdash; sensitive</td></tr>' +
+                '<tr><td>2025-08-19</td><td>2025-08-20</td><td>2</td><td>Withheld &mdash; sensitive</td></tr>' +
+              '</tbody></table>',
+            footer: 'Half-days excluded: 0 · PO exclusions applied: 0 · Source: sickness_absence_profile.yaml v8.0'
+          })
+        ]
+      ));
+      setTimeout(step5, 400);
+    }
+
+    function step5() {
+      render(agentMsg('07:42', 'Here’s the Stage 1 prompt. Same principle &mdash; supportive opener, not a script. You can send as-is or edit.',
+        [
+          draftBlock({
+            lane: 'b',
+            label: 'Stage 1 conversation — Loop B',
+            body: 'Eve, I wanted to set aside some time for a supportive check-in. The framework asks me to make sure we’re talking properly when absences pass a certain point in the year &mdash; you’ve reached that point. This isn’t a formal stage. I’d like to understand what’s going on and see if there’s anything getting in the way that I can help with.',
+            primaryLabel: 'Send to Eve',
+            secondaryLabels: ['Edit draft', 'Skip']
+          }),
+          summaryChip('<strong>Logged:</strong> R-2026-05-13-0001 &middot; <strong>Decision:</strong> Fire &middot; Loop A + B &middot; 2 drafts queued.')
+        ]
+      ));
+    }
+  }
+
+  // ── Worker B: Tom Reed (Pattern catch) ──────────────────────────────────
+  function scenarioTom() {
+    clearStream();
+
+    render(agentMsg('07:43', 'Next is <strong>Tom Reed</strong>. This one’s different &mdash; Tom’s <em>below</em> the Stage 1 count threshold. <strong>I’m not drafting a stage conversation.</strong> But the <em>shape</em> of his absences is unusual enough that it’s worth a soft check-in now, before the threshold is reached.'));
+
+    render(quickActions(stream, [{ label: 'What did you spot?', time: '07:43', next: step2 }]));
+
+    function step2() {
+      render(agentMsg('07:44', 'Day-of-week clustering. The maths first, then the absences.',
+        [
+          evidenceCard({
+            lane: 'c',
+            title: 'Pattern math',
+            bodyHtml: '<dl class="kv">' +
+              '<dt>Tom’s shape</dt><dd>3 of 4 spells (75%) started on a Friday</dd>' +
+              '<dt>UK BU baseline</dt><dd>18% (n=42 spells, rolling 12mo)</dd>' +
+              '<dt>Binomial p-value</dt><dd>0.014</dd>' +
+              '<dt>Fire criteria</dt><dd>n &ge; 4, ratio &ge; 3&times; baseline, p &lt; 0.05 &mdash; all met</dd>' +
+              '</dl>'
+          }),
+          evidenceCard({
+            lane: 'c',
+            title: 'Absence record',
+            bodyHtml: '<table>' +
+              '<thead><tr><th>Start</th><th>End</th><th>Day</th><th>Days</th></tr></thead>' +
+              '<tbody>' +
+                '<tr><td>2026-04-24</td><td>2026-04-24</td><td>Fri <span class="day-tag">F</span></td><td>1</td></tr>' +
+                '<tr><td>2026-02-13</td><td>2026-02-13</td><td>Fri <span class="day-tag">F</span></td><td>1</td></tr>' +
+                '<tr><td>2025-12-19</td><td>2025-12-19</td><td>Fri <span class="day-tag">F</span></td><td>1</td></tr>' +
+                '<tr><td>2025-09-22</td><td>2025-09-23</td><td>Mon&ndash;Tue</td><td>2</td></tr>' +
+              '</tbody></table>'
+          })
+        ]
+      ));
+      setTimeout(step3, 400);
+    }
+
+    function step3() {
+      render(agentMsg('07:44', 'Bradford scoring is locked out of stage logic by design. <strong>This is a separate signal in its own lane</strong> &mdash; explainable, soft, dismissible without paperwork. Workday can’t see this. The framework’s count + day maths can’t see this. This is what Loop C adds.',
+        [
+          draftBlock({
+            lane: 'c',
+            label: 'Pattern check-in — Loop C (soft)',
+            body: 'Tom, no formal process here &mdash; just wanted to say I’ve noticed a few short absences and I’m not sure if there’s something going on outside of work, with the week itself, or just bad timing. Have I caught you at a good moment for a quick coffee?',
+            primaryLabel: 'Send to Tom',
+            secondaryLabels: ['Edit draft', 'Dismiss (reason)']
+          }),
+          summaryChip('<strong>Logged:</strong> R-2026-05-13-0002 &middot; <strong>Decision:</strong> Pattern &middot; Loop C &middot; 1 soft draft queued &middot; Bradford NOT invoked.')
+        ]
+      ));
+    }
+  }
+
+  // ── Worker C: Priya M. (Exclusion refusal) ──────────────────────────────
+  function scenarioPriya() {
+    clearStream();
+
+    render(agentMsg('07:45', 'Last one is <strong>Priya M.</strong> I want to walk through this carefully because it’s the case the count maths alone would have got wrong.'));
+
+    render(quickActions(stream, [{ label: 'Go on.', time: '07:45', next: step2 }]));
+
+    function step2() {
+      render(agentMsg('07:46', 'Priya’s raw record crosses Stage 1. <strong>5 spells, 11 days.</strong> If I were only counting, I’d be drafting a Stage 1 prompt for you right now. <strong>I’m not.</strong> Three of those five spells are PO-flagged under Equality Act 2010 &sect;18 (pregnancy-related). After exclusions she’s at <strong>2 spells, 2 days</strong> &mdash; well below threshold.',
+        [
+          evidenceCard({
+            lane: 'excl',
+            title: 'Exclusion record (PO-only view)',
+            bodyHtml: '<dl class="kv">' +
+              '<dt>Type</dt><dd>Pregnancy-related (Equality Act 2010 &sect;18)</dd>' +
+              '<dt>Effective from</dt><dd>2025-12-01</dd>' +
+              '<dt>Reviewer</dt><dd>People Operations Lead</dd>' +
+              '<dt>Renewal</dt><dd>2026-12-01</dd>' +
+              '<dt>Note</dt><dd>Pre-exclusion spells (Oct + Jul 2025) remain in the count.</dd>' +
+              '</dl>'
+          }),
+          evidenceCard({
+            lane: 'excl',
+            title: 'What the maths looked like after exclusions',
+            bodyHtml: '<dl class="kv">' +
+              '<dt>Raw</dt><dd>5 spells / 11 days</dd>' +
+              '<dt>Excluded spells</dt><dd>3 (pregnancy-related, &sect;18)</dd>' +
+              '<dt>Effective</dt><dd>2 spells / 2 days</dd>' +
+              '<dt>Threshold check</dt><dd>Stage 1 threshold <strong>not crossed</strong></dd>' +
+              '<dt>Decision</dt><dd>No-fire</dd>' +
+              '</dl>'
+          })
+        ]
+      ));
+      setTimeout(step3, 400);
+    }
+
+    function step3() {
+      render(agentMsg('07:46', 'Nothing goes to your Inbox for Priya. <strong>The decision and the full evidence trail are written to the transparency log, accessible to People Ops only.</strong> If People Ops decides any conversation is appropriate, they’ll route it. Reason text never enters your line-management surface.'));
+      render(quickActions(stream, [{ label: 'What stops this from going wrong?', time: '07:47', next: step4 }]));
+    }
+
+    function step4() {
+      render(agentMsg('07:47', 'Today the exclusion list lives in a PO-maintained SharePoint with access control, encryption at rest, audited reads. Article 9 data. Before live Inbox writes flip on, this cuts over to a native effective-dated Workday Custom Field on the Worker record. <strong>The cutover is non-negotiable</strong> &mdash; I will not write to a manager Inbox while exclusions live in SharePoint.',
+        [
+          summaryChip('<strong>Logged:</strong> R-2026-05-13-0003 &middot; <strong>Decision:</strong> No-fire &middot; Loop B + C &middot; 0 drafts &middot; 3 exclusions applied (&sect;18).')
+        ]
+      ));
+    }
+  }
+
+  // ── Wire up scenario picker ──────────────────────────────────────────────
+  var scenarios = { eve: scenarioEve, tom: scenarioTom, priya: scenarioPriya };
+  var chips = document.querySelectorAll('.chip[data-scenario]');
+  chips.forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      chips.forEach(function (c) {
+        c.classList.remove('active');
+        c.setAttribute('aria-selected', 'false');
+      });
+      chip.classList.add('active');
+      chip.setAttribute('aria-selected', 'true');
+      var fn = scenarios[chip.getAttribute('data-scenario')];
+      if (fn) fn();
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

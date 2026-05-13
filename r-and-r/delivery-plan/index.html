@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>R&amp;R Agentic Approver — Delivery Plan</title>
+<style>
+  :root {
+    --color-ink: #1d1d1f;
+    --color-graphite: #707070;
+    --color-fog: #f5f5f7;
+    --color-snow: #ffffff;
+    --color-silver-mist: #e8e8ed;
+    --color-azure: #0071e3;
+    --color-caution: #b64400;
+    --font-display: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-text: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-mono: 'SF Mono', ui-monospace, 'Menlo', 'Monaco', 'Consolas', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+
+  body {
+    font-family: var(--font-text);
+    background: var(--color-snow);
+    color: var(--color-ink);
+    font-size: 15px;
+    line-height: 1.5;
+    letter-spacing: -0.1px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+  }
+
+  /* ── Sticky header ── */
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(245, 245, 247, 0.85);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 1px solid var(--color-silver-mist);
+    height: 44px;
+    display: flex;
+    align-items: center;
+    padding: 0 22px;
+    gap: 14px;
+  }
+  .header-title { font-size: 12px; font-weight: 600; color: var(--color-ink); letter-spacing: -0.26px; }
+  .header-sub { font-size: 12px; font-weight: 400; color: var(--color-graphite); letter-spacing: -0.26px; }
+  .header-back { margin-left: auto; font-size: 12px; font-weight: 400; color: var(--color-azure); text-decoration: none; letter-spacing: -0.26px; }
+  .header-back:hover { text-decoration: underline; }
+
+  /* ── Page container ── */
+  .container {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 32px 32px 40px;
+  }
+
+  /* ── Hero ── */
+  h1 {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.5px;
+    color: var(--color-ink);
+    margin-bottom: 8px;
+  }
+  .lede {
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.5;
+    letter-spacing: -0.1px;
+    color: var(--color-graphite);
+    max-width: 760px;
+    margin-bottom: 18px;
+  }
+
+  /* ── Sections ── */
+  section {
+    margin-bottom: 22px;
+    padding-bottom: 22px;
+    border-bottom: 1px solid var(--color-silver-mist);
+  }
+  section:last-of-type { border-bottom: none; }
+  h2 {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.3px;
+    margin-bottom: 6px;
+    color: var(--color-ink);
+  }
+  h3 {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.3;
+    margin-top: 14px;
+    margin-bottom: 6px;
+    color: var(--color-ink);
+  }
+  .section-num {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--color-graphite);
+    margin-bottom: 6px;
+  }
+  .section-intro {
+    font-size: 14px;
+    color: var(--color-graphite);
+    margin-bottom: 12px;
+    max-width: 760px;
+  }
+  p { margin-bottom: 10px; }
+  p:last-child { margin-bottom: 0; }
+
+  ul, ol { margin: 0 0 10px 22px; }
+  li { margin-bottom: 5px; line-height: 1.5; font-size: 14px; }
+  li:last-child { margin-bottom: 0; }
+
+  strong { font-weight: 600; }
+
+  code {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    background: var(--color-silver-mist);
+    color: var(--color-ink);
+    padding: 1px 5px;
+    border-radius: 3px;
+    letter-spacing: -0.1px;
+  }
+
+  /* ── Tables: plain ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    line-height: 1.45;
+    margin-bottom: 8px;
+  }
+  th, td {
+    text-align: left;
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--color-silver-mist);
+    vertical-align: top;
+  }
+  th {
+    font-weight: 600;
+    color: var(--color-graphite);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+  tr:last-child td { border-bottom: none; }
+  td code { font-size: 12.5px; }
+
+  /* ── Architecture diagram ── */
+  .diagram {
+    background: var(--color-fog);
+    border: 1px solid var(--color-silver-mist);
+    padding: 18px 14px;
+    overflow-x: auto;
+    margin-bottom: 8px;
+  }
+  .diagram-row {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 12px;
+    align-items: stretch;
+    justify-content: center;
+    margin-bottom: 4px;
+  }
+  .diagram-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .diagram-spacer { flex: 1 1 0; }
+  .node {
+    background: var(--color-snow);
+    border: 1px solid var(--color-silver-mist);
+    padding: 8px 10px;
+    text-align: center;
+    width: 100%;
+    min-height: 54px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  .node-system {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: -0.1px;
+    color: var(--color-ink);
+    line-height: 1.2;
+  }
+  .node-role {
+    font-size: 11px;
+    color: var(--color-graphite);
+    margin-top: 3px;
+    line-height: 1.3;
+  }
+  .node-decision { background: var(--color-ink); color: var(--color-snow); border-color: var(--color-ink); }
+  .node-decision .node-system { color: var(--color-snow); }
+  .node-decision .node-role { color: rgba(255,255,255,0.7); }
+  .node-out { background: var(--color-snow); border: 1px solid var(--color-ink); }
+  .arrow-vert {
+    width: 1px;
+    background: var(--color-graphite);
+    height: 16px;
+    margin: 3px 0;
+    position: relative;
+  }
+  .arrow-vert::after {
+    content: "";
+    position: absolute;
+    bottom: -1px;
+    left: -3px;
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 6px solid var(--color-graphite);
+  }
+  .arrow-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--color-graphite);
+    margin: 2px 0;
+    letter-spacing: -0.1px;
+  }
+  .branch {
+    width: 100%;
+    height: 16px;
+    position: relative;
+    margin: 3px 0;
+  }
+  .branch::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 16.66%;
+    right: 16.66%;
+    height: 1px;
+    background: var(--color-graphite);
+  }
+  .branch::after {
+    content: "";
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 1px;
+    height: 8px;
+    background: var(--color-graphite);
+  }
+  .branch-down {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 16.66%;
+    margin-top: -1px;
+  }
+  .branch-down-col {
+    width: 1px;
+    height: 16px;
+    background: var(--color-graphite);
+    position: relative;
+  }
+  .branch-down-col::after {
+    content: "";
+    position: absolute;
+    bottom: -1px;
+    left: -3px;
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 6px solid var(--color-graphite);
+  }
+  .diagram-legend {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 12px;
+    font-size: 11px;
+    color: var(--color-graphite);
+  }
+  .legend-swatch {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    margin-right: 5px;
+    vertical-align: -1px;
+    border: 1px solid var(--color-silver-mist);
+  }
+  .legend-swatch.input { background: var(--color-snow); }
+  .legend-swatch.core { background: var(--color-ink); border-color: var(--color-ink); }
+  .legend-swatch.output { background: var(--color-snow); border-color: var(--color-ink); }
+
+  /* ── Decision cascade ── */
+  .cascade {
+    background: var(--color-fog);
+    border: 1px solid var(--color-silver-mist);
+    padding: 4px 6px;
+  }
+  .cascade-step {
+    display: grid;
+    grid-template-columns: 32px 1fr;
+    gap: 12px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--color-silver-mist);
+    align-items: start;
+  }
+  .cascade-step:last-child { border-bottom: none; }
+  .cascade-num {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--color-snow);
+    border: 1px solid var(--color-silver-mist);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-ink);
+    margin-top: 1px;
+  }
+  .cascade-step.terminal .cascade-num {
+    background: var(--color-ink);
+    color: var(--color-snow);
+    border-color: var(--color-ink);
+  }
+  .cascade-body { font-size: 14px; line-height: 1.5; }
+  .cascade-rule { font-weight: 600; color: var(--color-ink); }
+  .cascade-fail {
+    display: block;
+    font-size: 12.5px;
+    color: var(--color-graphite);
+    margin-top: 3px;
+  }
+  .cascade-log {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--color-graphite);
+    margin-top: 4px;
+  }
+
+  /* ── Callout ── */
+  .callout {
+    background: var(--color-fog);
+    border-left: 2px solid var(--color-caution);
+    padding: 10px 14px;
+    margin: 10px 0;
+    font-size: 14px;
+  }
+  .callout-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--color-caution);
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  /* ── Phase list ── */
+  .phase-list { list-style: none; margin-left: 0; }
+  .phase-list li {
+    border-left: 2px solid var(--color-silver-mist);
+    padding: 6px 0 6px 12px;
+    margin-bottom: 8px;
+    font-size: 14px;
+  }
+  .phase-name {
+    font-weight: 600;
+    color: var(--color-ink);
+    display: inline-block;
+    margin-right: 4px;
+  }
+
+  /* ── Footer ── */
+  .footer-note {
+    font-style: italic;
+    font-size: 13px;
+    color: var(--color-graphite);
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--color-silver-mist);
+  }
+  .footer {
+    margin-top: 24px;
+    padding-top: 16px;
+    text-align: center;
+    font-size: 12px;
+    line-height: 1.33;
+    letter-spacing: -0.26px;
+    color: var(--color-graphite);
+    border-top: 1px solid var(--color-silver-mist);
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 720px) {
+    .container { padding: 22px 18px 32px; }
+    h1 { font-size: 22px; }
+    .lede { font-size: 14px; }
+    h2 { font-size: 17px; }
+    section { margin-bottom: 18px; padding-bottom: 18px; }
+    .header { padding: 0 16px; gap: 8px; }
+    .header-sub { display: none; }
+    .diagram { padding: 12px 8px; }
+    .node-system { font-size: 10px; }
+    .node-role { font-size: 10px; }
+    .cascade-step { padding: 10px 10px; gap: 10px; grid-template-columns: 26px 1fr; }
+  }
+</style>
+<script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+
+<div class="header">
+  <span class="header-title">CoE Testing</span>
+  <span class="header-sub">R&amp;R Agentic Approver — Delivery Plan</span>
+  <span style="margin-left:10px;padding:2px 8px;border:1px solid #b88600;border-radius:3px;color:#b88600;font-size:10px;font-weight:600;letter-spacing:0.4px;text-transform:uppercase;">Draft</span>
+  <a class="header-back" href="/r-and-r">&larr; Back to R&amp;R</a>
+</div>
+
+<div class="container">
+
+  <h1>How the agent works</h1>
+  <p class="lede">An event-driven agent that reads each R&amp;R nomination from Workday, resolves the recipient and project context, applies versioned policy checks, decides &mdash; auto-approving when checks are clean and handing exceptions to existing BP reviewers &mdash; and writes every decision with its reasoning to a SharePoint Excel sheet / Workday worksheet via Microsoft Graph (or Workday RaaS write-back).</p>
+
+  <!-- 01. The bet -->
+  <section>
+    <span class="section-num">01 &mdash; The bet</span>
+    <div class="callout">
+      <span class="callout-label">In one sentence</span>
+      In 10 weeks, an event-driven agent (or RaaS-polled fallback) reads each R&amp;R nomination at submission, runs a 3-rule policy cascade (value cap, eligibility, frequency) against versioned policy, auto-approves the clean ~190/200, routes the ~10 exceptions to the existing Workday BP reviewer with a tagged reason, and writes every decision to a SharePoint Excel sheet / Workday worksheet &mdash; taking People Ops time per cycle from ~2 days to &lt;30 min and nomination-to-recognition from days to the same hour.
+    </div>
+  </section>
+
+  <!-- 02. Hard precondition -->
+  <section>
+    <span class="section-num">02 &mdash; Hard precondition</span>
+    <div class="callout">
+      <span class="callout-label">Week-1 decision &middot; not blocking for v1 build, but the precondition for v2</span>
+      [People Ops Lead] + Workday IT lead sign off the trigger model in week 1: either Workday R&amp;R exposes a nomination-submitted event hook (webhook / Studio outbound / BP subscription) &mdash; preferred &mdash; or the agent runs a 60-second RaaS poll against a custom report filtered to nominations submitted since last cursor. v1 ships against whichever surface exists at week 5; the event-hook path is the precondition for v2 pattern-detection at scale. Without a decision in week 1, week 3 build slips.
+    </div>
+  </section>
+
+  <!-- 03. Architecture (lean) -->
+  <section>
+    <span class="section-num">03 &mdash; Architecture (lean)</span>
+    <p>Copilot Studio agent + Power Automate trigger (Workday R&amp;R event hook if available, else 60s RaaS poll against a custom report) + Workday HCM REST (worker / manager / position reads) + Workday RaaS (90-day nomination history per recipient / nominator / project) + SharePoint via Microsoft Graph (decision-row append) + Workday R&amp;R BP completion call (auto-approve only). Two paths through the agent: (1) all checks pass &rarr; complete BP step + append SharePoint row tagged <code>AUTO-APPROVED</code>; (2) any check fails &rarr; leave BP for existing reviewer with comment + append SharePoint row tagged <code>ROUTED FOR REVIEW</code> with reason. Shadow mode = path (1) downgraded to log-only.</p>
+  </section>
+
+  <!-- 04. Architecture overview -->
+  <section>
+    <span class="section-num">04 &mdash; Architecture overview</span>
+    <p class="section-intro">Three Workday surfaces feed the agent. The agent resolves context, decides, and fans out: a Workday BP completion for in-policy nominations, a SharePoint Excel sheet / Workday worksheet audit row for every decision. The agent invents no new routing &mdash; exceptions inherit the BP&rsquo;s existing reviewer flow.</p>
+
+    <div class="diagram">
+      <!-- Top row: three input systems -->
+      <div class="diagram-row">
+        <div class="diagram-col">
+          <div class="node">
+            <div class="node-system">Workday R&amp;R module</div>
+            <div class="node-role">nomination event</div>
+          </div>
+        </div>
+        <div class="diagram-col">
+          <div class="node">
+            <div class="node-system">Workday HCM REST</div>
+            <div class="node-role">worker / manager / position</div>
+          </div>
+        </div>
+        <div class="diagram-col">
+          <div class="node">
+            <div class="node-system">Workday RaaS</div>
+            <div class="node-role">90-day nomination history</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-row" style="gap: 12px;">
+        <div class="diagram-col"><div class="arrow-vert"></div></div>
+        <div class="diagram-col"><div class="arrow-vert"></div></div>
+        <div class="diagram-col"><div class="arrow-vert"></div></div>
+      </div>
+
+      <div class="diagram-row">
+        <div class="diagram-spacer"></div>
+        <div class="diagram-col" style="flex: 0 0 320px;">
+          <div class="node node-decision">
+            <div class="node-system">Agent core</div>
+            <div class="node-role">resolve &middot; check rules &middot; decide</div>
+          </div>
+        </div>
+        <div class="diagram-spacer"></div>
+      </div>
+
+      <div class="diagram-row">
+        <div class="diagram-spacer"></div>
+        <div class="diagram-col" style="flex: 0 0 220px;">
+          <div class="arrow-vert"></div>
+          <div class="arrow-label">agent decision</div>
+        </div>
+        <div class="diagram-spacer"></div>
+      </div>
+
+      <div class="branch"></div>
+      <div class="branch-down">
+        <div class="branch-down-col"></div>
+        <div class="branch-down-col"></div>
+        <div class="branch-down-col"></div>
+      </div>
+
+      <div class="diagram-row">
+        <div class="diagram-col">
+          <div class="node node-out">
+            <div class="node-system">Workday R&amp;R BP</div>
+            <div class="node-role">complete approval step (auto-approve only)</div>
+          </div>
+        </div>
+        <div class="diagram-col">
+          <div class="node node-out">
+            <div class="node-system">SharePoint Excel / Workday worksheet</div>
+            <div class="node-role">append decision row (every decision)</div>
+          </div>
+        </div>
+        <div class="diagram-col">
+          <div class="node node-out">
+            <div class="node-system">Existing BP routing</div>
+            <div class="node-role">exceptions &rarr; existing BP reviewer (Workday inbox)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="diagram-legend">
+        <span><span class="legend-swatch input"></span>Workday source</span>
+        <span><span class="legend-swatch core"></span>Agent core</span>
+        <span><span class="legend-swatch output"></span>Output / destination</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. Trigger model -->
+  <section>
+    <span class="section-num">05 &mdash; Trigger</span>
+    <p>Event-driven on R&amp;R nomination submission in Workday. The agent reacts to a single nomination at a time; each event is processed and acknowledged independently.</p>
+    <div class="callout">
+      <span class="callout-label">TBD &middot; Primary integration unknown</span>
+      Confirm whether Workday R&amp;R exposes a nomination-submitted event hook (webhook, Workday Studio outbound, or business-process subscription). If no event surface exists, the fallback is a short-interval RaaS poll (e.g. every 60s) against a custom report filtered to nominations submitted since last cursor. The poll path is acceptable for MVP &mdash; event-driven is preferred for Phase 2.
+    </div>
+  </section>
+
+  <!-- 3. Integration surface -->
+  <section>
+    <span class="section-num">06 &mdash; Integration</span>
+    <p class="section-intro">Five touchpoints. Four read, two write (R&amp;R module reads and writes; SharePoint is write-only from the agent). The agent invents no new routing &mdash; exceptions inherit the BP&rsquo;s existing reviewer flow.</p>
+    <table>
+      <thead>
+        <tr><th>System</th><th>Operation</th><th>Mode</th><th>Notes</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Workday R&amp;R module</td>
+          <td>Read nomination on submission; complete BP step or leave with comment</td>
+          <td>Read / Write</td>
+          <td>Event hook TBD; fallback is RaaS poll</td>
+        </tr>
+        <tr>
+          <td>Workday HCM REST API</td>
+          <td><code>GET /workers/{id}</code> for worker, manager, position</td>
+          <td>Read-only</td>
+          <td>Daily refresh sufficient</td>
+        </tr>
+        <tr>
+          <td>Workday RaaS</td>
+          <td>Read 90-day nomination history per recipient / nominator / project</td>
+          <td>Read-only</td>
+          <td>Near-real-time</td>
+        </tr>
+        <tr>
+          <td>SharePoint (Microsoft Graph)</td>
+          <td>Append one row per decision via <code>POST /sites/{id}/lists/{id}/items</code></td>
+          <td>Write-only</td>
+          <td>One row = one decision; full audit trail</td>
+        </tr>
+        <tr>
+          <td>Workday Inbox (existing BP routing)</td>
+          <td>Inherit existing routing for exceptions</td>
+          <td>Read-only from agent&rsquo;s POV</td>
+          <td>Agent does not invent new routing</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 4. Decision logic -->
+  <section>
+    <span class="section-num">07 &mdash; Decision logic</span>
+    <p class="section-intro">A short-circuit policy cascade. Each check is logged with its outcome and the reasoning that produced it; the first failure routes the nomination to a human reviewer with a tagged reason; only an all-pass result triggers an auto-approval.</p>
+
+    <div class="cascade">
+      <div class="cascade-step">
+        <div class="cascade-num">1</div>
+        <div class="cascade-body">
+          <span class="cascade-rule">Resolve recipient and nominator records</span>
+          <span class="cascade-fail">Fail &rarr; route as exception (&ldquo;data unresolved&rdquo;)</span>
+          <span class="cascade-log">logs: recipient_id, nominator_id, resolution_status</span>
+        </div>
+      </div>
+      <div class="cascade-step">
+        <div class="cascade-num">2</div>
+        <div class="cascade-body">
+          <span class="cascade-rule">Check value cap</span>
+          <span class="cascade-fail">Fail &rarr; route as exception (&ldquo;value above auto-approve cap&rdquo;)</span>
+          <span class="cascade-log">logs: nomination_value, cap_threshold, pass/fail</span>
+        </div>
+      </div>
+      <div class="cascade-step">
+        <div class="cascade-num">3</div>
+        <div class="cascade-body">
+          <span class="cascade-rule">Check recipient eligibility</span>
+          <span class="cascade-fail">Active employee, not on a formal performance process. Fail &rarr; route as exception (&ldquo;eligibility&rdquo;)</span>
+          <span class="cascade-log">logs: active_status, performance_process_flag, pass/fail</span>
+        </div>
+      </div>
+      <div class="cascade-step">
+        <div class="cascade-num">4</div>
+        <div class="cascade-body">
+          <span class="cascade-rule">Check frequency rule</span>
+          <span class="cascade-fail">Per recipient / nominator / project, 30-day window. Fail &rarr; route as exception (&ldquo;frequency&rdquo;)</span>
+          <span class="cascade-log">logs: window_count, threshold, pass/fail</span>
+        </div>
+      </div>
+      <div class="cascade-step">
+        <div class="cascade-num">5</div>
+        <div class="cascade-body">
+          <span class="cascade-rule">Check manager-self-loop pattern <span style="font-weight:400;color:var(--color-graphite);">(Phase 2)</span></span>
+          <span class="cascade-fail">Detect manager nominating direct reports who reciprocally nominate the manager. Fail &rarr; route as exception (&ldquo;pattern&rdquo;)</span>
+          <span class="cascade-log">logs: pattern_signal, pattern_score, pass/fail</span>
+        </div>
+      </div>
+      <div class="cascade-step terminal">
+        <div class="cascade-num">&#10003;</div>
+        <div class="cascade-body">
+          <span class="cascade-rule">All checks pass &mdash; AUTO-APPROVE</span>
+          <span class="cascade-fail">Complete BP step in Workday and append row to SharePoint.</span>
+          <span class="cascade-log">logs: decision = AUTO-APPROVED, ruleset_version, full rule trace</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Data model -->
+  <section>
+    <span class="section-num">08 &mdash; Data model</span>
+    <p class="section-intro">One row per decision &mdash; whether auto-approved or routed for review. The schema is versioned because Power BI dashboards downstream depend on stable column names.</p>
+    <table>
+      <thead>
+        <tr><th>Column</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>timestamp</code></td><td>ISO 8601, UTC</td></tr>
+        <tr><td><code>nomination_id</code></td><td>Workday nomination ID; primary key for idempotency, links back to source record</td></tr>
+        <tr><td><code>recipient</code></td><td>Worker name + Workday ID</td></tr>
+        <tr><td><code>nominator</code></td><td>Worker name + Workday ID</td></tr>
+        <tr><td><code>value</code></td><td>Monetary value of the nomination (&pound;)</td></tr>
+        <tr><td><code>decision</code></td><td><code>AUTO-APPROVED</code> or <code>ROUTED FOR REVIEW</code></td></tr>
+        <tr><td><code>rules_applied</code></td><td>Comma-separated rule list with pass/fail per rule</td></tr>
+        <tr><td><code>ruleset_version</code></td><td>Semver; tracks which policy version made the decision</td></tr>
+        <tr><td><code>workday_link</code></td><td>Deep link to the nomination in Workday</td></tr>
+        <tr><td><code>decision_mode</code></td><td><code>live</code> or <code>shadow</code> &mdash; for shadow-mode rollout</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 6. Guardrails -->
+  <section>
+    <span class="section-num">09 &mdash; Guardrails</span>
+
+    <h3>Identity &amp; access</h3>
+    <ul>
+      <li>Read-only on Workday HCM, RaaS, and the R&amp;R nomination payload. Write only to the Workday R&amp;R BP completion endpoint and the SharePoint audit list.</li>
+      <li>Azure AD app registration in [Company] tenant &mdash; least-privilege scopes only. SharePoint scope limited to the audit list.</li>
+    </ul>
+
+    <h3>Data</h3>
+    <ul>
+      <li><strong>Versioned policy ruleset</strong> (<code>ruleset_version</code> semver) &mdash; every decision row records which version made the call. Mid-cycle bumps re-validate, never silently re-interpret historical rows.</li>
+      <li><strong>SharePoint row schema is semver-versioned</strong> because Power BI dashboards depend on it. Breaking changes require a coordinated bump.</li>
+      <li><strong>Audit retention.</strong> 7 years on the technical event log; SharePoint row retention per [Company] document-retention policy (assume 7 years until confirmed).</li>
+      <li><strong>GDPR.</strong> Recipient and nominator IDs only; no recognition narrative copied into the audit log beyond what&rsquo;s necessary for review. [People Ops Lead] + [Legal Counsel] sign off the retention model in week 8.</li>
+    </ul>
+
+    <h3>Agent behaviour</h3>
+    <ul>
+      <li><strong>First failed check halts the cascade.</strong> Agent does not re-try or re-weight.</li>
+      <li><strong>Hard monetary ceiling</strong> sits outside the cascade &mdash; auto-approval refused above it regardless of rule logic.</li>
+      <li><strong>Tool allowlist only.</strong> Bounded loops: max 6 tool calls per nomination, 30s wall-clock.</li>
+      <li><strong>Agent never sends to the recipient.</strong> Recognition flows through standard Workday R&amp;R notification.</li>
+    </ul>
+
+    <h3>Operational</h3>
+    <ul>
+      <li><strong>Idempotency.</strong> Decisions keyed by <code>nomination_id</code>; a re-fired event must not double-write to the BP or duplicate audit rows.</li>
+      <li><strong>Kill switch.</strong> [People Ops Lead] flips one config flag &rarr; agent reverts to <code>decision_mode = shadow</code> across the board. Effective in &lt;5 min.</li>
+      <li><strong>Reversibility.</strong> Auto-approvals are standard BP completions &mdash; reversible by People Ops in one Workday action.</li>
+      <li><strong>Cost ceiling.</strong> &pound;150/month Azure OpenAI spend, alert at 80%. Cascade is mostly deterministic &mdash; token spend is modest.</li>
+    </ul>
+  </section>
+
+  <!-- 7. Phases -->
+  <section>
+    <span class="section-num">10 &mdash; Build phases</span>
+    <ul class="phase-list">
+      <li><span class="phase-name">MVP.</span> 3-rule threshold check (value cap, eligibility, frequency) plus exception routing via the existing BP and SharePoint append. One R&amp;R category, one cycle.</li>
+      <li><span class="phase-name">Shadow mode (cycle 1).</span> <code>decision_mode = &ldquo;shadow&rdquo;</code> &mdash; rows logged only, no BP writes. Compare agent decisions against human decisions on the same nominations to calibrate before going live.</li>
+      <li><span class="phase-name">Phase 2.</span> Pattern-detection layer &mdash; the agent reads cross-nomination signals (reciprocity, ring detection, gaming patterns) the policy cascade alone can&rsquo;t see. Multi-category rollout.</li>
+      <li><span class="phase-name">Phase 3.</span> Generalise the agent pattern (Workday Approval Audit Agent) across other rubber-stamp Workday BPs.</li>
+    </ul>
+  </section>
+
+  <!-- 8. Pod composition -->
+  <section>
+    <span class="section-num">11 &mdash; Pod composition</span>
+    <table>
+      <thead>
+        <tr><th>Role</th><th>Owner</th><th>Primary deliverable</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Product Lead</td><td>[AI CoE Owner]</td><td>PoC brief, scope cuts, success metric, exec ask</td></tr>
+        <tr><td>Business Analyst</td><td>Agentic BA</td><td>Rule cascade spec, exception-reason taxonomy, edge-case register</td></tr>
+        <tr><td>Solution Architect</td><td>[Company AI CoE] Eng</td><td>Lean architecture, Workday BP wrap, audit-row contract</td></tr>
+        <tr><td>AI / Agent Engineer</td><td>Copilot Studio / Azure dev</td><td>Agent loop, rule orchestration, eval harness, model wiring</td></tr>
+        <tr><td>Data / Integration Engineer</td><td>Workday R&amp;R + HCM + RaaS specialist</td><td>Source contracts, Workday BP step completion, SharePoint append</td></tr>
+        <tr><td>UX Designer</td><td>[Company] Design</td><td>SharePoint audit sheet layout, People Ops oversight view</td></tr>
+        <tr><td>QA / Security Reviewer</td><td>AI CoE Sec + People Ops lead</td><td>Shadow-mode calibration, kill-switch test, GDPR / audit retention</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 9. Sprints -->
+  <section>
+    <span class="section-num">12 &mdash; Sprints</span>
+    <table>
+      <thead>
+        <tr><th>Weeks</th><th>Sprint</th><th>Outputs</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1&ndash;2</td><td>Frame (PL + BA)</td><td>Brief signed off. R&amp;R category locked for pilot. Rule cascade thresholds confirmed with People Ops. Exception-reason taxonomy started.</td></tr>
+        <tr><td>3&ndash;4</td><td>Design (SA + UX)</td><td>Agent architecture. Workday BP wrap contract. SharePoint audit-row schema. Kill-switch design. People Ops oversight view.</td></tr>
+        <tr><td>5&ndash;8</td><td>Build (AE + DE)</td><td>Agent loop. 3-rule cascade. Workday BP step completion. SharePoint append via Graph. Ruleset versioning. End-to-end happy path on dev nominations.</td></tr>
+        <tr><td>8&ndash;9</td><td>Test (QSR)</td><td>Shadow-mode calibration: full last cycle replayed (~200 nominations). Adversarial battery (see eval harness). Kill-switch drill. Sample audit by People Ops.</td></tr>
+        <tr><td>9&ndash;10</td><td>Pilot (whole pod)</td><td>One live monthly cycle &mdash; agent auto-approves the in-policy ~95%, exceptions route via existing BP. Daily measurement: agreement rate, false-approves, People Ops time, cycle-to-recognition latency. Decision gate on v2 (Workday Approval Audit Agent).</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 10. Tools the agent calls -->
+  <section>
+    <span class="section-num">13 &mdash; Tools</span>
+    <ul>
+      <li><code>WorkdayRRReadNomination(nomination_id)</code> &rarr; nomination payload</li>
+      <li><code>WorkdayHCMReadWorker(worker_id)</code> &rarr; worker, manager, position, employment status</li>
+      <li><code>WorkdayRaaSReadNominationHistory(recipient_id, nominator_id, window_days)</code> &rarr; prior nominations</li>
+      <li><code>PolicyRuleEval(nomination, ruleset_version)</code> &rarr; pass/fail per rule + tagged reason</li>
+      <li><code>WorkdayBPCompleteApproval(nomination_id, decision, reasoning)</code> &rarr; BP step completed</li>
+      <li><code>SharePointAppendDecisionRow(payload)</code> &rarr; audit row appended via Microsoft Graph</li>
+      <li><code>AuditLogWrite(event_type, payload)</code> &rarr; 7-year retention</li>
+    </ul>
+  </section>
+
+  <!-- 11. Model choice -->
+  <section>
+    <span class="section-num">14 &mdash; Model choice</span>
+    <ul>
+      <li><strong>GPT-4o-mini</strong> for the deterministic rule cascade orchestration and tagged-reason formatting.</li>
+      <li>No large model needed &mdash; the decision logic is rule-based, not judgment-based. The model is doing orchestration, not reasoning.</li>
+      <li>Hosted on <strong>Azure OpenAI</strong> on the [Company] enterprise tenant. Zero data egress to public OpenAI.</li>
+    </ul>
+  </section>
+
+  <!-- 15. Riskiest design choice -->
+  <section>
+    <span class="section-num">15 &mdash; Riskiest design choice</span>
+    <div class="callout">
+      <span class="callout-label">If we get this wrong, People Ops fixes it in one click</span>
+      The first failed check halts the cascade and routes to a human with a tagged reason &mdash; the agent does not weigh, balance, or &ldquo;argue past&rdquo; a fail. Conservative thresholds at launch (cap set below the stated policy cap until shadow-mode cycle 1 calibrates against human decisions). Hard monetary ceiling sits outside the rule cascade as an unconditional refuse. Auto-approvals are standard BP completions, reversible by People Ops in one Workday action. Shadow-mode cycle 1 is the hard gate &mdash; no auto-approvals go live until agent decisions match human decisions on the in-policy set at &ge;95%.
+    </div>
+  </section>
+
+  <!-- 16. UX moments -->
+  <section>
+    <span class="section-num">16 &mdash; UX moments</span>
+    <p class="section-intro">For the three people whose experience changes: the nominating manager, [People Ops Lead] doing the weekly audit, and the BP reviewer who opens an exception.</p>
+    <table>
+      <thead>
+        <tr><th>When</th><th>Who sees</th><th>What the user sees</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Nominator submits</td>
+          <td>Manager submitting in Workday</td>
+          <td>Same Workday UX &mdash; nothing changes at submission. Auto-approved nominations land within the hour (same-cycle confirmation); routed nominations follow the existing BP timeline. The manager sees their thank-you arrive while the moment is still fresh.</td>
+        </tr>
+        <tr>
+          <td>Weekly audit</td>
+          <td>[People Ops Lead] opens the SharePoint sheet</td>
+          <td>One row per decision &mdash; sortable by decision, rule, value, nominator. Each row carries a full rule trace, deep link back to Workday, <code>decision_mode</code> (<code>live</code> / <code>shadow</code>), <code>ruleset_version</code>, and kill-switch status. The 5% sample audit takes ~5 minutes.</td>
+        </tr>
+        <tr>
+          <td>Exception lands</td>
+          <td>BP reviewer opens their Workday inbox</td>
+          <td>The same BP step they handle today, plus a tagged reason in the comment (<code>value</code> / <code>eligibility</code> / <code>frequency</code> / <code>data-unresolved</code> / <code>pattern</code>) and a link back to the SharePoint audit row with the agent&rsquo;s full reasoning. Straight to judgement, no triage.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 17. Eval harness -->
+  <section>
+    <span class="section-num">17 &mdash; Eval harness</span>
+
+    <h3>Golden path</h3>
+    <p>Full last cycle (~200 nominations) replayed in shadow mode. Agent decisions logged alongside the human decisions; thresholds calibrated against the delta before live cutover.</p>
+
+    <h3>Adversarial</h3>
+    <ul>
+      <li>Value-cap boundary (£1 over, £1 under).</li>
+      <li>Recipient on formal performance process.</li>
+      <li>Frequency boundary &mdash; e.g. 4&times; same recipient/nominator/project in 30 days.</li>
+      <li>Missing recipient record.</li>
+      <li>Reciprocal-nomination pair (A&rarr;B, B&rarr;A).</li>
+      <li>Ring nomination (A&rarr;B, B&rarr;C, C&rarr;A).</li>
+      <li>Mid-cycle policy version change.</li>
+    </ul>
+
+    <h3>Pre-merge</h3>
+    <p>Every change replays the cycle suite. Tracing on every decision.</p>
+
+    <h3>PoC passes when&hellip;</h3>
+    <ul>
+      <li>&ge;95% agreement on in-policy nominations vs the human baseline in shadow mode.</li>
+      <li>Zero false auto-approves on exceptions.</li>
+      <li>People Ops time per cycle &le; 30 min.</li>
+      <li>Cycle-to-recognition latency &le; 24h on auto-approved nominations.</li>
+    </ul>
+  </section>
+
+  <!-- 13. Cost & team -->
+  <section>
+    <span class="section-num">18 &mdash; Cost &amp; team</span>
+    <table>
+      <thead>
+        <tr><th>Role</th><th>FTE</th><th>Commitment</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Solution Architect</td><td>0.3</td><td>10 weeks &mdash; architecture + Workday BP wrap</td></tr>
+        <tr><td>AI / Agent Engineer</td><td>0.5</td><td>10 weeks &mdash; agent loop + evals</td></tr>
+        <tr><td>Data / Integration Engineer</td><td>0.5</td><td>10 weeks &mdash; Workday + SharePoint integration</td></tr>
+        <tr><td>UX Designer</td><td>0.1</td><td>3 weeks &mdash; audit sheet + oversight view</td></tr>
+        <tr><td>QA / Security Reviewer</td><td>0.2</td><td>10 weeks &mdash; shadow-mode calibration + sign-off</td></tr>
+        <tr><td>Business Analyst</td><td>0.2</td><td>10 weeks &mdash; rule spec + edge-case register</td></tr>
+        <tr><td>Product Lead</td><td>0.1</td><td>10 weeks &mdash; [AI CoE Owner], scope and metric ownership</td></tr>
+        <tr><td>Total</td><td>&asymp;1.9</td><td>&asymp;19 FTE-weeks + <strong>~£100/month</strong> Azure OpenAI token spend (rule-cascade is cheap; orchestration only)</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 14. Real vs stubbed -->
+  <section>
+    <span class="section-num">19 &mdash; PoC scope</span>
+    <table>
+      <thead>
+        <tr><th>State</th><th>Components</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Real</strong></td>
+          <td>Rule cascade, Workday BP step completion, SharePoint audit row, shadow-mode toggle, kill switch, hard cap, ruleset versioning, exception-reason taxonomy.</td>
+        </tr>
+        <tr>
+          <td><strong>Stubbed</strong></td>
+          <td>Pattern-detection layer (Phase 2), generalisation to other BPs (Phase 3), Workday event hook (fallback is RaaS poll if no hook exists).</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 15. v1 → v2 path -->
+  <section>
+    <span class="section-num">20 &mdash; v1 &rarr; v2 path</span>
+    <p>If shadow-mode cycle 1 + live cycle 2 hit the pass criteria &mdash; &ge;95% agreement, zero false-approves, People Ops time &le;30 min, latency &le;24h &mdash; v2 layers in pattern-detection (cross-nomination signals: reciprocity, ring detection, off-policy bursts) and starts generalising the pattern as the <strong>Workday Approval Audit Agent</strong> across the next rubber-stamp BP.</p>
+    <p>Probable next target: sickness self-cert above the 7-day threshold. The v2 step shifts the agent from &ldquo;auto-approves one BP&rdquo; to &ldquo;audits and auto-clears the rubber-stamp shape across People Ops BPs.&rdquo;</p>
+  </section>
+
+  <!-- 21. The ask -->
+  <section>
+    <span class="section-num">21 &mdash; The ask</span>
+    <div class="callout">
+      <span class="callout-label">What we need from [Executive Sponsor]</span>
+      <p>Four things on the delivery side, mirroring the agent-design ask:</p>
+      <ol>
+        <li><strong>Kill-switch owner named.</strong> [People Ops Lead] holds the config flag; drilled in week 9.</li>
+        <li><strong>Event-vs-poll arbiter named.</strong> Workday IT lead signs off the trigger model by end of week 1 &mdash; without this, week 3 build does not start.</li>
+        <li><strong>~1.9 FTE &times; 10 weeks committed</strong> across the 7 pod roles plus ~&pound;150/month Azure OpenAI spend.</li>
+        <li><strong>Pilot population locked.</strong> One R&amp;R category &times; one monthly cycle in shadow mode + one monthly cycle live. Shadow-mode &ge;95% agreement with [People Ops Lead] on in-policy cases and zero genuine misses is the hard gate to flip <code>decision_mode = live</code>.</li>
+      </ol>
+    </div>
+  </section>
+
+  <p class="footer-note">Code samples will be added as the build progresses. This page describes the intended shape, not the current state of implementation.</p>
+
+  <div class="footer">Internal &mdash; for CoE feedback. Do not share the URL externally.</div>
+</div>
+
+</body>
+</html>
