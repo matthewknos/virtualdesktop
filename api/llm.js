@@ -17,7 +17,7 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Server missing LLM_KEY' });
   }
 
-  const { prompt, messages, model = 'kimi-k2-0905-preview', max_tokens = 2048 } = req.body || {};
+  const { prompt, messages, model = 'moonshot-v1-32k', max_tokens = 2048 } = req.body || {};
   const chatMessages = Array.isArray(messages) && messages.length
     ? messages
     : (prompt ? [{ role: 'user', content: prompt }] : null);
