@@ -17,9 +17,12 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Server missing LLM_KEY' });
   }
 
-  const { prompt, model = 'moonshot-v1-32k', max_tokens = 2048 } = req.body || {};
-  if (!prompt) {
-    return res.status(400).json({ error: 'Missing prompt' });
+  const { prompt, messages, model = 'kimi-k2-0905-preview', max_tokens = 2048 } = req.body || {};
+  const chatMessages = Array.isArray(messages) && messages.length
+    ? messages
+    : (prompt ? [{ role: 'user', content: prompt }] : null);
+  if (!chatMessages) {
+    return res.status(400).json({ error: 'Missing prompt or messages' });
   }
 
   try {
@@ -32,7 +35,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model,
         max_tokens,
-        messages: [{ role: 'user', content: prompt }],
+        messages: chatMessages,
       }),
     });
 
