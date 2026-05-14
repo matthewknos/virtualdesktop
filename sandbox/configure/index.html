@@ -143,6 +143,69 @@
     margin-bottom: 6px;
   }
   .persona-opening-row textarea { min-height: 70px; }
+  .add-followup-btn {
+    background: transparent;
+    border: 1px dashed var(--color-silver-mist);
+    color: var(--color-graphite);
+    border-radius: 10px;
+    padding: 10px 14px;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: inherit;
+    margin-top: 8px;
+    transition: all 0.15s ease;
+  }
+  .add-followup-btn:hover { color: var(--color-azure); border-color: var(--color-azure); }
+  .followup-rule {
+    border: 1px solid var(--color-silver-mist);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    position: relative;
+  }
+  .followup-rule .rule-remove {
+    position: absolute; top: 10px; right: 10px;
+    background: transparent; border: none; cursor: pointer;
+    color: var(--color-graphite); font-size: 18px;
+    width: 26px; height: 26px; border-radius: 999px;
+    transition: all 0.15s ease;
+  }
+  .followup-rule .rule-remove:hover { color: var(--color-danger); background: #fff5f5; }
+  .followup-rule .rule-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .followup-rule .rule-grid input { font-size: 14px; }
+  .followup-rule .persona-chip-block { margin-top: 6px; }
+  .followup-rule .persona-chip-block .label {
+    font-size: 11px; color: var(--color-graphite);
+    text-transform: uppercase; letter-spacing: 0.4px;
+    margin-bottom: 4px;
+  }
+  .followup-rule .persona-chip-block textarea {
+    min-height: 50px; font-size: 13px;
+  }
+  .file-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--color-fog);
+    border: 1px solid var(--color-silver-mist);
+    border-radius: 999px;
+    padding: 6px 12px;
+    margin: 0 8px 8px 0;
+    font-size: 13px;
+  }
+  .file-pill .file-name { font-weight: 500; }
+  .file-pill .file-size { color: var(--color-graphite); font-size: 11px; }
+  .file-pill .file-remove {
+    background: transparent; border: none; cursor: pointer;
+    color: var(--color-graphite); font-size: 14px;
+    width: 18px; height: 18px; border-radius: 50%;
+    transition: all 0.15s ease;
+  }
+  .file-pill .file-remove:hover { color: var(--color-danger); }
+  .file-pill.prior { background: rgba(0,113,227,0.06); border-color: rgba(0,113,227,0.2); }
 
   .submit-row {
     display: flex; align-items: center; gap: 16px;
@@ -300,9 +363,58 @@
       </div>
 
       <div class="field">
+        <label class="field-label" for="styleGuidance">Style guidance (formatting, voice, conventions)</label>
+        <textarea id="styleGuidance" class="compact" placeholder="e.g. Use markdown bold for emphasis. Render drafts as blockquotes (> prefix). 24-hour time. DD MMM dates. Keep replies to 3–8 short paragraphs."></textarea>
+        <div class="field-hint">Distinct from tone — this is about output shape (markdown, length, citation format).</div>
+      </div>
+
+      <div class="field">
         <label class="field-label">Per-persona opening messages</label>
         <div id="personaOpenings"></div>
         <div class="field-hint">Optional. If blank for a persona, the setup LLM writes one. Markdown allowed. End with <code>&lt;&lt;ACTIONS&gt;&gt;["A","B"]&lt;&lt;END&gt;&gt;</code> if you want quick-reply buttons.</div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Per-persona suggested-reply chips</label>
+        <div id="personaChips"></div>
+        <div class="field-hint">Optional. One chip per line. These appear under the chat as quick replies on first load. If blank for a persona, the setup LLM writes them.</div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Follow-up keyword map</label>
+        <div id="followupRules"></div>
+        <button type="button" class="add-followup-btn" id="addFollowupBtn">+ Add follow-up rule</button>
+        <div class="field-hint">Optional. When the user's message matches a rule's regex (case-insensitive), the listed chips appear as follow-up suggestions. If you leave this blank, the setup LLM generates a small map from the brief.</div>
+      </div>
+    </details>
+
+    <details class="optional-section" id="referenceSection">
+      <summary>Reference material — files, policy text, case records</summary>
+
+      <div class="info-banner" style="background:var(--color-fog);border-color:var(--color-silver-mist);">
+        <span class="icon">📎</span>
+        <div class="body">
+          Anything you put here is injected into the agent's system prompt <strong>every turn</strong>. Treat it like grounded knowledge — the agent will quote and cite it. Cap: 8 files, 120KB per file, 400KB total (files + inline data combined).
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="referenceFiles">Reference files</label>
+        <input type="file" id="referenceFiles" multiple accept=".md,.txt,.json,.csv,.yaml,.yml,.html,.xml,text/*">
+        <div class="field-hint">Text-like files only (.md, .txt, .json, .csv, .yaml, .html, .xml). For PDFs, copy the text into the box below instead.</div>
+        <div id="fileList" style="margin-top:10px;"></div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="referenceData">Inline reference data (paste policy text, case records, dates, IDs)</label>
+        <textarea id="referenceData" style="min-height:160px;font-family:var(--font-mono);font-size:13px;" placeholder="e.g.
+## Worker records
+Eve Hart (W-104882) — 4 spells / 9 days rolling 12mo. Stage 1 fired.
+Tom Reed (W-118394) — 4 spells / 5 days. 3 of 4 Friday starts (p=0.014). Loop C signal, no stage trigger.
+
+## Key dates
+2026-04-01 — Framework v8.0 live
+2026-05-13 — Eve returned from latest spell"></textarea>
       </div>
     </details>
 
@@ -368,6 +480,20 @@
   const refusesInput = document.getElementById('refuses');
   const savingsInput = document.getElementById('savingsLine');
   const personaOpeningsHost = document.getElementById('personaOpenings');
+  const personaChipsHost = document.getElementById('personaChips');
+  const followupHost = document.getElementById('followupRules');
+  const addFollowupBtn = document.getElementById('addFollowupBtn');
+  const styleInput = document.getElementById('styleGuidance');
+  const referenceDataInput = document.getElementById('referenceData');
+  const fileInput = document.getElementById('referenceFiles');
+  const fileListHost = document.getElementById('fileList');
+  const referenceSection = document.getElementById('referenceSection');
+
+  // Files held in memory until submit. Map of name → { name, content, size, prior:boolean }
+  const stagedFiles = new Map();
+
+  const MAX_FILE_BYTES = 120_000;
+  const MAX_TOTAL_BYTES = 400_000;
 
   const client = new SandboxClient('');
   let scenariosCache = [];
@@ -393,6 +519,18 @@
     `).join('') || '<div style="color:var(--color-graphite);font-size:13px;">No personas defined on this scenario.</div>';
   }
 
+  function renderPersonaChips(personas, chips) {
+    personaChipsHost.innerHTML = (personas || []).map((p) => {
+      const lines = Array.isArray(chips?.[p.id]) ? chips[p.id].join('\n') : '';
+      return `
+        <div class="persona-opening-row">
+          <span class="persona-tag">${escapeHtml(p.name)} <span style="color:var(--color-graphite)">· ${escapeHtml(p.role || p.id)}</span></span>
+          <textarea data-persona-id="${escapeHtml(p.id)}" placeholder="(blank = LLM generates chips for ${escapeHtml(p.name)}). One chip per line, max 6.">${escapeHtml(lines)}</textarea>
+        </div>
+      `;
+    }).join('') || '<div style="color:var(--color-graphite);font-size:13px;">No personas defined on this scenario.</div>';
+  }
+
   function gatherPersonaOpenings() {
     const out = {};
     personaOpeningsHost.querySelectorAll('textarea[data-persona-id]').forEach((t) => {
@@ -401,6 +539,114 @@
     });
     return out;
   }
+
+  function gatherPersonaChips() {
+    const out = {};
+    personaChipsHost.querySelectorAll('textarea[data-persona-id]').forEach((t) => {
+      const chips = t.value.split(/\r?\n/).map((s) => s.trim()).filter(Boolean).slice(0, 6);
+      if (chips.length) out[t.dataset.personaId] = chips;
+    });
+    return out;
+  }
+
+  function renderFollowupRules(personas, rules) {
+    followupHost.innerHTML = '';
+    (rules || []).forEach((r) => addFollowupRow(personas, r));
+  }
+
+  function addFollowupRow(personas, rule) {
+    const row = document.createElement('div');
+    row.className = 'followup-rule';
+    const personaBlocks = (personas || []).map((p) => `
+      <div class="persona-chip-block">
+        <div class="label">${escapeHtml(p.name)} (${escapeHtml(p.id)})</div>
+        <textarea data-persona-id="${escapeHtml(p.id)}" placeholder="One chip per line. Blank = no chips for this persona.">${escapeHtml((rule?.chips?.[p.id] || []).join('\n'))}</textarea>
+      </div>
+    `).join('');
+    row.innerHTML = `
+      <button type="button" class="rule-remove" aria-label="Remove rule">×</button>
+      <div class="rule-grid">
+        <input type="text" class="rule-id" placeholder="Rule id (e.g. eve)" value="${escapeHtml(rule?.id || '')}">
+        <input type="text" class="rule-match" placeholder="Regex source (e.g. \\beve\\b)" value="${escapeHtml(rule?.match || '')}">
+      </div>
+      ${personaBlocks}
+    `;
+    row.querySelector('.rule-remove').addEventListener('click', () => row.remove());
+    followupHost.appendChild(row);
+  }
+
+  function gatherFollowupMap() {
+    const rules = [];
+    followupHost.querySelectorAll('.followup-rule').forEach((row) => {
+      const id = row.querySelector('.rule-id').value.trim();
+      const match = row.querySelector('.rule-match').value.trim();
+      if (!match) return;
+      const chips = {};
+      row.querySelectorAll('textarea[data-persona-id]').forEach((t) => {
+        const arr = t.value.split(/\r?\n/).map((s) => s.trim()).filter(Boolean).slice(0, 4);
+        if (arr.length) chips[t.dataset.personaId] = arr;
+      });
+      rules.push({ id: id || `rule_${rules.length}`, match, chips });
+    });
+    return rules;
+  }
+
+  function readFileAsText(file) {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result || ''));
+      r.onerror = () => reject(r.error || new Error('read failed'));
+      r.readAsText(file);
+    });
+  }
+
+  function renderFileList() {
+    if (!stagedFiles.size) { fileListHost.innerHTML = ''; return; }
+    let total = 0;
+    fileListHost.innerHTML = '';
+    stagedFiles.forEach((f) => {
+      total += f.size;
+      const pill = document.createElement('span');
+      pill.className = 'file-pill' + (f.prior ? ' prior' : '');
+      pill.innerHTML = `
+        <span class="file-name">${escapeHtml(f.name)}</span>
+        <span class="file-size">${(f.size / 1024).toFixed(1)} KB${f.prior ? ' · saved' : ''}</span>
+        <button type="button" class="file-remove" title="Remove">×</button>
+      `;
+      pill.querySelector('.file-remove').addEventListener('click', () => {
+        stagedFiles.delete(f.name);
+        renderFileList();
+      });
+      fileListHost.appendChild(pill);
+    });
+    const totalLine = document.createElement('div');
+    totalLine.style.cssText = 'font-size:12px;color:var(--color-graphite);margin-top:6px;';
+    totalLine.textContent = `${stagedFiles.size} file${stagedFiles.size === 1 ? '' : 's'} · ${(total / 1024).toFixed(1)} KB total`;
+    fileListHost.appendChild(totalLine);
+  }
+
+  fileInput.addEventListener('change', async (e) => {
+    const files = Array.from(e.target.files || []);
+    for (const f of files) {
+      if (f.size > MAX_FILE_BYTES) {
+        showError(`"${f.name}" is ${(f.size / 1024).toFixed(1)} KB, exceeding the ${MAX_FILE_BYTES / 1000} KB per-file cap.`);
+        continue;
+      }
+      try {
+        const content = await readFileAsText(f);
+        stagedFiles.set(f.name, { name: f.name, content, size: content.length, prior: false });
+      } catch (err) {
+        showError(`Couldn't read "${f.name}": ${err.message}`);
+      }
+    }
+    fileInput.value = '';
+    renderFileList();
+  });
+
+  addFollowupBtn.addEventListener('click', () => {
+    const sel = scenariosCache.find((s) => s.id === scenarioSel.value);
+    addFollowupRow(sel?.personas || [], { id: '', match: '', chips: {} });
+  });
 
   function applyScenarioToForm(s) {
     const isReconfigure = Boolean(s && s.systemPrompt);
@@ -425,9 +671,25 @@
     connectsToInput.value = listToText(si.connectsTo);
     refusesInput.value = listToText(si.refuses);
     savingsInput.value = si.savingsLine || '';
+    styleInput.value = si.styleGuidance || s?.styleGuidance || '';
+    referenceDataInput.value = si.referenceData || s?.referenceData || '';
     renderPersonaOpenings(s?.personas || [], si.personaOpenings || s?.personaOpenings || {});
+    renderPersonaChips(s?.personas || [], si.personaChips || s?.personaChips || {});
+    renderFollowupRules(s?.personas || [], si.followupMap || s?.followupMap || []);
+
+    // Prior reference files (metadata only — list endpoint strips content).
+    // The user can keep them, remove them, or upload more.
+    stagedFiles.clear();
+    (s?.referenceFiles || []).forEach((f) => {
+      stagedFiles.set(f.name, { name: f.name, content: '', size: f.size || 0, prior: true });
+    });
+    renderFileList();
+
     // Auto-open the optional section on reconfigure so prior inputs are visible
-    if (isReconfigure) optionalSection.open = true;
+    if (isReconfigure) {
+      optionalSection.open = true;
+      if ((s?.referenceFiles || []).length || (s?.referenceData || '')) referenceSection.open = true;
+    }
     submitBtn.textContent = isReconfigure ? 'Apply update' : 'Configure';
   }
 
@@ -469,6 +731,16 @@
     if (!token) return showError('Enter the dev password.');
     if (!description) return showError('Describe what the agent should do (or what to add).');
 
+    // Files: send full set (prior + new). For prior pills we don't have the
+    // text content locally, so we tell the server which prior files to KEEP
+    // and send only the newly-added file contents. Server merges by name.
+    const newFiles = [];
+    const keepPriorNames = [];
+    stagedFiles.forEach((f) => {
+      if (f.prior) keepPriorNames.push(f.name);
+      else newFiles.push({ name: f.name, content: f.content });
+    });
+
     const payload = {
       description,
       tone: toneInput.value.trim(),
@@ -477,6 +749,12 @@
       refuses: refusesInput.value.split(/\r?\n/).map((s) => s.trim()).filter(Boolean),
       savingsLine: savingsInput.value.trim(),
       personaOpenings: gatherPersonaOpenings(),
+      personaChips: gatherPersonaChips(),
+      followupMap: gatherFollowupMap(),
+      styleGuidance: styleInput.value.trim(),
+      referenceData: referenceDataInput.value.trim(),
+      referenceFiles: newFiles,
+      keepPriorFileNames: keepPriorNames,
     };
 
     submitBtn.disabled = true;

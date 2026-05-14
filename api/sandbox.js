@@ -28,6 +28,9 @@ import { kv } from '@vercel/kv';
 
 const KV_AVAILABLE = Boolean(process.env.KV_REST_API_URL || process.env.KV_URL);
 const TEMPLATES = ['teams', 'workday', 'excel'];
+const MAX_FILE_BYTES = 120_000;       // per file
+const MAX_TOTAL_REF_BYTES = 400_000;  // sum of all files + referenceData
+const MAX_FILES = 8;
 const KV_INDEX = 'sandbox:scenario:index'; // Set of user-created scenario ids
 const KV_KEY = (id) => `sandbox:scenario:${id}`;
 const KV_STATE_KEY = (id) => `sandbox:scenario:${id}:state`;
@@ -257,8 +260,11 @@ Rules:
 - Confirm what you booked in your reply text. The event will appear instantly on the user's calendar tab.
 - Only emit the block when actually adding an event. Never invent meetings the user didn't request.`;
 
-function sanitizeScenario(def) {
+function sanitizeScenario(def, { stripFileContent = false } = {}) {
   const { initialState, deleteToken, ...rest } = def; // deleteToken legacy on old scenarios — strip from public reads
+  if (stripFileContent && Array.isArray(rest.referenceFiles)) {
+    rest.referenceFiles = rest.referenceFiles.map(({ content, ...meta }) => meta);
+  }
   return rest;
 }
 
@@ -270,6 +276,80 @@ function arrayOfStrings(input) {
   return raw.map((s) => String(s).replace(/^\s*[-*•]\s*/, '').trim()).filter(Boolean).slice(0, 8);
 }
 
+// Validate & cap reference files. Returns { files, error }. Files are
+// objects { name, content, size }. Any non-text-looking content is rejected.
+function sanitizeReferenceFiles(input, referenceDataLen = 0) {
+  if (!Array.isArray(input)) return { files: [], error: null };
+  const trimmed = input.slice(0, MAX_FILES);
+  let total = referenceDataLen;
+  const out = [];
+  for (const f of trimmed) {
+    if (!f || typeof f !== 'object') continue;
+    const name = String(f.name || 'untitled').slice(0, 200);
+    const content = String(f.content || '');
+    if (!content) continue;
+    if (content.length > MAX_FILE_BYTES) {
+      return { files: [], error: `Reference file "${name}" exceeds ${Math.round(MAX_FILE_BYTES / 1000)}KB limit.` };
+    }
+    total += content.length;
+    if (total > MAX_TOTAL_REF_BYTES) {
+      return { files: [], error: `Total reference material exceeds ${Math.round(MAX_TOTAL_REF_BYTES / 1000)}KB limit.` };
+    }
+    out.push({ name, content, size: content.length });
+  }
+  return { files: out, error: null };
+}
+
+// { personaId: [chip, chip, ...] }
+function sanitizePersonaChips(input) {
+  if (!input || typeof input !== 'object') return {};
+  const out = {};
+  for (const [pid, chips] of Object.entries(input)) {
+    const arr = Array.isArray(chips) ? chips : String(chips || '').split(/\r?\n/);
+    const clean = arr.map((c) => String(c).trim()).filter(Boolean).slice(0, 6);
+    if (clean.length) out[String(pid)] = clean;
+  }
+  return out;
+}
+
+// [{ id, match (regex source string), chips: { personaId: [chip,...] } }]
+function sanitizeFollowupMap(input) {
+  if (!Array.isArray(input)) return [];
+  return input.slice(0, 20).map((rule, i) => {
+    if (!rule || typeof rule !== 'object') return null;
+    const id = String(rule.id || `rule_${i}`).slice(0, 60);
+    const match = String(rule.match || '').slice(0, 200);
+    if (!match) return null;
+    // Validate regex compiles; if not, escape as literal
+    let regexSource = match;
+    try { new RegExp(match, 'i'); }
+    catch { regexSource = match.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+    return {
+      id,
+      match: regexSource,
+      chips: sanitizePersonaChips(rule.chips),
+    };
+  }).filter(Boolean);
+}
+
+function buildReferenceBlock(def) {
+  const sections = [];
+  if (def.styleGuidance) {
+    sections.push(`## Style guidance\n${def.styleGuidance}`);
+  }
+  if (def.referenceData) {
+    sections.push(`## Reference data (inline notes, case records, dates)\n${def.referenceData}`);
+  }
+  if (Array.isArray(def.referenceFiles) && def.referenceFiles.length) {
+    const fileSections = def.referenceFiles
+      .map((f) => `### File: ${f.name}\n${f.content}`)
+      .join('\n\n');
+    sections.push(`## Reference files (treat these as ground truth — quote and cite by filename when relevant)\n${fileSections}`);
+  }
+  if (sections.length === 0) return '';
+  return `\n\n# REFERENCE MATERIAL\nThe demo owner has supplied the following. Treat it as authoritative. If something contradicts your general knowledge, the material below wins. Cite filenames when you quote from them.\n\n${sections.join('\n\n')}`;
+}
+
 function sanitizeInfoPanel(ip) {
   if (!ip || typeof ip !== 'object') return null;
   const arr = (x) => Array.isArray(x) ? x.map((s) => String(s)).filter(Boolean).slice(0, 8) : [];
@@ -278,6 +358,7 @@ function sanitizeInfoPanel(ip) {
     does: arr(ip.does),
     connects: arr(ip.connects),
     refuses: arr(ip.refuses),
+    references: arr(ip.references),
     closingNote: ip.closingNote ? String(ip.closingNote).slice(0, 280) : '',
   };
 }
@@ -316,8 +397,8 @@ export default async function handler(req, res) {
     const userDefs = await listUserScenarios();
     return res.status(200).json({
       scenarios: [
-        ...SCENARIOS.map((s) => ({ ...sanitizeScenario(s), source: 'seeded' })),
-        ...userDefs.map((s) => ({ ...sanitizeScenario(s), source: 'user' })),
+        ...SCENARIOS.map((s) => ({ ...sanitizeScenario(s, { stripFileContent: true }), source: 'seeded' })),
+        ...userDefs.map((s) => ({ ...sanitizeScenario(s, { stripFileContent: true }), source: 'user' })),
       ],
     });
   }
@@ -392,7 +473,9 @@ export default async function handler(req, res) {
     const id = path.split('/')[4];
     const def = await getScenarioDef(id);
     if (!def) return res.status(404).json({ error: 'Scenario not found' });
-    return res.status(200).json(sanitizeScenario(def));
+    // Strip file content from public reads — runtime uses server-side def
+    // for system-prompt injection; clients only need metadata.
+    return res.status(200).json(sanitizeScenario(def, { stripFileContent: true }));
   }
 
   // ── CONFIGURE SCENARIO (AI wizard) ──
@@ -426,24 +509,76 @@ export default async function handler(req, res) {
     const refuses = arrayOfStrings(body.refuses);
     const savingsLine = (body.savingsLine || '').trim();
     const personaOpenings = (body.personaOpenings && typeof body.personaOpenings === 'object') ? body.personaOpenings : {};
+    const styleGuidance = (body.styleGuidance || '').trim();
+    const referenceData = (body.referenceData || '').trim();
+    const personaChips = sanitizePersonaChips(body.personaChips);
+    const followupMap = sanitizeFollowupMap(body.followupMap);
+    // Merge new files with prior files unless caller explicitly sent
+    // `replaceReferenceFiles: true`. This makes additive reconfigures
+    // genuinely additive on uploads too.
+    const incomingFiles = sanitizeReferenceFiles(body.referenceFiles, referenceData.length);
+    if (incomingFiles.error) return res.status(400).json({ error: incomingFiles.error });
+    const replaceFiles = Boolean(body.replaceReferenceFiles);
+    // If the client supplied `keepPriorFileNames`, that's the authoritative
+    // list of which previously-saved files to keep. Otherwise default to
+    // keeping all prior files (legacy behaviour) unless replaceFiles is set.
+    const allPrior = Array.isArray(def.referenceFiles) ? def.referenceFiles : [];
+    let basePrior;
+    if (replaceFiles) {
+      basePrior = [];
+    } else if (Array.isArray(body.keepPriorFileNames)) {
+      const keepSet = new Set(body.keepPriorFileNames.map((s) => String(s)));
+      basePrior = allPrior.filter((pf) => keepSet.has(pf.name));
+    } else {
+      basePrior = allPrior;
+    }
+    // New files with the same name as a prior file override the prior content.
+    const priorFiles = basePrior.filter((pf) => !incomingFiles.files.find((nf) => nf.name === pf.name));
+    const referenceFiles = priorFiles.concat(incomingFiles.files);
+    // Re-validate total size after merging
+    const merged = sanitizeReferenceFiles(referenceFiles, referenceData.length);
+    if (merged.error) return res.status(400).json({ error: merged.error });
 
     const personaList = (def.personas || []).map((p) => `- ${p.id}: ${p.name} (${p.role})`).join('\n') || '- (none defined)';
     const calendarCapability = def.template === 'teams'
       ? `\n\nThis is the Teams template, which has a working calendar tab. If the demo owner's brief involves scheduling meetings, booking calls, or adding events, mention in the system prompt that the agent can add calendar events by appending a trailing block:\n<<CALENDAR>>[{"day":"Tue","startHour":14,"duration":0.5,"title":"Catch-up with Alice"}]<<END>>\nDay must be Mon–Sun (current week), startHour is 0–23 (0.5 = half hour), duration in hours. Direct the agent to ask the user for missing details (which day/time) before booking, and to confirm what was booked in the reply text.`
       : '';
 
+    const personaChipsBlock = Object.keys(personaChips).length
+      ? `### Per-persona suggested-reply chips (verbatim — use these exactly when generating personaChips)\n${Object.entries(personaChips)
+          .map(([pid, chips]) => `- ${pid}: ${chips.map((c) => `"${c}"`).join(', ')}`)
+          .join('\n')}`
+      : null;
+    const followupBlock = followupMap.length
+      ? `### Follow-up keyword map (use verbatim — populate the followupMap field)\nA list of rules. Each has an id, a regex source string, and per-persona chip arrays. When the user's message matches the regex (case-insensitive), the listed chips are surfaced to the relevant persona.\n${followupMap.map((r, i) => `(${i + 1}) id=${r.id} match=/${r.match}/i chips=${JSON.stringify(r.chips)}`).join('\n')}`
+      : null;
+    const referenceFilesNoteForSetup = referenceFiles.length
+      ? `### Reference files supplied by the demo owner (${referenceFiles.length})\n${referenceFiles.map((f) => `- ${f.name} (${Math.round(f.size / 100) / 10} KB)`).join('\n')}\nThese files are appended verbatim to the runtime system prompt every turn. The agent should treat them as authoritative source material and cite them by filename when quoting.`
+      : null;
+    const referenceDataNoteForSetup = referenceData
+      ? `### Inline reference data supplied by the demo owner\n---\n${referenceData}\n---`
+      : null;
+    const styleNoteForSetup = styleGuidance
+      ? `### Style guidance (formatting, voice, conventions — bake into system prompt)\n${styleGuidance}`
+      : null;
+
     const optionalSection = [
       tone && `### Tone & style\n${tone}`,
+      styleNoteForSetup,
       capabilities.length && `### What the agent does (info-panel "What it does")\n${capabilities.map((c) => `- ${c}`).join('\n')}`,
       connectsTo.length && `### Systems it connects to (info-panel "Connects to")\n${connectsTo.map((c) => `- ${c}`).join('\n')}`,
       refuses.length && `### Hard rules — must refuse (info-panel "Will refuse to do")\n${refuses.map((c) => `- ${c}`).join('\n')}`,
       savingsLine && `### Time saved estimate (info-panel closing line)\n${savingsLine}`,
+      referenceFilesNoteForSetup,
+      referenceDataNoteForSetup,
       Object.keys(personaOpenings).filter((k) => String(personaOpenings[k] || '').trim()).length
         ? `### Per-persona opening messages (verbatim — use these exactly when generating personaOpenings)\n${Object.entries(personaOpenings)
             .filter(([, v]) => String(v || '').trim())
             .map(([pid, txt]) => `- ${pid}: ${String(txt).trim()}`)
             .join('\n')}`
         : null,
+      personaChipsBlock,
+      followupBlock,
     ].filter(Boolean).join('\n\n');
 
     const reconfigureHeader = isReconfigure
@@ -471,7 +606,9 @@ Produce a JSON object with these exact keys (and ONLY these keys):
 - "openingMessage": the agent's first line of chat, addressed to the FIRST persona by name. Markdown allowed. Set context and offer 2–3 next-step choices via action buttons. End with a trailing <<ACTIONS>>["Choice A","Choice B"]<<END>> block (literal text, no escaping).${isReconfigure ? ' On reconfigure, this is NOT posted to the existing chat — the conversation continues. Still produce a sensible one for record-keeping.' : ''}
 - "suggestedReplies": array of 2–4 short user-reply suggestions (each under 30 chars).
 - "personaOpenings": object keyed by persona id; value is the opening message that persona would see. Include ALL personas. If the demo owner supplied per-persona openings above, use those verbatim; otherwise generate one for each.
-- "infoPanel": object with keys { "heading" (short string, e.g. "About this agent"), "does" (array of 2–6 short bullets), "connects" (array of 2–5 short bullets), "refuses" (array of 2–5 short bullets), "closingNote" (one short sentence, e.g. the time-saved estimate or a usage caveat) }. If structured inputs above provided "What it does" / "Connects to" / "Refuses to do" / "Time saved", reuse them; otherwise infer from the brief.
+- "infoPanel": object with keys { "heading" (short string, e.g. "About this agent"), "does" (array of 2–6 short bullets), "connects" (array of 2–5 short bullets), "refuses" (array of 2–5 short bullets), "references" (array of 0–6 short bullets listing supplied filenames + a brief note on what each is — empty array if none), "closingNote" (one short sentence, e.g. the time-saved estimate or a usage caveat) }. If structured inputs above provided "What it does" / "Connects to" / "Refuses to do" / "Time saved", reuse them; otherwise infer from the brief.
+- "personaChips": object keyed by persona id, value is an array of 2–4 short suggested-reply chips (each under 30 chars). If the demo owner supplied per-persona chips above, use those verbatim; otherwise generate one set per persona.
+- "followupMap": array of follow-up keyword rules. Each rule is { "id": short slug, "match": regex source string (case-insensitive, no slashes), "chips": { personaId: [chip, ...] } }. If the demo owner supplied a map above, use it verbatim. If not, generate 2–6 rules covering the most likely conversation pivots (e.g. user mentions a key entity, asks for a draft, asks for context). Return an empty array if none would help.
 
 Respond with the JSON object ONLY — no prose, no markdown fences, no commentary.`;
 
@@ -502,10 +639,20 @@ Respond with the JSON object ONLY — no prose, no markdown fences, no commentar
         ? config.suggestedReplies.map((s) => String(s)).slice(0, 4)
         : [],
       personaOpenings: (config.personaOpenings && typeof config.personaOpenings === 'object') ? config.personaOpenings : {},
+      personaChips: sanitizePersonaChips(config.personaChips) || {},
+      followupMap: sanitizeFollowupMap(config.followupMap) || [],
       infoPanel: sanitizeInfoPanel(config.infoPanel) || def.infoPanel || null,
+      // Reference material — stored separately, injected at runtime.
+      referenceFiles,
+      referenceData,
+      styleGuidance,
       descriptions: nextDescriptions,
       // keep the most recent structured inputs for re-edit prefill on the form
-      structuredInputs: { tone, capabilities, connectsTo, refuses, savingsLine, personaOpenings },
+      structuredInputs: {
+        tone, capabilities, connectsTo, refuses, savingsLine, personaOpenings,
+        styleGuidance, referenceData,
+        personaChips, followupMap,
+      },
       configuredAt: Date.now(),
       reconfigureCount: (def.reconfigureCount || 0) + (isReconfigure ? 1 : 0),
     };
@@ -635,7 +782,8 @@ Respond with the JSON object ONLY — no prose, no markdown fences, no commentar
         const history = await getMessages(id);
         const llmHistory = historyToLLM(def, history);
         const calendarInstr = def.template === 'teams' ? `\n\n${RUNTIME_CALENDAR_INSTRUCTION}` : '';
-        const sysContent = `${def.systemPrompt}\n\n${RUNTIME_ACTION_INSTRUCTION}${calendarInstr}`;
+        const refBlock = buildReferenceBlock(def);
+        const sysContent = `${def.systemPrompt}\n\n${RUNTIME_ACTION_INSTRUCTION}${calendarInstr}${refBlock}`;
         const raw = await callLLM([
           { role: 'system', content: sysContent },
           ...llmHistory,

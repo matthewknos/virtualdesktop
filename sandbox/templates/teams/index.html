@@ -2388,10 +2388,13 @@
           <!-- Messages will be injected here -->
         </div>
 
-        <!-- Suggested Replies -->
+        <!-- Suggested Replies (first-load chips, per active persona) -->
         <div id="suggestedReplies">
           <!-- Reply chips will be injected here -->
         </div>
+
+        <!-- Follow-up chips (surfaced by keyword matches against the last user message) -->
+        <div id="followupRow" style="display:flex;flex-wrap:wrap;gap:8px;padding:0 20px 6px;"></div>
 
         <!-- Typing Indicator -->
         <div id="typingIndicator">
@@ -3151,6 +3154,54 @@ class ChatView {
     if (this.convSubtitle && persona) {
       this.convSubtitle.textContent = persona.role || '';
     }
+    this._renderSuggestedChips(persona);
+  }
+
+  _renderSuggestedChips(persona) {
+    if (!this.suggestedReplies || !this.app.scenario) return;
+    const pid = persona?.id;
+    const perPersona = this.app.scenario.personaChips || {};
+    const fallback = this.app.scenario.suggestedReplies || [];
+    const chips = (pid && Array.isArray(perPersona[pid]) && perPersona[pid].length)
+      ? perPersona[pid]
+      : fallback;
+    this.suggestedReplies.innerHTML = '';
+    if (!chips.length) return;
+    chips.forEach((c) => {
+      const btn = document.createElement('button');
+      btn.className = 'suggested-chip';
+      btn.type = 'button';
+      btn.textContent = c;
+      btn.addEventListener('click', () => this.app.sendMessage(c));
+      this.suggestedReplies.appendChild(btn);
+    });
+  }
+
+  _renderFollowupChips(userText) {
+    if (!this.followupRow || !this.app.scenario) return;
+    const rules = this.app.scenario.followupMap || [];
+    const pid = this.app.currentPersona?.id;
+    if (!rules.length || !pid || !userText) { this.followupRow.innerHTML = ''; return; }
+    const matched = [];
+    for (const r of rules) {
+      try {
+        const re = new RegExp(r.match, 'i');
+        if (re.test(userText)) {
+          const chips = (r.chips && r.chips[pid]) || [];
+          chips.forEach((c) => { if (!matched.includes(c)) matched.push(c); });
+        }
+      } catch { /* bad regex — skip */ }
+      if (matched.length >= 3) break;
+    }
+    this.followupRow.innerHTML = '';
+    matched.slice(0, 3).forEach((c) => {
+      const btn = document.createElement('button');
+      btn.className = 'suggested-chip';
+      btn.type = 'button';
+      btn.textContent = c;
+      btn.addEventListener('click', () => this.app.sendMessage(c));
+      this.followupRow.appendChild(btn);
+    });
   }
 
   /** Clear all rendered messages and suggestion chips. */
@@ -3378,6 +3429,11 @@ class SandboxTeamsApp {
       // 11. Render calendar (hidden until user switches)
       this.renderCalendar();
 
+      // 11b. Re-apply persona so chips render (chatView exists now)
+      if (this.currentPersona && this.chatView) {
+        this.chatView.setPersona(this.currentPersona);
+      }
+
       // 12. Start polling
       this.pollTimer = setInterval(() => this.poll(), 2000);
     } catch (err) {
@@ -3479,6 +3535,11 @@ class SandboxTeamsApp {
       if (composeInput) {
         composeInput.value = '';
         composeInput.style.height = '';
+      }
+
+      // Refresh followup chips against the user's last message
+      if (this.chatView && !this.agentMode) {
+        this.chatView._renderFollowupChips(t);
       }
 
       // Immediate poll so the user's own message appears quickly
@@ -3730,6 +3791,15 @@ class SandboxTeamsApp {
     }
     if (ip && ip.refuses && ip.refuses.length) {
       sections.push(`<h3>What it will refuse to do</h3><ul>${ip.refuses.map((d) => `<li>${escape(d)}</li>`).join('')}</ul>`);
+    }
+    // References — prefer the LLM-summarised list, fall back to raw filenames
+    const refList = (ip && ip.references && ip.references.length)
+      ? ip.references
+      : (Array.isArray(this.scenario.referenceFiles)
+          ? this.scenario.referenceFiles.map((f) => `${f.name}${f.size ? ` (${(f.size / 1024).toFixed(1)} KB)` : ''}`)
+          : []);
+    if (refList.length) {
+      sections.push(`<h3>References</h3><ul>${refList.map((d) => `<li>${escape(d)}</li>`).join('')}</ul>`);
     }
     if (ip && ip.closingNote) {
       sections.push(`<p class="closing">${escape(ip.closingNote)}</p>`);
