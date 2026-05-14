@@ -30,14 +30,13 @@ const KV_AVAILABLE = Boolean(process.env.KV_REST_API_URL || process.env.KV_URL);
 const TEMPLATES = ['teams', 'workday', 'excel'];
 const KV_INDEX = 'sandbox:scenario:index'; // Set of user-created scenario ids
 const KV_KEY = (id) => `sandbox:scenario:${id}`;
+const KV_STATE_KEY = (id) => `sandbox:scenario:${id}:state`;
+const KV_MSGS_KEY = (id) => `sandbox:scenario:${id}:messages`;
+const MAX_MESSAGES = 500; // cap per scenario to keep KV lean
 
 // ── Scenario catalogue ────────────────────────────────────────────────────
 
 const SCENARIOS = [];
-
-// ── In-memory runtime state ───────────────────────────────────────────────
-
-const runtime = new Map(); // scenarioId → { state, messages }
 
 // ── Scenario definition lookup (seeded + KV) ──────────────────────────────
 
@@ -73,32 +72,46 @@ function genToken() {
   return Array.from({ length: 4 }, () => Math.random().toString(36).slice(2, 8)).join('');
 }
 
-async function ensureScenario(id) {
-  if (!runtime.has(id)) {
-    const def = await getScenarioDef(id);
-    if (!def) return null;
-    runtime.set(id, {
-      state: structuredClone(def.initialState || {}),
-      messages: [],
-      createdAt: Date.now(),
-      lastAccessed: Date.now(),
-    });
-  }
-  const sc = runtime.get(id);
-  sc.lastAccessed = Date.now();
-  return sc;
+// Scenario data is now persisted in KV so it survives across Vercel
+// function instances (which is the only way GET /messages can return what
+// /webhook just pushed).
+
+async function getState(id) {
+  const def = await getScenarioDef(id);
+  if (!def) return null;
+  if (!KV_AVAILABLE) return structuredClone(def.initialState || {});
+  const stored = await kv.get(KV_STATE_KEY(id));
+  return stored || structuredClone(def.initialState || {});
 }
 
-async function resetScenario(id) {
+async function setState(id, nextState) {
+  if (!KV_AVAILABLE) return;
+  await kv.set(KV_STATE_KEY(id), nextState);
+}
+
+async function clearState(id) {
   const def = await getScenarioDef(id);
   if (!def) return false;
-  runtime.set(id, {
-    state: structuredClone(def.initialState || {}),
-    messages: [],
-    createdAt: Date.now(),
-    lastAccessed: Date.now(),
-  });
+  if (KV_AVAILABLE) {
+    await kv.set(KV_STATE_KEY(id), structuredClone(def.initialState || {}));
+    await kv.del(KV_MSGS_KEY(id));
+  }
   return true;
+}
+
+async function getMessages(id) {
+  if (!KV_AVAILABLE) return [];
+  const raw = await kv.lrange(KV_MSGS_KEY(id), 0, -1);
+  if (!raw || raw.length === 0) return [];
+  return raw
+    .map((entry) => (typeof entry === 'string' ? JSON.parse(entry) : entry))
+    .sort((a, b) => a.timestamp - b.timestamp);
+}
+
+async function appendMessage(id, msg) {
+  if (!KV_AVAILABLE) return;
+  await kv.rpush(KV_MSGS_KEY(id), JSON.stringify(msg));
+  await kv.ltrim(KV_MSGS_KEY(id), -MAX_MESSAGES, -1);
 }
 
 function sanitizeScenario(def) {
@@ -236,51 +249,51 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: 'Invalid or missing delete token' });
     }
     await kv.del(KV_KEY(id));
+    await kv.del(KV_STATE_KEY(id));
+    await kv.del(KV_MSGS_KEY(id));
     await kv.srem(KV_INDEX, id);
-    runtime.delete(id);
     return res.status(200).json({ id, deleted: true });
   }
 
   // ── GET STATE ──
   if (path.match(/^\/api\/sandbox\/scenarios\/[^/]+\/state$/) && req.method === 'GET') {
     const id = path.split('/')[4];
-    const sc = await ensureScenario(id);
-    if (!sc) return res.status(404).json({ error: 'Scenario not found' });
-    return res.status(200).json({ scenarioId: id, state: sc.state });
+    if (!(await getScenarioDef(id))) return res.status(404).json({ error: 'Scenario not found' });
+    const state = await getState(id);
+    return res.status(200).json({ scenarioId: id, state });
   }
 
   // ── UPDATE STATE (shallow merge) ──
   if (path.match(/^\/api\/sandbox\/scenarios\/[^/]+\/state$/) && req.method === 'POST') {
     const id = path.split('/')[4];
-    const sc = await ensureScenario(id);
-    if (!sc) return res.status(404).json({ error: 'Scenario not found' });
+    if (!(await getScenarioDef(id))) return res.status(404).json({ error: 'Scenario not found' });
     const updates = (await readBody(req)) || {};
-    // Shallow merge top-level keys only
+    const state = await getState(id);
     Object.keys(updates).forEach((key) => {
       if (typeof updates[key] === 'object' && updates[key] !== null && !Array.isArray(updates[key])) {
-        sc.state[key] = { ...(sc.state[key] || {}), ...updates[key] };
+        state[key] = { ...(state[key] || {}), ...updates[key] };
       } else {
-        sc.state[key] = updates[key];
+        state[key] = updates[key];
       }
     });
-    return res.status(200).json({ scenarioId: id, state: sc.state });
+    await setState(id, state);
+    return res.status(200).json({ scenarioId: id, state });
   }
 
   // ── RESET STATE ──
   if (path.match(/^\/api\/sandbox\/scenarios\/[^/]+\/state$/) && req.method === 'DELETE') {
     const id = path.split('/')[4];
-    if (!(await resetScenario(id))) return res.status(404).json({ error: 'Scenario not found' });
-    const sc = runtime.get(id);
-    return res.status(200).json({ scenarioId: id, state: sc.state, reset: true });
+    if (!(await clearState(id))) return res.status(404).json({ error: 'Scenario not found' });
+    const state = await getState(id);
+    return res.status(200).json({ scenarioId: id, state, reset: true });
   }
 
   // ── GET MESSAGES ──
   if (path.match(/^\/api\/sandbox\/scenarios\/[^/]+\/messages$/) && req.method === 'GET') {
     const id = path.split('/')[4];
-    const sc = await ensureScenario(id);
-    if (!sc) return res.status(404).json({ error: 'Scenario not found' });
+    if (!(await getScenarioDef(id))) return res.status(404).json({ error: 'Scenario not found' });
+    let msgs = await getMessages(id);
     const since = url.searchParams.get('since');
-    let msgs = sc.messages;
     if (since) {
       const t = Number(since);
       msgs = msgs.filter((m) => m.timestamp > t);
@@ -291,8 +304,7 @@ export default async function handler(req, res) {
   // ── POST MESSAGE ──
   if (path.match(/^\/api\/sandbox\/scenarios\/[^/]+\/messages$/) && req.method === 'POST') {
     const id = path.split('/')[4];
-    const sc = await ensureScenario(id);
-    if (!sc) return res.status(404).json({ error: 'Scenario not found' });
+    if (!(await getScenarioDef(id))) return res.status(404).json({ error: 'Scenario not found' });
     const body = (await readBody(req)) || {};
     if (!body.text || typeof body.text !== 'string') {
       return res.status(400).json({ error: 'Missing or invalid "text" field' });
@@ -306,7 +318,7 @@ export default async function handler(req, res) {
       timestamp: Date.now(),
       actions: body.actions || null,
     };
-    sc.messages.push(msg);
+    await appendMessage(id, msg);
     return res.status(201).json(msg);
   }
 
@@ -319,8 +331,9 @@ export default async function handler(req, res) {
     if (!body.text || typeof body.text !== 'string') {
       return res.status(400).json({ error: 'Missing or invalid "text" field' });
     }
-    const sc = await ensureScenario(body.scenarioId);
-    if (!sc) return res.status(404).json({ error: 'Scenario not found' });
+    if (!(await getScenarioDef(body.scenarioId))) {
+      return res.status(404).json({ error: 'Scenario not found' });
+    }
 
     const msg = {
       id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
@@ -332,17 +345,18 @@ export default async function handler(req, res) {
       actions: body.actions || null,
       source: 'webhook',
     };
-    sc.messages.push(msg);
+    await appendMessage(body.scenarioId, msg);
 
-    // Optionally auto-update state if the webhook carries state mutations
     if (body.stateUpdates && typeof body.stateUpdates === 'object') {
+      const state = await getState(body.scenarioId);
       Object.keys(body.stateUpdates).forEach((key) => {
         if (typeof body.stateUpdates[key] === 'object' && body.stateUpdates[key] !== null && !Array.isArray(body.stateUpdates[key])) {
-          sc.state[key] = { ...(sc.state[key] || {}), ...body.stateUpdates[key] };
+          state[key] = { ...(state[key] || {}), ...body.stateUpdates[key] };
         } else {
-          sc.state[key] = body.stateUpdates[key];
+          state[key] = body.stateUpdates[key];
         }
       });
+      await setState(body.scenarioId, state);
     }
 
     return res.status(201).json({ ok: true, message: msg });
