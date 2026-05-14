@@ -454,26 +454,62 @@ Examples (illustrative, not literal):
 
 Never respond to a short command with a generic email draft, a policy lecture, or unrelated content.`;
 
-// If an opener doesn't already carry an <<ACTIONS>> block, append one using
-// supplied fallback chips. Openings without action buttons feel dead — the
-// demo's first impression should always offer next steps.
-// When `force` is true (alwaysShowActions toggle on) we use a generic
-// fallback chip set if nothing better is available, so the opener NEVER
-// lands without buttons.
+// Repair / attach the trailing <<ACTIONS>>[…]<<END>> block on an opener.
+// Three states to handle:
+//   1. No <<ACTIONS>> at all → append a fresh block from fallback chips (if
+//      we have enough, or {force:true} for the generic fallback).
+//   2. A complete <<ACTIONS>>[…]<<END>> block already → leave it.
+//   3. A MALFORMED / truncated <<ACTIONS>>… block (the LLM started one but
+//      didn't close the JSON array or never emitted <<END>>) → strip the
+//      junk from <<ACTIONS>> onward, then treat as case 1.
 const GENERIC_FALLBACK_CHIPS = ['Tell me more', 'Show me an example', 'What can you do?'];
 function ensureOpeningActions(opener, fallbackChips, { force = false } = {}) {
-  const text = String(opener || '');
+  let text = String(opener || '');
   if (!text.trim()) return text;
-  if (/<<\s*ACTIONS\s*>>/i.test(text)) return text;
-  let chips = Array.isArray(fallbackChips)
-    ? fallbackChips.map((c) => String(c).trim()).filter(Boolean).slice(0, 3)
-    : [];
+
+  const hasOpener = /<<\s*ACTIONS\s*>>/i.test(text);
+  const hasCompleteBlock = /<<\s*ACTIONS\s*>>\s*\[[\s\S]*?\]\s*<<\s*END\s*>>/i.test(text);
+  if (hasCompleteBlock) return text;
+
+  // Try to recover existing chips from a partial block before we strip it,
+  // so we don't lose what the LLM was trying to offer.
+  let recoveredChips = null;
+  if (hasOpener) {
+    const partial = text.match(/<<\s*ACTIONS\s*>>\s*(\[[\s\S]*)/i);
+    if (partial) {
+      const tail = partial[1];
+      // Find matching close bracket if it exists; otherwise try to parse
+      // what's there with a synthetic close.
+      const closeIdx = tail.indexOf(']');
+      const sliceEnd = closeIdx === -1 ? tail.length : closeIdx + 1;
+      const arrayText = closeIdx === -1 ? tail + '"]' : tail.slice(0, sliceEnd);
+      try {
+        const parsed = JSON.parse(arrayText);
+        if (Array.isArray(parsed)) {
+          recoveredChips = parsed.map((s) => String(s).trim()).filter(Boolean).slice(0, 3);
+        }
+      } catch {
+        // last-resort: split on quotes
+        const fragments = tail.match(/"([^"]+)"/g);
+        if (fragments) {
+          recoveredChips = fragments.map((f) => f.slice(1, -1).trim()).filter(Boolean).slice(0, 3);
+        }
+      }
+    }
+    // Strip the broken block from the text.
+    text = text.replace(/<<\s*ACTIONS\s*>>[\s\S]*$/i, '').replace(/\s+$/, '');
+  }
+
+  let chips = (recoveredChips && recoveredChips.length >= 2)
+    ? recoveredChips
+    : (Array.isArray(fallbackChips)
+        ? fallbackChips.map((c) => String(c).trim()).filter(Boolean).slice(0, 3)
+        : []);
   if (chips.length < 2) {
     if (!force) return text;
     chips = GENERIC_FALLBACK_CHIPS.slice(0, 3);
   }
-  const block = `\n\n<<ACTIONS>>${JSON.stringify(chips)}<<END>>`;
-  return text.replace(/\s+$/, '') + block;
+  return text + `\n\n<<ACTIONS>>${JSON.stringify(chips)}<<END>>`;
 }
 
 function sanitizeInfoPanel(ip) {
