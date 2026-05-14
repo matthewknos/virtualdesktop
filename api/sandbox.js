@@ -617,10 +617,14 @@ export default async function handler(req, res) {
       ? `### Follow-up keyword map (use verbatim — populate the followupMap field)\nA list of rules. Each has an id, a regex source string, and per-persona chip arrays. When the user's message matches the regex (case-insensitive), the listed chips are surfaced to the relevant persona.\n${followupMap.map((r, i) => `(${i + 1}) id=${r.id} match=/${r.match}/i chips=${JSON.stringify(r.chips)}`).join('\n')}`
       : null;
     const referenceFilesNoteForSetup = referenceFiles.length
-      ? `### Reference files supplied by the demo owner (${referenceFiles.length})\n${referenceFiles.map((f) => `- ${f.name} (${Math.round(f.size / 100) / 10} KB)`).join('\n')}\nThese files are appended verbatim to the runtime system prompt every turn. The agent should treat them as authoritative source material and cite them by filename when quoting.`
+      ? `### Reference files (${referenceFiles.length}, injected at runtime — DO NOT read or echo content here)\n${referenceFiles.map((f) => `- ${f.name} (${Math.round(f.size / 100) / 10} KB)`).join('\n')}`
       : null;
+    // Don't echo inline reference data verbatim — it can be many KB and the
+    // setup LLM doesn't need to read it to write the system prompt. Send a
+    // short signature + the first ~300 chars so the LLM can tell what kind of
+    // material is loaded, but no more.
     const referenceDataNoteForSetup = referenceData
-      ? `### Inline reference data supplied by the demo owner\n---\n${referenceData}\n---`
+      ? `### Inline reference data (${referenceData.length} chars supplied, injected at runtime — DO NOT echo or paraphrase here)\nFirst 300 chars for context only:\n${referenceData.slice(0, 300)}${referenceData.length > 300 ? '…' : ''}`
       : null;
     const styleNoteForSetup = styleGuidance
       ? `### Style guidance (formatting, voice, conventions — bake into system prompt)\n${styleGuidance}`
@@ -651,50 +655,58 @@ export default async function handler(req, res) {
     ].filter(Boolean).join('\n\n');
 
     const reconfigureHeader = isReconfigure
-      ? `THIS IS A RECONFIGURE. The agent already has a prior system prompt and a live conversation. You MUST preserve every constraint, capability, persona reference, hard rule, and tone choice from the prior prompt. Treat the new brief below as an ADDITION — weave it in alongside the existing intent rather than replacing it. Where it conflicts with the prior prompt, the new brief wins; otherwise both stand.\n\nPRIOR SYSTEM PROMPT (verbatim — preserve intent):\n---\n${def.systemPrompt}\n---\n\nPRIOR BRIEF CHAIN (oldest → newest):\n${priorDescriptions.map((d, i) => `(${i + 1}) ${d}`).join('\n\n')}`
-      : 'This is the FIRST configure for this scenario. Build the system prompt from scratch using the brief below.';
+      ? `RECONFIGURE — additive only. Preserve every constraint, persona reference, hard rule, and tone choice from the prior system prompt. Weave the new brief in alongside; where they conflict, new wins.\n\nPRIOR SYSTEM PROMPT (preserve verbatim intent):\n---\n${def.systemPrompt}\n---`
+      : 'First configure — build from scratch using the brief below.';
 
-    const setupPrompt = `You are configuring a sandbox AI agent for the CoE Sandbox platform's "${def.template}" template.${calendarCapability}
+    const setupPrompt = `Configure a sandbox AI agent for the "${def.template}" template.${calendarCapability}
 
-Scenario name: ${def.name}
-Agent name: ${def.agent}
-Personas (id : name (role)) — the agent talks to one of these at a time:
+Name: ${def.name} · Agent: ${def.agent}
+Personas (id : name (role)):
 ${personaList}
 
 ${reconfigureHeader}
 
-NEW BRIEF FROM DEMO OWNER:
----
+NEW BRIEF:
 ${description}
----
 
-${optionalSection ? `STRUCTURED OPTIONAL INPUTS (use these verbatim where instructed; otherwise treat as authoritative for the relevant info-panel section):\n\n${optionalSection}\n` : ''}
+${optionalSection ? `OPTIONAL INPUTS (use verbatim where supplied):\n${optionalSection}\n` : ''}
+SIZE RULES (responses have been truncated before — stay under these):
+- DO NOT copy reference-file or inline-data content anywhere. They're injected into the runtime prompt automatically. Refer to files by name only (e.g. "see Policy.md").
+- systemPrompt ≤900 words. openingMessage ≤120 words. Each personaOpening ≤120 words. Each chip ≤30 chars. Each infoPanel bullet ≤15 words. personaRegisters ≤100 words each.
 
-CRITICAL OUTPUT-SIZE RULES (read carefully — past responses have been truncated by exceeding token caps):
-- Reference files and inline reference data shown above are INJECTED INTO THE RUNTIME SYSTEM PROMPT AUTOMATICALLY every turn. DO NOT copy their content into the systemPrompt field. In the systemPrompt, refer to them by filename only (e.g. "Consult Policy.md for thresholds"). The runtime appends the full text.
-- Keep the systemPrompt under 1200 words. It should describe identity, tone, hard rules, persona-handling, and reference *that* the files exist — not paraphrase them.
-- Keep openingMessage under 150 words. Keep each personaOpening under 150 words. Keep each chip under 30 chars. Keep each infoPanel bullet under 15 words.
+Output a JSON object with ONLY these keys:
+- "systemPrompt": full system prompt — identity, tone, hard rules, persona-handling, reference files by name. ${isReconfigure ? 'Preserve prior prompt intent, add the new brief.' : 'Self-contained.'}
+- "openingMessage": agent's first line to the FIRST persona by name. Markdown OK. End with <<ACTIONS>>["A","B","C"]<<END>>.
+- "suggestedReplies": [2–4 strings, each ≤30 chars].
+- "personaOpenings": { personaId: opener } for ALL personas. Verbatim if supplied above.
+- "personaChips": { personaId: [2–4 chips] } for ALL personas. Verbatim if supplied above.
+- "personaRegisters": { personaId: ≤100-word tone addendum } — only when personas need different register. Empty object if not.
+- "followupMap": [up to 6 { id, match (regex source, no slashes), chips: { personaId: [chips] } }]. Verbatim if supplied. Empty array if no rules help.
+- "infoPanel": { heading, does[2–6], connects[2–5], refuses[2–5], references[0–6: filename + brief note], closingNote }.
 
-Produce a JSON object with these exact keys (and ONLY these keys):
-- "systemPrompt": a complete system prompt to drive the live conversation. Address it to the agent. Bake in scenario name, persona names, tone, what to ask first, what choices to offer, hard rules, when to escalate or close out. ${isReconfigure ? 'Preserve everything from the prior prompt above and add the new brief.' : 'Make it self-contained.'} The runtime passes this verbatim as the system message every turn. ≤1200 words.
-- "openingMessage": the agent's first line of chat, addressed to the FIRST persona by name. Markdown allowed. Set context and offer 2–3 next-step choices via action buttons. End with a trailing <<ACTIONS>>["Choice A","Choice B"]<<END>> block (literal text, no escaping). ≤150 words.${isReconfigure ? ' On reconfigure, this is NOT posted to the existing chat — the conversation continues. Still produce a sensible one for record-keeping.' : ''}
-- "suggestedReplies": array of 2–4 short user-reply suggestions (each under 30 chars).
-- "personaOpenings": object keyed by persona id; value is the opening message that persona would see. Include ALL personas. ≤150 words each. If the demo owner supplied per-persona openings above, use those verbatim; otherwise generate one for each.
-- "infoPanel": object with keys { "heading" (short string, e.g. "About this agent"), "does" (array of 2–6 short bullets, ≤15 words each), "connects" (array of 2–5 short bullets), "refuses" (array of 2–5 short bullets), "references" (array of 0–6 short bullets listing supplied filenames + a brief note on what each is — empty array if none), "closingNote" (one short sentence) }. If structured inputs above provided "What it does" / "Connects to" / "Refuses to do" / "Time saved", reuse them; otherwise infer from the brief.
-- "personaChips": object keyed by persona id, value is an array of 2–4 short suggested-reply chips (each under 30 chars). If the demo owner supplied per-persona chips above, use those verbatim; otherwise generate one set per persona.
-- "followupMap": array of follow-up keyword rules (max 6 rules). Each rule is { "id": short slug, "match": regex source string (case-insensitive, no slashes), "chips": { personaId: [chip, ...] } }. If the demo owner supplied a map above, use it verbatim. Otherwise generate 2–6 rules covering the most likely conversation pivots. Empty array if none would help.
-- "personaRegisters": object keyed by persona id; value is a short ≤120-word addendum (markdown OK) that overrides tone/register when that persona is the active speaker. Mirrors how a human-built demo branches tone (e.g. plain English for a line manager vs precise terminology for a People Ops lead). If the demo owner supplied registers above, use those verbatim. Otherwise, infer a sensible per-persona register from the brief. Empty object if there is only one persona or no register distinction is needed.
-
-Respond with the JSON object ONLY — no prose, no markdown fences, no commentary.`;
+JSON OBJECT ONLY. No prose, no fences.`;
 
     const baseMessages = [
-      { role: 'system', content: 'You are a configuration assistant that outputs ONLY a single JSON object. No prose, no markdown, no commentary. Keep field values terse — never copy reference-file content into any field; refer to files by name only.' },
+      { role: 'system', content: 'You output ONE JSON object. No prose, no markdown fences. Never copy reference content; reference files by name only.' },
       { role: 'user', content: setupPrompt },
     ];
 
+    // Pick the smallest model whose context comfortably fits the prompt.
+    // With reference data no longer echoed verbatim, the 8k model is plenty
+    // for most calls (~4× cheaper than 32k). Fall back to 32k only when the
+    // prompt itself is large.
+    const promptBytes = JSON.stringify(baseMessages).length;
+    const setupModel = promptBytes > 20_000 ? 'moonshot-v1-32k' : 'moonshot-v1-8k';
+
     let setupRaw, finishReason;
     try {
-      const meta = await callLLM(baseMessages, { maxTokens: 6000, temperature: 0.2, jsonMode: true, returnMeta: true });
+      const meta = await callLLM(baseMessages, {
+        model: setupModel,
+        maxTokens: 4000,
+        temperature: 0.2,
+        jsonMode: true,
+        returnMeta: true,
+      });
       setupRaw = meta.content;
       finishReason = meta.finishReason;
     } catch (err) {
@@ -703,16 +715,13 @@ Respond with the JSON object ONLY — no prose, no markdown fences, no commentar
 
     let config = extractJSON(setupRaw);
 
-    // If the first call got truncated (finish_reason=length) or didn't parse,
-    // retry once with a much tighter shape and a bigger token budget. We
-    // explicitly drop the heavy follow-up map and ask for the smallest viable
-    // payload so the response fits.
-    if ((!config || finishReason === 'length') && (referenceFiles.length || referenceData.length > 2000 || (optionalSection && optionalSection.length > 4000))) {
-      const slimSetupPrompt = `${setupPrompt}\n\nIMPORTANT: Your previous attempt did not return valid JSON (truncated or malformed). Retry now with EVERY field at its minimum size. systemPrompt ≤600 words. openingMessage ≤80 words. personaOpenings ≤80 words each. followupMap MAY be an empty array. Reference files are injected at runtime — do not paraphrase them.`;
+    // Retry only when actually truncated. Use 32k just in case the prompt
+    // was a borderline fit for the 8k model.
+    if (!config && finishReason === 'length') {
       try {
         const meta2 = await callLLM(
-          [baseMessages[0], { role: 'user', content: slimSetupPrompt }],
-          { maxTokens: 8000, temperature: 0.1, jsonMode: true, returnMeta: true }
+          [baseMessages[0], { role: 'user', content: `${setupPrompt}\n\nPrevious attempt truncated. Halve every field. followupMap may be []. personaRegisters may be {}.` }],
+          { model: 'moonshot-v1-32k', maxTokens: 6000, temperature: 0.1, jsonMode: true, returnMeta: true }
         );
         setupRaw = meta2.content;
         finishReason = meta2.finishReason;
