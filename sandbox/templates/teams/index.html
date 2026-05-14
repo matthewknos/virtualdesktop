@@ -3385,6 +3385,11 @@ class SandboxTeamsApp {
         (view === 'chat' && label === 'Chat') ||
         (view === 'calendar' && label === 'Calendar');
       item.classList.toggle('active', isTarget);
+      // Clear unread dot when entering calendar
+      if (view === 'calendar' && label === 'Calendar') {
+        const dot = item.querySelector('.rail-dot');
+        if (dot) dot.remove();
+      }
     });
   }
 
@@ -3460,11 +3465,50 @@ class SandboxTeamsApp {
         if (this.chatView) {
           this.chatView.appendMessages(newMessages);
         }
+        // If any new message hints the agent mutated state (e.g. added a
+        // calendar event via the <<CALENDAR>>…<<END>> protocol), refresh
+        // state so the calendar tab reflects it immediately.
+        const stateLikelyChanged = newMessages.some((m) =>
+          m.stateChanged || m.source === 'auto-agent' || m.source === 'webhook'
+        );
+        if (stateLikelyChanged) {
+          await this._refreshState();
+        }
       }
       this.lastPollTime = Date.now();
     } catch (err) {
       console.error('poll failed:', err);
     }
+  }
+
+  async _refreshState() {
+    try {
+      const res = await this.client.getState(this.scenarioId);
+      const prevCalLen = (this.state?.calendar || []).length;
+      this.state = res.state;
+      const newCalLen = (this.state?.calendar || []).length;
+      if (newCalLen !== prevCalLen) {
+        this.renderCalendar();
+        this._flashCalendarRail();
+      }
+    } catch (err) {
+      console.error('state refresh failed:', err);
+    }
+  }
+
+  _flashCalendarRail() {
+    if (this.currentView === 'calendar') return;
+    const items = document.querySelectorAll('#rail .rail-item');
+    items.forEach((item) => {
+      const label = item.querySelector('.rail-label')?.textContent?.trim();
+      if (label !== 'Calendar') return;
+      if (item.querySelector('.rail-dot')) return;
+      const dot = document.createElement('span');
+      dot.className = 'rail-dot';
+      dot.style.cssText = 'position:absolute;top:6px;right:14px;width:8px;height:8px;border-radius:50%;background:#d13438;box-shadow:0 0 0 2px var(--teams-rail-bg,#1f1f1f);';
+      item.style.position = item.style.position || 'relative';
+      item.appendChild(dot);
+    });
   }
 
   /* ── Calendar ── */

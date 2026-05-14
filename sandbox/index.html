@@ -108,29 +108,41 @@
   .card-wrap {
     position: relative;
   }
-  .card-delete {
+  .card-actions {
     position: absolute;
     top: 14px;
     right: 14px;
+    display: flex;
+    gap: 6px;
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+  .card-wrap:hover .card-actions { opacity: 1; }
+  .card-action-btn {
     background: var(--color-snow);
     border: 1px solid var(--color-silver-mist);
     border-radius: 999px;
-    width: 30px;
     height: 30px;
-    font-size: 16px;
+    padding: 0 12px;
+    font-size: 12px;
     line-height: 1;
     color: var(--color-graphite);
     cursor: pointer;
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 4px;
     transition: all 0.15s ease;
-    z-index: 2;
-    opacity: 0;
     font-family: inherit;
+    text-decoration: none;
   }
-  .card-wrap:hover .card-delete { opacity: 1; }
-  .card-delete:hover {
+  .card-action-btn.icon { width: 30px; padding: 0; justify-content: center; font-size: 16px; }
+  .card-action-btn.configure:hover {
+    color: var(--color-azure);
+    border-color: var(--color-azure);
+    background: rgba(0,113,227,0.04);
+  }
+  .card-action-btn.delete:hover {
     color: #c0322a;
     border-color: #c0322a;
     background: #fff5f5;
@@ -426,9 +438,14 @@
       const grid = document.getElementById('scenario-grid');
       grid.innerHTML = scenarios.map(s => `
         <div class="card-wrap">
-          ${s.source === 'user' ? `<button class="card-delete" data-id="${escapeHtml(s.id)}" data-name="${escapeHtml(s.name)}" title="Delete this demo" aria-label="Delete ${escapeHtml(s.name)}">×</button>` : ''}
+          ${s.source === 'user' ? `
+            <div class="card-actions">
+              <a class="card-action-btn configure" href="/sandbox/configure?scenario=${encodeURIComponent(s.id)}" title="Configure agent with AI" aria-label="Configure ${escapeHtml(s.name)}">⚡ Configure</a>
+              <button class="card-action-btn delete icon" data-id="${escapeHtml(s.id)}" data-name="${escapeHtml(s.name)}" title="Delete this demo" aria-label="Delete ${escapeHtml(s.name)}">×</button>
+            </div>
+          ` : ''}
           <a class="card" href="/sandbox/demo/?scenario=${encodeURIComponent(s.id)}">
-            <span class="card-agent">${escapeHtml(s.agent)}</span>${s.source === 'user' ? '<span class="source-badge">User</span>' : ''}
+            <span class="card-agent">${escapeHtml(s.agent)}</span>${s.source === 'user' ? '<span class="source-badge">User</span>' : ''}${s.systemPrompt ? '<span class="source-badge" style="color:var(--color-azure);background:rgba(0,113,227,0.08)">AI configured</span>' : ''}
             <div class="card-title">${escapeHtml(s.name)}</div>
             <div class="card-desc">${escapeHtml(s.description || '')}</div>
             <div class="card-meta">
@@ -443,12 +460,16 @@
         </div>
       `).join('');
 
-      grid.querySelectorAll('.card-delete').forEach((btn) => {
+      grid.querySelectorAll('.card-action-btn.delete').forEach((btn) => {
         btn.addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
           handleDelete(btn.dataset.id, btn.dataset.name);
         });
+      });
+      // Stop card link from intercepting Configure-button clicks
+      grid.querySelectorAll('.card-action-btn.configure').forEach((a) => {
+        a.addEventListener('click', (e) => { e.stopPropagation(); });
       });
     } catch (err) {
       document.getElementById('scenario-grid').innerHTML =

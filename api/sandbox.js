@@ -191,6 +191,41 @@ function parseActions(raw) {
   return { text: raw.replace(/<<ACTIONS>>[\s\S]*?<<END>>/, '').trim(), actions };
 }
 
+// Parse a trailing <<CALENDAR>>[{...}]<<END>> block — the agent's way of
+// adding entries to state.calendar from chat. Strips the block from the text.
+// Returns { text, events } where events is null or an array of event objects
+// matching the teams template's calendar schema: { day, startHour, duration, title }.
+const VALID_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+function parseCalendar(raw) {
+  const m = raw.match(/<<CALENDAR>>(.*?)<<END>>/s);
+  if (!m) return { text: raw, events: null };
+  let events = null;
+  try {
+    const parsed = JSON.parse(m[1]);
+    const arr = Array.isArray(parsed) ? parsed : [parsed];
+    events = arr
+      .map((e) => {
+        if (!e || typeof e !== 'object') return null;
+        const day = VALID_DAYS.includes(e.day) ? e.day : null;
+        const startHour = Number(e.startHour);
+        const duration = Number(e.duration);
+        const title = String(e.title || '').trim();
+        if (!day || !title || !Number.isFinite(startHour) || !Number.isFinite(duration)) return null;
+        return {
+          day,
+          startHour,
+          duration: Math.max(0.25, duration),
+          title,
+          color: e.color || undefined,
+          accent: e.accent || undefined,
+        };
+      })
+      .filter(Boolean);
+    if (events.length === 0) events = null;
+  } catch { /* malformed — ignore */ }
+  return { text: raw.replace(/<<CALENDAR>>[\s\S]*?<<END>>/, '').trim(), events };
+}
+
 // Build conversation history for runtime LLM calls.
 // User personas are the "user" role; the agent is the "assistant" role.
 function historyToLLM(scenarioDef, messages) {
@@ -211,6 +246,16 @@ function historyToLLM(scenarioDef, messages) {
 const RUNTIME_ACTION_INSTRUCTION = `When you want to offer the user button choices, append a trailing block on its own line in this exact format:
 <<ACTIONS>>["First option","Second option","Third option"]<<END>>
 Use 2–3 short options (each under 30 chars). Omit the block entirely when no choice is needed.`;
+
+const RUNTIME_CALENDAR_INSTRUCTION = `When the user asks you to schedule, book, or add a call/meeting to their calendar, append a calendar block on its own line in this exact format AFTER your normal text (and before any <<ACTIONS>> block):
+<<CALENDAR>>[{"day":"Tue","startHour":14,"duration":0.5,"title":"Catch-up with Alice"}]<<END>>
+Rules:
+- "day" MUST be one of: Mon, Tue, Wed, Thu, Fri, Sat, Sun (current week only).
+- "startHour" is 0–23 (e.g. 9.5 = 09:30, 14 = 14:00).
+- "duration" is hours (e.g. 0.5 = 30 min, 1 = 1 hour).
+- "title" is a short label.
+- Confirm what you booked in your reply text. The event will appear instantly on the user's calendar tab.
+- Only emit the block when actually adding an event. Never invent meetings the user didn't request.`;
 
 function sanitizeScenario(def) {
   const { initialState, deleteToken, ...rest } = def; // deleteToken legacy on old scenarios — strip from public reads
@@ -348,7 +393,10 @@ export default async function handler(req, res) {
     if (!description) return res.status(400).json({ error: 'Missing "description"' });
 
     const personaList = (def.personas || []).map((p) => `- ${p.name} (${p.role})`).join('\n') || '- (none defined)';
-    const setupPrompt = `You are configuring a sandbox AI agent for the CoE Sandbox platform's "${def.template}" template.
+    const calendarCapability = def.template === 'teams'
+      ? `\n\nThis is the Teams template, which has a working calendar tab. If the demo owner's brief involves scheduling meetings, booking calls, or adding events, mention in the system prompt that the agent can add calendar events by appending a trailing block:\n<<CALENDAR>>[{"day":"Tue","startHour":14,"duration":0.5,"title":"Catch-up with Alice"}]<<END>>\nDay must be Mon–Sun (current week), startHour is 0–23 (0.5 = half hour), duration in hours. Direct the agent to ask the user for missing details (which day/time) before booking, and to confirm what was booked in the reply text.`
+      : '';
+    const setupPrompt = `You are configuring a sandbox AI agent for the CoE Sandbox platform's "${def.template}" template.${calendarCapability}
 
 Scenario name: ${def.name}
 Agent name: ${def.agent}
@@ -517,12 +565,21 @@ Respond with the JSON object ONLY — no prose, no markdown fences, no commentar
       try {
         const history = await getMessages(id);
         const llmHistory = historyToLLM(def, history);
-        const sysContent = `${def.systemPrompt}\n\n${RUNTIME_ACTION_INSTRUCTION}`;
+        const calendarInstr = def.template === 'teams' ? `\n\n${RUNTIME_CALENDAR_INSTRUCTION}` : '';
+        const sysContent = `${def.systemPrompt}\n\n${RUNTIME_ACTION_INSTRUCTION}${calendarInstr}`;
         const raw = await callLLM([
           { role: 'system', content: sysContent },
           ...llmHistory,
         ], { maxTokens: 800 });
-        const parsed = parseActions(raw);
+        // Strip calendar block first so it doesn't end up in the rendered chat.
+        const cal = def.template === 'teams' ? parseCalendar(raw) : { text: raw, events: null };
+        const parsed = parseActions(cal.text);
+        if (cal.events && cal.events.length) {
+          const state = await getState(id);
+          const existing = Array.isArray(state.calendar) ? state.calendar : [];
+          state.calendar = existing.concat(cal.events);
+          await setState(id, state);
+        }
         if (parsed.text) {
           agentReply = {
             id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
@@ -533,6 +590,7 @@ Respond with the JSON object ONLY — no prose, no markdown fences, no commentar
             timestamp: Date.now(),
             actions: parsed.actions,
             source: 'auto-agent',
+            stateChanged: Boolean(cal.events && cal.events.length),
           };
           await appendMessage(id, agentReply);
         }
