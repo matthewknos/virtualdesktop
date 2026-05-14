@@ -105,6 +105,36 @@
     margin-bottom: 60px;
   }
 
+  .card-wrap {
+    position: relative;
+  }
+  .card-delete {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: var(--color-snow);
+    border: 1px solid var(--color-silver-mist);
+    border-radius: 999px;
+    width: 30px;
+    height: 30px;
+    font-size: 16px;
+    line-height: 1;
+    color: var(--color-graphite);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+    z-index: 2;
+    opacity: 0;
+    font-family: inherit;
+  }
+  .card-wrap:hover .card-delete { opacity: 1; }
+  .card-delete:hover {
+    color: #c0322a;
+    border-color: #c0322a;
+    background: #fff5f5;
+  }
   .card {
     background: var(--color-snow);
     border-radius: 24px;
@@ -291,9 +321,12 @@
     and connect your agent via API — no need to rebuild Teams chrome every time.
   </p>
 
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap;">
     <div class="section-title" style="margin-bottom:0">Scenarios</div>
-    <a href="/sandbox/new" style="background:var(--color-azure);color:#fff;text-decoration:none;font-size:14px;font-weight:500;padding:8px 16px;border-radius:999px;">+ Create new demo</a>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <a href="/sandbox/teams-integration-guide.md" download style="color:var(--color-graphite);text-decoration:none;font-size:14px;border:1px solid var(--color-silver-mist);padding:8px 14px;border-radius:999px;background:var(--color-snow);">↓ Teams integration guide</a>
+      <a href="/sandbox/new" style="background:var(--color-azure);color:#fff;text-decoration:none;font-size:14px;font-weight:500;padding:8px 16px;border-radius:999px;">+ Create new demo</a>
+    </div>
   </div>
   <div class="grid" id="scenario-grid">
     <!-- Filled by JS -->
@@ -391,23 +424,54 @@
       const { scenarios } = await client.listScenarios();
       const grid = document.getElementById('scenario-grid');
       grid.innerHTML = scenarios.map(s => `
-        <a class="card" href="/sandbox/demo/?scenario=${s.id}">
-          <span class="card-agent">${escapeHtml(s.agent)}</span>${s.source === 'user' ? '<span class="source-badge">User</span>' : ''}
-          <div class="card-title">${escapeHtml(s.name)}</div>
-          <div class="card-desc">${escapeHtml(s.description || '')}</div>
-          <div class="card-meta">
-            ${(s.personas || []).map(p => `
-              <span class="persona-pill">
-                <span class="avatar">${escapeHtml(p.initials || (p.name || '?').charAt(0))}</span>
-                ${escapeHtml(p.name)}
-              </span>
-            `).join('')}
-          </div>
-        </a>
+        <div class="card-wrap">
+          ${s.source === 'user' ? `<button class="card-delete" data-id="${escapeHtml(s.id)}" data-name="${escapeHtml(s.name)}" title="Delete this demo" aria-label="Delete ${escapeHtml(s.name)}">×</button>` : ''}
+          <a class="card" href="/sandbox/demo/?scenario=${encodeURIComponent(s.id)}">
+            <span class="card-agent">${escapeHtml(s.agent)}</span>${s.source === 'user' ? '<span class="source-badge">User</span>' : ''}
+            <div class="card-title">${escapeHtml(s.name)}</div>
+            <div class="card-desc">${escapeHtml(s.description || '')}</div>
+            <div class="card-meta">
+              ${(s.personas || []).map(p => `
+                <span class="persona-pill">
+                  <span class="avatar">${escapeHtml(p.initials || (p.name || '?').charAt(0))}</span>
+                  ${escapeHtml(p.name)}
+                </span>
+              `).join('')}
+            </div>
+          </a>
+        </div>
       `).join('');
+
+      grid.querySelectorAll('.card-delete').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          handleDelete(btn.dataset.id, btn.dataset.name);
+        });
+      });
     } catch (err) {
       document.getElementById('scenario-grid').innerHTML =
         `<p style="color:var(--color-caution)">Failed to load scenarios: ${err.message}</p>`;
+    }
+  }
+
+  async function handleDelete(id, name) {
+    if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+    const token = (prompt(`Paste the delete token for "${name}":\n\n(The token was shown once when you created this demo. If you didn't save it, this scenario can't be deleted from here.)`) || '').trim();
+    if (!token) return;
+    if (!confirm(`Final check — permanently delete "${name}"?`)) return;
+    try {
+      const res = await fetch(`/api/sandbox/scenarios/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        headers: { 'X-Delete-Token': token },
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(body.error || `HTTP ${res.status}`);
+      }
+      await loadScenarios();
+    } catch (err) {
+      alert(`Delete failed: ${err.message}`);
     }
   }
 
