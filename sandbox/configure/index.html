@@ -310,7 +310,8 @@
       });
       if (!res.ok) {
         const b = await res.json().catch(() => ({ error: res.statusText }));
-        throw new Error(b.error || `HTTP ${res.status}`);
+        const detail = b.rawPreview ? `\n\nRaw LLM output:\n${b.rawPreview}` : '';
+        throw new Error((b.error || `HTTP ${res.status}`) + detail);
       }
       const data = await res.json();
       renderSuccess(id, data);

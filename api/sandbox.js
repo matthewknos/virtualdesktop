@@ -120,19 +120,52 @@ async function appendMessage(id, msg) {
 
 // ── LLM call + adaptive-card action parser ────────────────────────────────
 
-async function callLLM(messages, { maxTokens = 1024, model = 'moonshot-v1-32k' } = {}) {
+async function callLLM(messages, { maxTokens = 1024, model = 'moonshot-v1-32k', temperature, jsonMode = false } = {}) {
   if (!process.env.LLM_KEY) throw new Error('LLM_KEY not set');
+  const payload = { model, max_tokens: maxTokens, messages };
+  if (typeof temperature === 'number') payload.temperature = temperature;
+  if (jsonMode) payload.response_format = { type: 'json_object' };
   const res = await fetch('https://api.moonshot.ai/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${process.env.LLM_KEY}`,
     },
-    body: JSON.stringify({ model, max_tokens: maxTokens, messages }),
+    body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error(`LLM ${res.status}: ${await res.text()}`);
   const data = await res.json();
   return data.choices?.[0]?.message?.content || '';
+}
+
+// Pull the first balanced { … } object out of a string the LLM might have
+// padded with prose, code fences, or commentary.
+function extractJSON(raw) {
+  if (!raw) return null;
+  // Strip fenced code blocks if present.
+  const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+  const candidate = fenced ? fenced[1] : raw;
+  const start = candidate.indexOf('{');
+  if (start === -1) return null;
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+  for (let i = start; i < candidate.length; i++) {
+    const ch = candidate[i];
+    if (escape) { escape = false; continue; }
+    if (ch === '\\' && inString) { escape = true; continue; }
+    if (ch === '"') { inString = !inString; continue; }
+    if (inString) continue;
+    if (ch === '{') depth++;
+    else if (ch === '}') {
+      depth--;
+      if (depth === 0) {
+        const slice = candidate.slice(start, i + 1);
+        try { return JSON.parse(slice); } catch { return null; }
+      }
+    }
+  }
+  return null;
 }
 
 // Parse a trailing <<ACTIONS>>["Yes","No"]<<END>> block emitted by the agent.
@@ -337,19 +370,18 @@ Respond with the JSON object ONLY — no prose, no markdown fences, no commentar
     let setupRaw;
     try {
       setupRaw = await callLLM([
-        { role: 'system', content: 'You are a configuration assistant that outputs strict JSON only.' },
+        { role: 'system', content: 'You are a configuration assistant that outputs ONLY a single JSON object. No prose, no markdown, no commentary.' },
         { role: 'user', content: setupPrompt },
-      ], { maxTokens: 1600 });
+      ], { maxTokens: 1600, temperature: 0.2, jsonMode: true });
     } catch (err) {
       return res.status(502).json({ error: `Setup LLM call failed: ${err.message}` });
     }
-    // Strip code fences if the model added them despite instructions.
-    const cleaned = setupRaw.replace(/^```(?:json)?\s*|\s*```$/g, '').trim();
-    let config;
-    try { config = JSON.parse(cleaned); }
-    catch { return res.status(502).json({ error: 'Setup LLM returned non-JSON.', raw: setupRaw }); }
+    const config = extractJSON(setupRaw);
+    if (!config) {
+      return res.status(502).json({ error: 'Setup LLM returned non-JSON.', rawPreview: String(setupRaw).slice(0, 400) });
+    }
     if (!config.systemPrompt || !config.openingMessage) {
-      return res.status(502).json({ error: 'Setup LLM response missing required fields.', raw: setupRaw });
+      return res.status(502).json({ error: 'Setup LLM response missing required fields (systemPrompt/openingMessage).', config });
     }
 
     // Persist on the scenario definition.
