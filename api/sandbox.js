@@ -114,6 +114,67 @@ async function appendMessage(id, msg) {
   await kv.ltrim(KV_MSGS_KEY(id), -MAX_MESSAGES, -1);
 }
 
+// ── LLM call + adaptive-card action parser ────────────────────────────────
+
+async function callLLM(messages, { maxTokens = 1024, model = 'moonshot-v1-32k' } = {}) {
+  if (!process.env.LLM_KEY) throw new Error('LLM_KEY not set');
+  const res = await fetch('https://api.moonshot.ai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${process.env.LLM_KEY}`,
+    },
+    body: JSON.stringify({ model, max_tokens: maxTokens, messages }),
+  });
+  if (!res.ok) throw new Error(`LLM ${res.status}: ${await res.text()}`);
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content || '';
+}
+
+// Parse a trailing <<ACTIONS>>["Yes","No"]<<END>> block emitted by the agent.
+// Returns { text, actions } — text has the block stripped.
+function parseActions(raw) {
+  const m = raw.match(/<<ACTIONS>>(.*?)<<END>>/s);
+  if (!m) return { text: raw.trim(), actions: null };
+  let actions = null;
+  try {
+    const parsed = JSON.parse(m[1]);
+    if (Array.isArray(parsed)) {
+      actions = parsed
+        .map((a) => {
+          if (typeof a === 'string') return { label: a };
+          if (a && typeof a === 'object' && a.label) {
+            return { label: String(a.label), action: a.action || undefined, primary: !!a.primary };
+          }
+          return null;
+        })
+        .filter(Boolean);
+    }
+  } catch { /* malformed action block — leave as null */ }
+  return { text: raw.replace(/<<ACTIONS>>[\s\S]*?<<END>>/, '').trim(), actions };
+}
+
+// Build conversation history for runtime LLM calls.
+// User personas are the "user" role; the agent is the "assistant" role.
+function historyToLLM(scenarioDef, messages) {
+  const agentNames = new Set([
+    'agent',
+    String(scenarioDef.agent || '').toLowerCase(),
+  ]);
+  return messages.map((m) => {
+    const fromLower = String(m.from || '').toLowerCase();
+    const isAgent = m.source === 'webhook' || agentNames.has(fromLower) || fromLower === 'assistant';
+    return {
+      role: isAgent ? 'assistant' : 'user',
+      content: m.text,
+    };
+  });
+}
+
+const RUNTIME_ACTION_INSTRUCTION = `When you want to offer the user button choices, append a trailing block on its own line in this exact format:
+<<ACTIONS>>["First option","Second option","Third option"]<<END>>
+Use 2–3 short options (each under 30 chars). Omit the block entirely when no choice is needed.`;
+
 function sanitizeScenario(def) {
   const { initialState, deleteToken, ...rest } = def;
   return rest;
@@ -235,6 +296,98 @@ export default async function handler(req, res) {
     return res.status(200).json(sanitizeScenario(def));
   }
 
+  // ── CONFIGURE SCENARIO (AI wizard) ──
+  // Takes a plain-English description + delete token. Asks the setup LLM to
+  // produce {systemPrompt, openingMessage, suggestedReplies}; saves them on
+  // the scenario; clears prior messages; posts the opening message. The
+  // /messages auto-respond hook will then drive every subsequent turn.
+  if (path.match(/^\/api\/sandbox\/scenarios\/[^/]+\/configure$/) && req.method === 'POST') {
+    const id = path.split('/')[4];
+    if (!KV_AVAILABLE) return res.status(503).json({ error: 'Scenario storage not configured.' });
+    const def = await kv.get(KV_KEY(id));
+    if (!def) return res.status(404).json({ error: 'Scenario not found or not user-created.' });
+    const body = await readBody(req);
+    const provided = req.headers['x-delete-token'] || body.deleteToken;
+    if (!provided || provided !== def.deleteToken) {
+      return res.status(403).json({ error: 'Invalid or missing delete token.' });
+    }
+    const description = (body.description || '').trim();
+    if (!description) return res.status(400).json({ error: 'Missing "description"' });
+
+    const personaList = (def.personas || []).map((p) => `- ${p.name} (${p.role})`).join('\n') || '- (none defined)';
+    const setupPrompt = `You are configuring a sandbox AI agent for the CoE Sandbox platform's "${def.template}" template.
+
+Scenario name: ${def.name}
+Agent name: ${def.agent}
+Personas (who the agent talks to):
+${personaList}
+
+The demo owner has described what they want the agent to do:
+---
+${description}
+---
+
+Produce a JSON object with these exact keys (and ONLY these keys):
+- "systemPrompt": a complete system prompt to drive the live conversation. Address it to the agent. Bake in the scenario name, persona names, tone, what to ask first, what to do when the user picks options, when to escalate or close out. Make it self-contained — the runtime will pass this verbatim as the system message every turn.
+- "openingMessage": the agent's first line of chat, addressed to the primary persona by name. Markdown allowed. Should set context and offer 2–3 next-step choices via action buttons. End with a trailing <<ACTIONS>>["Choice A","Choice B"]<<END>> block (literal text, no escaping).
+- "suggestedReplies": array of 2–4 short user-reply suggestions (each under 30 chars) the demo can show as quick-replies on first load.
+
+Respond with the JSON object ONLY — no prose, no markdown fences, no commentary.`;
+
+    let setupRaw;
+    try {
+      setupRaw = await callLLM([
+        { role: 'system', content: 'You are a configuration assistant that outputs strict JSON only.' },
+        { role: 'user', content: setupPrompt },
+      ], { maxTokens: 1600 });
+    } catch (err) {
+      return res.status(502).json({ error: `Setup LLM call failed: ${err.message}` });
+    }
+    // Strip code fences if the model added them despite instructions.
+    const cleaned = setupRaw.replace(/^```(?:json)?\s*|\s*```$/g, '').trim();
+    let config;
+    try { config = JSON.parse(cleaned); }
+    catch { return res.status(502).json({ error: 'Setup LLM returned non-JSON.', raw: setupRaw }); }
+    if (!config.systemPrompt || !config.openingMessage) {
+      return res.status(502).json({ error: 'Setup LLM response missing required fields.', raw: setupRaw });
+    }
+
+    // Persist on the scenario definition.
+    const updatedDef = {
+      ...def,
+      systemPrompt: String(config.systemPrompt),
+      openingMessage: String(config.openingMessage),
+      suggestedReplies: Array.isArray(config.suggestedReplies)
+        ? config.suggestedReplies.map((s) => String(s)).slice(0, 4)
+        : [],
+      configuredAt: Date.now(),
+    };
+    await kv.set(KV_KEY(id), updatedDef);
+
+    // Reset chat: the new system prompt defines a different conversation.
+    await kv.del(KV_MSGS_KEY(id));
+
+    // Post the opening message as if from the agent.
+    const parsedOpener = parseActions(updatedDef.openingMessage);
+    const openMsg = {
+      id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      scenarioId: id,
+      from: updatedDef.agent || 'agent',
+      to: 'user',
+      text: parsedOpener.text,
+      timestamp: Date.now(),
+      actions: parsedOpener.actions,
+      source: 'configure',
+    };
+    await appendMessage(id, openMsg);
+
+    return res.status(200).json({
+      id,
+      scenario: sanitizeScenario(updatedDef),
+      openingMessage: openMsg,
+    });
+  }
+
   // ── DELETE USER SCENARIO ──
   if (path.match(/^\/api\/sandbox\/scenarios\/[^/]+$/) && req.method === 'DELETE') {
     const id = path.split('/')[4];
@@ -304,7 +457,8 @@ export default async function handler(req, res) {
   // ── POST MESSAGE ──
   if (path.match(/^\/api\/sandbox\/scenarios\/[^/]+\/messages$/) && req.method === 'POST') {
     const id = path.split('/')[4];
-    if (!(await getScenarioDef(id))) return res.status(404).json({ error: 'Scenario not found' });
+    const def = await getScenarioDef(id);
+    if (!def) return res.status(404).json({ error: 'Scenario not found' });
     const body = (await readBody(req)) || {};
     if (!body.text || typeof body.text !== 'string') {
       return res.status(400).json({ error: 'Missing or invalid "text" field' });
@@ -319,7 +473,45 @@ export default async function handler(req, res) {
       actions: body.actions || null,
     };
     await appendMessage(id, msg);
-    return res.status(201).json(msg);
+
+    // ── Auto-respond hook ──
+    // If the scenario has been configured with a systemPrompt and this
+    // message is from a user (not the agent itself), generate + post an
+    // agent reply inline. Adds 1–3s to the POST response.
+    let agentReply = null;
+    const agentNameLower = String(def.agent || '').toLowerCase();
+    const fromLower = String(msg.from || '').toLowerCase();
+    const isFromUser = fromLower !== 'agent' && fromLower !== agentNameLower && msg.source !== 'webhook';
+    if (def.systemPrompt && isFromUser) {
+      try {
+        const history = await getMessages(id);
+        const llmHistory = historyToLLM(def, history);
+        const sysContent = `${def.systemPrompt}\n\n${RUNTIME_ACTION_INSTRUCTION}`;
+        const raw = await callLLM([
+          { role: 'system', content: sysContent },
+          ...llmHistory,
+        ], { maxTokens: 800 });
+        const parsed = parseActions(raw);
+        if (parsed.text) {
+          agentReply = {
+            id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+            scenarioId: id,
+            from: def.agent || 'agent',
+            to: 'user',
+            text: parsed.text,
+            timestamp: Date.now(),
+            actions: parsed.actions,
+            source: 'auto-agent',
+          };
+          await appendMessage(id, agentReply);
+        }
+      } catch (err) {
+        // Don't fail the user's POST if the agent reply errors; just log.
+        console.error('auto-respond failed:', err.message);
+      }
+    }
+
+    return res.status(201).json({ message: msg, agentReply });
   }
 
   // ── WEBHOOK (external agent → sandbox) ──

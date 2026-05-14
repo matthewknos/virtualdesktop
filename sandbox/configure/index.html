@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CoE Sandbox — Configure with AI</title>
+<style>
+  :root {
+    --color-ink: #1d1d1f;
+    --color-graphite: #707070;
+    --color-fog: #f5f5f7;
+    --color-snow: #ffffff;
+    --color-silver-mist: #e8e8ed;
+    --color-azure: #0071e3;
+    --color-forest: #1f7a3c;
+    --color-danger: #c0322a;
+    --font-display: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-text: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-mono: 'SF Mono', SFMono-Regular, ui-monospace, Menlo, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: var(--font-text);
+    background: var(--color-fog);
+    color: var(--color-ink);
+    font-size: 17px;
+    line-height: 1.47;
+    letter-spacing: -0.1px;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  .header {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--color-fog);
+    border-bottom: 1px solid var(--color-silver-mist);
+    height: 44px; display: flex; align-items: center;
+    padding: 0 22px;
+  }
+  .header-title { font-size: 12px; font-weight: 600; letter-spacing: -0.26px; }
+  .header-title a { color: inherit; text-decoration: none; }
+  .header-sub { font-size: 12px; color: var(--color-graphite); margin-left: auto; }
+
+  .container { max-width: 820px; margin: 0 auto; padding: 80px 40px; }
+
+  h1 {
+    font-family: var(--font-display);
+    font-size: 48px; font-weight: 700; line-height: 1.05; letter-spacing: -1.2px;
+    margin-bottom: 12px;
+  }
+  .lede {
+    font-size: 19px; font-weight: 300; line-height: 1.45;
+    max-width: 660px; margin-bottom: 48px;
+  }
+
+  .form-card {
+    background: var(--color-snow);
+    border-radius: 24px;
+    padding: 40px 36px;
+    margin-bottom: 32px;
+  }
+  .field { margin-bottom: 26px; }
+  .field:last-child { margin-bottom: 0; }
+  label.field-label {
+    display: block;
+    font-size: 13px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--color-graphite);
+    margin-bottom: 10px;
+  }
+  .field-hint { font-size: 13px; color: var(--color-graphite); margin-top: 6px; }
+  input[type="text"], textarea, select {
+    width: 100%;
+    font-family: var(--font-text);
+    font-size: 16px;
+    border: 1px solid var(--color-silver-mist);
+    border-radius: 12px;
+    padding: 12px 14px;
+    background: var(--color-snow);
+    color: var(--color-ink);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  input[type="text"]:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--color-azure);
+    box-shadow: 0 0 0 3px rgba(0,113,227,0.15);
+  }
+  textarea { resize: vertical; min-height: 180px; line-height: 1.5; }
+
+  .submit-row {
+    display: flex; align-items: center; gap: 16px;
+    margin-top: 28px;
+  }
+  .btn-primary {
+    background: var(--color-azure); color: #fff;
+    border: none; border-radius: 999px;
+    padding: 14px 28px;
+    font-size: 16px; font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: opacity 0.15s ease;
+  }
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-secondary {
+    background: transparent; color: var(--color-graphite);
+    border: none; cursor: pointer; font-size: 15px;
+    text-decoration: underline; text-underline-offset: 3px;
+    font-family: inherit;
+  }
+  .error-msg {
+    color: var(--color-danger);
+    font-size: 14px;
+    margin-top: 12px;
+    display: none;
+  }
+  .error-msg.show { display: block; }
+  .status-msg {
+    color: var(--color-graphite);
+    font-size: 14px;
+    margin-top: 12px;
+    display: none;
+  }
+  .status-msg.show { display: block; }
+
+  .success-card {
+    display: none;
+    background: var(--color-snow);
+    border-radius: 24px;
+    padding: 40px 36px;
+    border: 1px solid var(--color-silver-mist);
+  }
+  .success-card.show { display: block; }
+  .success-card h2 {
+    font-family: var(--font-display);
+    font-size: 28px; font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .success-sub {
+    color: var(--color-graphite); font-size: 15px; margin-bottom: 28px;
+  }
+  .preview-row {
+    background: var(--color-fog);
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin-bottom: 14px;
+  }
+  .preview-label {
+    font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--color-graphite);
+    margin-bottom: 8px;
+  }
+  .preview-body { font-size: 14px; line-height: 1.5; color: var(--color-ink); white-space: pre-wrap; word-break: break-word; }
+  .preview-body.mono { font-family: var(--font-mono); font-size: 12px; }
+  .chip-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .chip {
+    display: inline-block;
+    background: var(--color-snow);
+    border: 1px solid var(--color-silver-mist);
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+  }
+  .next-row { margin-top: 28px; }
+  .next-row a {
+    color: var(--color-azure);
+    text-decoration: none;
+    font-size: 15px;
+  }
+  .next-row a:hover { text-decoration: underline; }
+  .next-row .sep { color: var(--color-silver-mist); margin: 0 12px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-title"><a href="/sandbox">CoE Sandbox</a> · Configure with AI</div>
+  <div class="header-sub">Internal — agent testing</div>
+</div>
+
+<div class="container">
+
+  <h1>Configure with AI</h1>
+  <p class="lede">Describe what your agent should do, in plain English. The setup LLM reads the integration guide and generates a system prompt, an opening message, and quick-reply chips. Every user message in the demo then gets a live LLM reply driven by that prompt.</p>
+
+  <form id="configureForm" class="form-card" novalidate>
+
+    <div class="field">
+      <label class="field-label" for="scenario">Scenario</label>
+      <select id="scenario" required></select>
+      <div class="field-hint">Pick a user-created scenario. Configuring overwrites any prior agent prompt and wipes the existing chat history for that scenario.</div>
+    </div>
+
+    <div class="field">
+      <label class="field-label" for="deleteToken">Delete token</label>
+      <input type="text" id="deleteToken" placeholder="The token you saved when creating this demo" autocomplete="off">
+      <div class="field-hint">Same token used to delete. Lost it? You'll need to recreate the scenario.</div>
+    </div>
+
+    <div class="field">
+      <label class="field-label" for="description">What should your agent do?</label>
+      <textarea id="description" placeholder="Example: You are Polly, a People Operations coach. Greet Mark and ask if he wants to review three recent absence cases. If yes, present each as a card with Approve / Request OH referral / Defer buttons. If no, offer to schedule a check-in for next week. Tone: warm, concise, plain English. Avoid HR jargon." required></textarea>
+      <div class="field-hint">Be specific about tone, what to ask first, and what choices to offer. The setup LLM bakes this into a full system prompt.</div>
+    </div>
+
+    <div class="submit-row">
+      <button type="submit" class="btn-primary" id="submitBtn">Configure</button>
+      <a href="/sandbox" class="btn-secondary">Cancel</a>
+    </div>
+    <div class="status-msg" id="statusMsg"></div>
+    <div class="error-msg" id="errorMsg"></div>
+
+  </form>
+
+  <div class="success-card" id="successCard">
+    <h2>Agent configured</h2>
+    <p class="success-sub">The opening message is now live in the demo. Type a reply — the agent will respond using the generated system prompt.</p>
+
+    <div class="preview-row">
+      <div class="preview-label">Opening message</div>
+      <div class="preview-body" id="previewOpening"></div>
+      <div class="chip-row" id="previewActions"></div>
+    </div>
+
+    <div class="preview-row">
+      <div class="preview-label">Suggested replies</div>
+      <div class="chip-row" id="previewReplies"></div>
+    </div>
+
+    <details style="margin-top:16px">
+      <summary style="cursor:pointer;font-size:13px;color:var(--color-graphite);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Generated system prompt</summary>
+      <div class="preview-body mono" id="previewSystemPrompt" style="margin-top:10px;padding:14px;background:var(--color-fog);border-radius:10px"></div>
+    </details>
+
+    <div class="next-row">
+      <a href="" id="openDemoLink" target="_blank">Open the demo →</a>
+      <span class="sep">·</span>
+      <a href="/sandbox/configure">Configure another</a>
+      <span class="sep">·</span>
+      <a href="/sandbox">Back to all demos</a>
+    </div>
+  </div>
+
+</div>
+
+<script src="/sandbox/sandbox-client.js"></script>
+<script>
+(() => {
+  const form = document.getElementById('configureForm');
+  const scenarioSel = document.getElementById('scenario');
+  const tokenInput = document.getElementById('deleteToken');
+  const descArea = document.getElementById('description');
+  const submitBtn = document.getElementById('submitBtn');
+  const errorMsg = document.getElementById('errorMsg');
+  const statusMsg = document.getElementById('statusMsg');
+  const successCard = document.getElementById('successCard');
+
+  const client = new SandboxClient('');
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function showError(msg) { errorMsg.textContent = msg; errorMsg.classList.add('show'); statusMsg.classList.remove('show'); }
+  function showStatus(msg) { statusMsg.textContent = msg; statusMsg.classList.add('show'); errorMsg.classList.remove('show'); }
+  function clearMsgs() { errorMsg.classList.remove('show'); statusMsg.classList.remove('show'); }
+
+  async function loadScenarios() {
+    try {
+      const { scenarios } = await client.listScenarios();
+      const userOnes = scenarios.filter((s) => s.source === 'user');
+      if (userOnes.length === 0) {
+        scenarioSel.innerHTML = '<option value="">No user scenarios yet — create one first</option>';
+        submitBtn.disabled = true;
+        return;
+      }
+      scenarioSel.innerHTML = userOnes.map((s) =>
+        `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)} (${escapeHtml(s.id)}) — ${escapeHtml(s.template)}</option>`
+      ).join('');
+      // Honour ?scenario= URL param if present
+      const preselect = new URLSearchParams(location.search).get('scenario');
+      if (preselect && userOnes.find((s) => s.id === preselect)) scenarioSel.value = preselect;
+    } catch (err) {
+      showError(`Failed to load scenarios: ${err.message}`);
+    }
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    clearMsgs();
+    const id = scenarioSel.value;
+    const token = tokenInput.value.trim();
+    const description = descArea.value.trim();
+    if (!id) return showError('Pick a scenario.');
+    if (!token) return showError('Paste the delete token.');
+    if (!description) return showError('Describe what the agent should do.');
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Generating…';
+    showStatus('Asking the setup LLM to generate the system prompt and opening message. This usually takes 3–8 seconds.');
+
+    try {
+      const res = await fetch(`/api/sandbox/scenarios/${encodeURIComponent(id)}/configure`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Delete-Token': token },
+        body: JSON.stringify({ description }),
+      });
+      if (!res.ok) {
+        const b = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(b.error || `HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      renderSuccess(id, data);
+    } catch (err) {
+      showError(err.message || 'Configure failed.');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Configure';
+    }
+  });
+
+  function renderSuccess(id, data) {
+    form.style.display = 'none';
+    document.getElementById('previewOpening').textContent = data.openingMessage.text;
+    const actionsHost = document.getElementById('previewActions');
+    actionsHost.innerHTML = (data.openingMessage.actions || []).map((a) =>
+      `<span class="chip">${escapeHtml(a.label)}</span>`
+    ).join('');
+    const repliesHost = document.getElementById('previewReplies');
+    const replies = data.scenario.suggestedReplies || [];
+    repliesHost.innerHTML = replies.length
+      ? replies.map((r) => `<span class="chip">${escapeHtml(r)}</span>`).join('')
+      : '<span style="font-size:13px;color:var(--color-graphite)">(none generated)</span>';
+    document.getElementById('previewSystemPrompt').textContent = data.scenario.systemPrompt || '';
+    document.getElementById('openDemoLink').href = `/sandbox/demo/?scenario=${encodeURIComponent(id)}`;
+    successCard.classList.add('show');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  loadScenarios();
+})();
+</script>
+</body>
+</html>
