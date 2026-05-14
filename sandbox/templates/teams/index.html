@@ -2634,7 +2634,7 @@
     <p class="closing">This is a sandbox environment for demonstration purposes only.</p>
   </aside>
 
-  <script src="../../sandbox-client.js"></script>
+  <script src="/sandbox/sandbox-client.js"></script>
   <script>
     /* ═══════ Calendar sidebar — renderMiniCalendar ═══════ */
 
@@ -3777,18 +3777,29 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  const app = new SandboxTeamsApp();
-  window.sandboxApp = app;
-
-  // Rail icons use inline onclick="app.switchView('…')". Expose a thin
-  // shim so the Calendar (and Chat) rail icons work regardless of whether
-  // the scenario bootstrap succeeds.
+  // Set the rail-icon shim FIRST. The body has <div id="app"> which creates
+  // an implicit named-element reference at window.app; overriding that
+  // before constructing the SandboxTeamsApp ensures the rail icons work
+  // even if construction or init() throws.
+  let _sandboxApp = null;
   window.app = {
-    switchView: (view) => app.switchView(view),
+    switchView: (view) => {
+      if (_sandboxApp && typeof _sandboxApp.switchView === 'function') {
+        _sandboxApp.switchView(view);
+      } else {
+        console.warn('app.switchView called before SandboxTeamsApp ready:', view);
+      }
+    },
   };
 
-  if (app.scenarioId) {
-    app.init();
+  try {
+    _sandboxApp = new SandboxTeamsApp();
+    window.sandboxApp = _sandboxApp;
+    if (_sandboxApp.scenarioId) {
+      _sandboxApp.init();
+    }
+  } catch (err) {
+    console.error('SandboxTeamsApp setup failed:', err);
   }
 });
 
