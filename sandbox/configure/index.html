@@ -193,9 +193,9 @@
     </div>
 
     <div class="field">
-      <label class="field-label" for="deleteToken">Delete token</label>
-      <input type="text" id="deleteToken" placeholder="The token you saved when creating this demo" autocomplete="off">
-      <div class="field-hint">Same token used to delete. Lost it? You'll need to recreate the scenario.</div>
+      <label class="field-label" for="devPassword">Dev password</label>
+      <input type="password" id="devPassword" placeholder="Shared internal password" autocomplete="off">
+      <div class="field-hint">Internal dev gate — ask the team if you don't have it.</div>
     </div>
 
     <div class="field">
@@ -249,7 +249,7 @@
 (() => {
   const form = document.getElementById('configureForm');
   const scenarioSel = document.getElementById('scenario');
-  const tokenInput = document.getElementById('deleteToken');
+  const tokenInput = document.getElementById('devPassword');
   const descArea = document.getElementById('description');
   const submitBtn = document.getElementById('submitBtn');
   const errorMsg = document.getElementById('errorMsg');
@@ -295,7 +295,7 @@
     const token = tokenInput.value.trim();
     const description = descArea.value.trim();
     if (!id) return showError('Pick a scenario.');
-    if (!token) return showError('Paste the delete token.');
+    if (!token) return showError('Enter the dev password.');
     if (!description) return showError('Describe what the agent should do.');
 
     submitBtn.disabled = true;
@@ -305,7 +305,7 @@
     try {
       const res = await fetch(`/api/sandbox/scenarios/${encodeURIComponent(id)}/configure`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Delete-Token': token },
+        headers: { 'Content-Type': 'application/json', 'X-Dev-Password': token },
         body: JSON.stringify({ description }),
       });
       if (!res.ok) {

@@ -349,7 +349,7 @@
 
   <div class="success-card" id="successCard">
     <h2>Demo created</h2>
-    <p class="success-sub">Save the delete token below — it's the only thing that lets you remove this demo later, and it won't be shown again.</p>
+    <p class="success-sub">Use the dev password (ask the team) to delete or reconfigure this scenario from the landing page.</p>
 
     <div class="copy-block">
       <span class="label">Demo URL</span>
@@ -361,12 +361,6 @@
       <span class="label">Scenario ID</span>
       <span class="value" id="successScenarioId"></span>
       <button class="copy-btn" data-copy="successScenarioId">Copy</button>
-    </div>
-
-    <div class="token-warn">
-      <strong>Delete token (save this now):</strong>
-      <span class="value" id="successDeleteToken" style="font-family:var(--font-mono);font-size:13px;display:inline-block;margin-left:8px"></span>
-      <button class="copy-btn" data-copy="successDeleteToken" style="float:right">Copy</button>
     </div>
 
     <div style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--color-graphite);margin:24px 0 10px">Webhook your agent into it</div>
@@ -500,7 +494,6 @@
     form.style.display = 'none';
     document.getElementById('successDemoUrl').textContent = d.demoUrl;
     document.getElementById('successScenarioId').textContent = d.id;
-    document.getElementById('successDeleteToken').textContent = d.deleteToken;
     document.getElementById('openDemoLink').href = d.demoUrl;
     const curl = `curl -X POST ${d.webhookUrl} \\
   -H 'Content-Type: application/json' \\

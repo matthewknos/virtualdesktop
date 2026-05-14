@@ -348,7 +348,7 @@
         </tr>
         <tr>
           <td><span class="method">POST</span> <span class="path">/api/sandbox/scenarios</span></td>
-          <td class="desc">Create a user scenario. Body: <code>name, template, personas, description?, agent?, openingMessage?</code>. Returns id, delete token, demo URL.</td>
+          <td class="desc">Create a user scenario. Body: <code>name, template, personas, description?, agent?, openingMessage?</code>. Returns id + demo URL.</td>
         </tr>
         <tr>
           <td><span class="method">GET</span> <span class="path">/api/sandbox/scenarios/:id</span></td>
@@ -356,7 +356,7 @@
         </tr>
         <tr>
           <td><span class="method">DELETE</span> <span class="path">/api/sandbox/scenarios/:id</span></td>
-          <td class="desc">Delete a user scenario. Requires <code>X-Delete-Token</code> header.</td>
+          <td class="desc">Delete a user scenario. Requires <code>X-Dev-Password</code> header.</td>
         </tr>
         <tr>
           <td><span class="method">GET</span> <span class="path">/api/sandbox/scenarios/:id/state</span></td>
@@ -458,13 +458,13 @@
 
   async function handleDelete(id, name) {
     if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
-    const token = (prompt(`Paste the delete token for "${name}":\n\n(The token was shown once when you created this demo. If you didn't save it, this scenario can't be deleted from here.)`) || '').trim();
-    if (!token) return;
+    const pw = (prompt(`Dev password to delete "${name}":`) || '').trim();
+    if (!pw) return;
     if (!confirm(`Final check — permanently delete "${name}"?`)) return;
     try {
       const res = await fetch(`/api/sandbox/scenarios/${encodeURIComponent(id)}`, {
         method: 'DELETE',
-        headers: { 'X-Delete-Token': token },
+        headers: { 'X-Dev-Password': pw },
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({ error: res.statusText }));

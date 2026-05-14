@@ -7,9 +7,9 @@
  *
  * Routes:
  *   GET    /api/sandbox/scenarios                  → list seeded + user-created
- *   POST   /api/sandbox/scenarios                  → create user scenario (returns id + deleteToken)
- *   GET    /api/sandbox/scenarios/:id              → one scenario (no deleteToken)
- *   DELETE /api/sandbox/scenarios/:id              → delete user scenario (requires deleteToken)
+ *   POST   /api/sandbox/scenarios                  → create user scenario
+ *   GET    /api/sandbox/scenarios/:id              → one scenario
+ *   DELETE /api/sandbox/scenarios/:id              → delete user scenario (requires X-Dev-Password)
  *   GET    /api/sandbox/scenarios/:id/state        → current mutable state
  *   POST   /api/sandbox/scenarios/:id/state        → merge updates into state
  *   DELETE /api/sandbox/scenarios/:id/state        → reset to initialState
@@ -33,6 +33,14 @@ const KV_KEY = (id) => `sandbox:scenario:${id}`;
 const KV_STATE_KEY = (id) => `sandbox:scenario:${id}:state`;
 const KV_MSGS_KEY = (id) => `sandbox:scenario:${id}:messages`;
 const MAX_MESSAGES = 500; // cap per scenario to keep KV lean
+
+// Shared dev password — internal-only sandbox. Override via SANDBOX_DEV_PASSWORD
+// env var in Vercel without redeploying source if you want to rotate it.
+const DEV_PASSWORD = process.env.SANDBOX_DEV_PASSWORD || 'COE101';
+function checkDevPassword(req, body) {
+  const provided = req.headers['x-dev-password'] || (body && body.devPassword);
+  return Boolean(provided) && provided === DEV_PASSWORD;
+}
 
 // ── Scenario catalogue ────────────────────────────────────────────────────
 
@@ -66,10 +74,6 @@ function slugify(s) {
 
 function randomSuffix(n = 5) {
   return Math.random().toString(36).slice(2, 2 + n);
-}
-
-function genToken() {
-  return Array.from({ length: 4 }, () => Math.random().toString(36).slice(2, 8)).join('');
 }
 
 // Scenario data is now persisted in KV so it survives across Vercel
@@ -176,7 +180,7 @@ const RUNTIME_ACTION_INSTRUCTION = `When you want to offer the user button choic
 Use 2–3 short options (each under 30 chars). Omit the block entirely when no choice is needed.`;
 
 function sanitizeScenario(def) {
-  const { initialState, deleteToken, ...rest } = def;
+  const { initialState, deleteToken, ...rest } = def; // deleteToken legacy on old scenarios — strip from public reads
   return rest;
 }
 
@@ -259,7 +263,6 @@ export default async function handler(req, res) {
     while (await kv.exists(KV_KEY(id))) {
       id = `${base}-${randomSuffix(5)}`;
     }
-    const deleteToken = genToken();
     const def = {
       id,
       name,
@@ -271,7 +274,6 @@ export default async function handler(req, res) {
       initialState: {},
       source: 'user',
       createdAt: Date.now(),
-      deleteToken,
     };
     await kv.set(KV_KEY(id), def);
     await kv.sadd(KV_INDEX, id);
@@ -281,7 +283,6 @@ export default async function handler(req, res) {
     const origin = `${proto}://${host}`;
     return res.status(201).json({
       id,
-      deleteToken,
       demoUrl: `${origin}/sandbox/demo/?scenario=${id}`,
       webhookUrl: `${origin}/api/sandbox/webhook`,
       scenario: sanitizeScenario(def),
@@ -307,9 +308,8 @@ export default async function handler(req, res) {
     const def = await kv.get(KV_KEY(id));
     if (!def) return res.status(404).json({ error: 'Scenario not found or not user-created.' });
     const body = await readBody(req);
-    const provided = req.headers['x-delete-token'] || body.deleteToken;
-    if (!provided || provided !== def.deleteToken) {
-      return res.status(403).json({ error: 'Invalid or missing delete token.' });
+    if (!checkDevPassword(req, body)) {
+      return res.status(403).json({ error: 'Invalid or missing dev password.' });
     }
     const description = (body.description || '').trim();
     if (!description) return res.status(400).json({ error: 'Missing "description"' });
@@ -397,9 +397,8 @@ Respond with the JSON object ONLY — no prose, no markdown fences, no commentar
     if (!KV_AVAILABLE) return res.status(404).json({ error: 'Scenario not found' });
     const def = await kv.get(KV_KEY(id));
     if (!def) return res.status(404).json({ error: 'Scenario not found' });
-    const provided = req.headers['x-delete-token'] || (await readBody(req)).deleteToken;
-    if (!provided || provided !== def.deleteToken) {
-      return res.status(403).json({ error: 'Invalid or missing delete token' });
+    if (!checkDevPassword(req, await readBody(req))) {
+      return res.status(403).json({ error: 'Invalid or missing dev password' });
     }
     await kv.del(KV_KEY(id));
     await kv.del(KV_STATE_KEY(id));

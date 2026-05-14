@@ -9,7 +9,7 @@
 
 ## 1. The 60-second quickstart
 
-1. Open `https://coe-prototypes.vercel.app/sandbox/new` and create a scenario. Pick the **Teams** template. Save the `deleteToken` shown after submit — it's the only way to remove the scenario later.
+1. Open `https://coe-prototypes.vercel.app/sandbox/new` and create a scenario. Pick the **Teams** template. (Deletion and AI-configuration are gated by a shared internal dev password — ask the team.)
 2. Note the `scenarioId` you got back (something like `onboarding-nudge-a7c4`).
 3. From your agent, POST a message:
 
@@ -235,20 +235,19 @@ Response:
 ```json
 {
   "id": "onboarding-nudge-demo-a7c4",
-  "deleteToken": "ld8x3k9p2vmq4nfh8r1b6t5y7c2w3z9e",
   "demoUrl": "https://coe-prototypes.vercel.app/sandbox/demo/?scenario=onboarding-nudge-demo-a7c4",
   "webhookUrl": "https://coe-prototypes.vercel.app/api/sandbox/webhook",
-  "scenario": { /* full sanitised scenario (no deleteToken) */ }
+  "scenario": { /* full sanitised scenario */ }
 }
 ```
 
-**Save the `deleteToken`.** It's shown once. It's the only credential the API accepts for `DELETE /scenarios/:id`. If you lose it, the scenario is permanent (or rather: it can be removed manually from KV via the Vercel dashboard, but that's a faff).
-
 ### Delete
+
+Gated by the shared internal dev password (ask the team). Pass it as the `X-Dev-Password` header:
 
 ```bash
 curl -X DELETE https://coe-prototypes.vercel.app/api/sandbox/scenarios/onboarding-nudge-demo-a7c4 \
-  -H 'X-Delete-Token: ld8x3k9p2vmq4nfh8r1b6t5y7c2w3z9e'
+  -H 'X-Dev-Password: <password>'
 ```
 
 ---
@@ -259,8 +258,9 @@ curl -X DELETE https://coe-prototypes.vercel.app/api/sandbox/scenarios/onboardin
 |---|---|---|
 | `GET` | `/api/sandbox/scenarios` | List all scenarios (seeded + user-created). |
 | `POST` | `/api/sandbox/scenarios` | Create a user scenario. |
-| `GET` | `/api/sandbox/scenarios/:id` | Get one scenario definition (no deleteToken). |
-| `DELETE` | `/api/sandbox/scenarios/:id` | Delete a user scenario. Requires `X-Delete-Token`. |
+| `GET` | `/api/sandbox/scenarios/:id` | Get one scenario definition. |
+| `DELETE` | `/api/sandbox/scenarios/:id` | Delete a user scenario. Requires `X-Dev-Password` header. |
+| `POST` | `/api/sandbox/scenarios/:id/configure` | AI-configure the agent. Requires `X-Dev-Password` header. Body: `{description}`. |
 | `GET` | `/api/sandbox/scenarios/:id/state` | Read current mutable state. |
 | `POST` | `/api/sandbox/scenarios/:id/state` | Shallow-merge updates into state. |
 | `DELETE` | `/api/sandbox/scenarios/:id/state` | Reset state to scenario's `initialState`. |
