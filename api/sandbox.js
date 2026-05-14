@@ -123,7 +123,7 @@ async function appendMessage(id, msg) {
 
 // ── LLM call + adaptive-card action parser ────────────────────────────────
 
-async function callLLM(messages, { maxTokens = 1024, model = 'moonshot-v1-32k', temperature, jsonMode = false } = {}) {
+async function callLLM(messages, { maxTokens = 1024, model = 'moonshot-v1-32k', temperature, jsonMode = false, returnMeta = false } = {}) {
   if (!process.env.LLM_KEY) throw new Error('LLM_KEY not set');
   const payload = { model, max_tokens: maxTokens, messages };
   if (typeof temperature === 'number') payload.temperature = temperature;
@@ -138,7 +138,11 @@ async function callLLM(messages, { maxTokens = 1024, model = 'moonshot-v1-32k', 
   });
   if (!res.ok) throw new Error(`LLM ${res.status}: ${await res.text()}`);
   const data = await res.json();
-  return data.choices?.[0]?.message?.content || '';
+  const content = data.choices?.[0]?.message?.content || '';
+  if (returnMeta) {
+    return { content, finishReason: data.choices?.[0]?.finish_reason || '', usage: data.usage || {} };
+  }
+  return content;
 }
 
 // Pull the first balanced { … } object out of a string the LLM might have
@@ -637,29 +641,63 @@ ${description}
 
 ${optionalSection ? `STRUCTURED OPTIONAL INPUTS (use these verbatim where instructed; otherwise treat as authoritative for the relevant info-panel section):\n\n${optionalSection}\n` : ''}
 
+CRITICAL OUTPUT-SIZE RULES (read carefully — past responses have been truncated by exceeding token caps):
+- Reference files and inline reference data shown above are INJECTED INTO THE RUNTIME SYSTEM PROMPT AUTOMATICALLY every turn. DO NOT copy their content into the systemPrompt field. In the systemPrompt, refer to them by filename only (e.g. "Consult Policy.md for thresholds"). The runtime appends the full text.
+- Keep the systemPrompt under 1200 words. It should describe identity, tone, hard rules, persona-handling, and reference *that* the files exist — not paraphrase them.
+- Keep openingMessage under 150 words. Keep each personaOpening under 150 words. Keep each chip under 30 chars. Keep each infoPanel bullet under 15 words.
+
 Produce a JSON object with these exact keys (and ONLY these keys):
-- "systemPrompt": a complete system prompt to drive the live conversation. Address it to the agent. Bake in scenario name, persona names, tone, what to ask first, what choices to offer, hard rules, when to escalate or close out. ${isReconfigure ? 'Preserve everything from the prior prompt above and add the new brief.' : 'Make it self-contained.'} The runtime passes this verbatim as the system message every turn.
-- "openingMessage": the agent's first line of chat, addressed to the FIRST persona by name. Markdown allowed. Set context and offer 2–3 next-step choices via action buttons. End with a trailing <<ACTIONS>>["Choice A","Choice B"]<<END>> block (literal text, no escaping).${isReconfigure ? ' On reconfigure, this is NOT posted to the existing chat — the conversation continues. Still produce a sensible one for record-keeping.' : ''}
+- "systemPrompt": a complete system prompt to drive the live conversation. Address it to the agent. Bake in scenario name, persona names, tone, what to ask first, what choices to offer, hard rules, when to escalate or close out. ${isReconfigure ? 'Preserve everything from the prior prompt above and add the new brief.' : 'Make it self-contained.'} The runtime passes this verbatim as the system message every turn. ≤1200 words.
+- "openingMessage": the agent's first line of chat, addressed to the FIRST persona by name. Markdown allowed. Set context and offer 2–3 next-step choices via action buttons. End with a trailing <<ACTIONS>>["Choice A","Choice B"]<<END>> block (literal text, no escaping). ≤150 words.${isReconfigure ? ' On reconfigure, this is NOT posted to the existing chat — the conversation continues. Still produce a sensible one for record-keeping.' : ''}
 - "suggestedReplies": array of 2–4 short user-reply suggestions (each under 30 chars).
-- "personaOpenings": object keyed by persona id; value is the opening message that persona would see. Include ALL personas. If the demo owner supplied per-persona openings above, use those verbatim; otherwise generate one for each.
-- "infoPanel": object with keys { "heading" (short string, e.g. "About this agent"), "does" (array of 2–6 short bullets), "connects" (array of 2–5 short bullets), "refuses" (array of 2–5 short bullets), "references" (array of 0–6 short bullets listing supplied filenames + a brief note on what each is — empty array if none), "closingNote" (one short sentence, e.g. the time-saved estimate or a usage caveat) }. If structured inputs above provided "What it does" / "Connects to" / "Refuses to do" / "Time saved", reuse them; otherwise infer from the brief.
+- "personaOpenings": object keyed by persona id; value is the opening message that persona would see. Include ALL personas. ≤150 words each. If the demo owner supplied per-persona openings above, use those verbatim; otherwise generate one for each.
+- "infoPanel": object with keys { "heading" (short string, e.g. "About this agent"), "does" (array of 2–6 short bullets, ≤15 words each), "connects" (array of 2–5 short bullets), "refuses" (array of 2–5 short bullets), "references" (array of 0–6 short bullets listing supplied filenames + a brief note on what each is — empty array if none), "closingNote" (one short sentence) }. If structured inputs above provided "What it does" / "Connects to" / "Refuses to do" / "Time saved", reuse them; otherwise infer from the brief.
 - "personaChips": object keyed by persona id, value is an array of 2–4 short suggested-reply chips (each under 30 chars). If the demo owner supplied per-persona chips above, use those verbatim; otherwise generate one set per persona.
-- "followupMap": array of follow-up keyword rules. Each rule is { "id": short slug, "match": regex source string (case-insensitive, no slashes), "chips": { personaId: [chip, ...] } }. If the demo owner supplied a map above, use it verbatim. If not, generate 2–6 rules covering the most likely conversation pivots (e.g. user mentions a key entity, asks for a draft, asks for context). Return an empty array if none would help.
+- "followupMap": array of follow-up keyword rules (max 6 rules). Each rule is { "id": short slug, "match": regex source string (case-insensitive, no slashes), "chips": { personaId: [chip, ...] } }. If the demo owner supplied a map above, use it verbatim. Otherwise generate 2–6 rules covering the most likely conversation pivots. Empty array if none would help.
 
 Respond with the JSON object ONLY — no prose, no markdown fences, no commentary.`;
 
-    let setupRaw;
+    const baseMessages = [
+      { role: 'system', content: 'You are a configuration assistant that outputs ONLY a single JSON object. No prose, no markdown, no commentary. Keep field values terse — never copy reference-file content into any field; refer to files by name only.' },
+      { role: 'user', content: setupPrompt },
+    ];
+
+    let setupRaw, finishReason;
     try {
-      setupRaw = await callLLM([
-        { role: 'system', content: 'You are a configuration assistant that outputs ONLY a single JSON object. No prose, no markdown, no commentary.' },
-        { role: 'user', content: setupPrompt },
-      ], { maxTokens: 2400, temperature: 0.2, jsonMode: true });
+      const meta = await callLLM(baseMessages, { maxTokens: 6000, temperature: 0.2, jsonMode: true, returnMeta: true });
+      setupRaw = meta.content;
+      finishReason = meta.finishReason;
     } catch (err) {
       return res.status(502).json({ error: `Setup LLM call failed: ${err.message}` });
     }
-    const config = extractJSON(setupRaw);
+
+    let config = extractJSON(setupRaw);
+
+    // If the first call got truncated (finish_reason=length) or didn't parse,
+    // retry once with a much tighter shape and a bigger token budget. We
+    // explicitly drop the heavy follow-up map and ask for the smallest viable
+    // payload so the response fits.
+    if ((!config || finishReason === 'length') && (referenceFiles.length || referenceData.length > 2000 || (optionalSection && optionalSection.length > 4000))) {
+      const slimSetupPrompt = `${setupPrompt}\n\nIMPORTANT: Your previous attempt did not return valid JSON (truncated or malformed). Retry now with EVERY field at its minimum size. systemPrompt ≤600 words. openingMessage ≤80 words. personaOpenings ≤80 words each. followupMap MAY be an empty array. Reference files are injected at runtime — do not paraphrase them.`;
+      try {
+        const meta2 = await callLLM(
+          [baseMessages[0], { role: 'user', content: slimSetupPrompt }],
+          { maxTokens: 8000, temperature: 0.1, jsonMode: true, returnMeta: true }
+        );
+        setupRaw = meta2.content;
+        finishReason = meta2.finishReason;
+        config = extractJSON(setupRaw);
+      } catch { /* fall through to error below */ }
+    }
+
     if (!config) {
-      return res.status(502).json({ error: 'Setup LLM returned non-JSON.', rawPreview: String(setupRaw).slice(0, 400) });
+      return res.status(502).json({
+        error: finishReason === 'length'
+          ? 'Setup LLM ran out of tokens before finishing the JSON. Try removing some reference files or shortening the inline reference data.'
+          : 'Setup LLM returned non-JSON.',
+        finishReason,
+        rawPreview: String(setupRaw).slice(0, 600),
+      });
     }
     if (!config.systemPrompt || !config.openingMessage) {
       return res.status(502).json({ error: 'Setup LLM response missing required fields (systemPrompt/openingMessage).', config });
