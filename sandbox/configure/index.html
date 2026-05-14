@@ -375,9 +375,15 @@
       </div>
 
       <div class="field">
+        <label class="field-label">Per-persona register (tone shift)</label>
+        <div id="personaRegisters"></div>
+        <div class="field-hint">Optional. Short addendum (≤120 words each) that overrides tone/register when that persona is speaking. Use this when different personas need different vocabulary or detail level — e.g. plain English for a line manager vs precise terminology for a People Ops lead. Mirrors the absence demo's role-switch.</div>
+      </div>
+
+      <div class="field">
         <label class="field-label">Per-persona suggested-reply chips</label>
         <div id="personaChips"></div>
-        <div class="field-hint">Optional. One chip per line. These appear under the chat as quick replies on first load. If blank for a persona, the setup LLM writes them.</div>
+        <div class="field-hint">Optional. One chip per line. These appear under the chat as quick replies on first load. If blank for a persona, the setup LLM writes them. (Note: pre-canned chips above the compose box are currently hidden; LLM-supplied action buttons on agent messages always show.)</div>
       </div>
 
       <div class="field">
@@ -481,6 +487,7 @@ Tom Reed (W-118394) — 4 spells / 5 days. 3 of 4 Friday starts (p=0.014). Loop 
   const savingsInput = document.getElementById('savingsLine');
   const personaOpeningsHost = document.getElementById('personaOpenings');
   const personaChipsHost = document.getElementById('personaChips');
+  const personaRegistersHost = document.getElementById('personaRegisters');
   const followupHost = document.getElementById('followupRules');
   const addFollowupBtn = document.getElementById('addFollowupBtn');
   const styleInput = document.getElementById('styleGuidance');
@@ -517,6 +524,24 @@ Tom Reed (W-118394) — 4 spells / 5 days. 3 of 4 Friday starts (p=0.014). Loop 
         <textarea data-persona-id="${escapeHtml(p.id)}" placeholder="(blank = let the setup LLM write one for ${escapeHtml(p.name)})">${escapeHtml(openings?.[p.id] || '')}</textarea>
       </div>
     `).join('') || '<div style="color:var(--color-graphite);font-size:13px;">No personas defined on this scenario.</div>';
+  }
+
+  function renderPersonaRegisters(personas, regs) {
+    personaRegistersHost.innerHTML = (personas || []).map((p) => `
+      <div class="persona-opening-row">
+        <span class="persona-tag">${escapeHtml(p.name)} <span style="color:var(--color-graphite)">· ${escapeHtml(p.role || p.id)}</span></span>
+        <textarea data-persona-id="${escapeHtml(p.id)}" placeholder="(blank = no register shift for ${escapeHtml(p.name)}). e.g. 'Plain English. Avoid jargon like Loop A/B/C. Don't show stats unless asked.'">${escapeHtml(regs?.[p.id] || '')}</textarea>
+      </div>
+    `).join('') || '<div style="color:var(--color-graphite);font-size:13px;">No personas defined on this scenario.</div>';
+  }
+
+  function gatherPersonaRegisters() {
+    const out = {};
+    personaRegistersHost.querySelectorAll('textarea[data-persona-id]').forEach((t) => {
+      const v = t.value.trim();
+      if (v) out[t.dataset.personaId] = v;
+    });
+    return out;
   }
 
   function renderPersonaChips(personas, chips) {
@@ -675,6 +700,7 @@ Tom Reed (W-118394) — 4 spells / 5 days. 3 of 4 Friday starts (p=0.014). Loop 
     referenceDataInput.value = si.referenceData || s?.referenceData || '';
     renderPersonaOpenings(s?.personas || [], si.personaOpenings || s?.personaOpenings || {});
     renderPersonaChips(s?.personas || [], si.personaChips || s?.personaChips || {});
+    renderPersonaRegisters(s?.personas || [], si.personaRegisters || s?.personaRegisters || {});
     renderFollowupRules(s?.personas || [], si.followupMap || s?.followupMap || []);
 
     // Prior reference files (metadata only — list endpoint strips content).
@@ -750,6 +776,7 @@ Tom Reed (W-118394) — 4 spells / 5 days. 3 of 4 Friday starts (p=0.014). Loop 
       savingsLine: savingsInput.value.trim(),
       personaOpenings: gatherPersonaOpenings(),
       personaChips: gatherPersonaChips(),
+      personaRegisters: gatherPersonaRegisters(),
       followupMap: gatherFollowupMap(),
       styleGuidance: styleInput.value.trim(),
       referenceData: referenceDataInput.value.trim(),

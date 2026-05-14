@@ -569,6 +569,14 @@ export default async function handler(req, res) {
     const referenceData = (body.referenceData || '').trim();
     const personaChips = sanitizePersonaChips(body.personaChips);
     const followupMap = sanitizeFollowupMap(body.followupMap);
+    // Per-persona register: short addendum injected into the system prompt
+    // when that persona is the active speaker. Mirrors getSystemPromptForRole
+    // in the sickness-absence demo.
+    const personaRegisters = (body.personaRegisters && typeof body.personaRegisters === 'object')
+      ? Object.fromEntries(Object.entries(body.personaRegisters)
+          .map(([k, v]) => [String(k), String(v || '').trim()])
+          .filter(([, v]) => v))
+      : {};
     // Merge new files with prior files unless caller explicitly sent
     // `replaceReferenceFiles: true`. This makes additive reconfigures
     // genuinely additive on uploads too.
@@ -633,6 +641,11 @@ export default async function handler(req, res) {
             .map(([pid, txt]) => `- ${pid}: ${String(txt).trim()}`)
             .join('\n')}`
         : null,
+      Object.keys(personaRegisters).length
+        ? `### Per-persona register addendum (verbatim — use these as the personaRegisters field; injected into the runtime system prompt when that persona is speaking)\n${Object.entries(personaRegisters)
+            .map(([pid, txt]) => `- ${pid}:\n${txt}`)
+            .join('\n\n')}`
+        : null,
       personaChipsBlock,
       followupBlock,
     ].filter(Boolean).join('\n\n');
@@ -670,6 +683,7 @@ Produce a JSON object with these exact keys (and ONLY these keys):
 - "infoPanel": object with keys { "heading" (short string, e.g. "About this agent"), "does" (array of 2–6 short bullets, ≤15 words each), "connects" (array of 2–5 short bullets), "refuses" (array of 2–5 short bullets), "references" (array of 0–6 short bullets listing supplied filenames + a brief note on what each is — empty array if none), "closingNote" (one short sentence) }. If structured inputs above provided "What it does" / "Connects to" / "Refuses to do" / "Time saved", reuse them; otherwise infer from the brief.
 - "personaChips": object keyed by persona id, value is an array of 2–4 short suggested-reply chips (each under 30 chars). If the demo owner supplied per-persona chips above, use those verbatim; otherwise generate one set per persona.
 - "followupMap": array of follow-up keyword rules (max 6 rules). Each rule is { "id": short slug, "match": regex source string (case-insensitive, no slashes), "chips": { personaId: [chip, ...] } }. If the demo owner supplied a map above, use it verbatim. Otherwise generate 2–6 rules covering the most likely conversation pivots. Empty array if none would help.
+- "personaRegisters": object keyed by persona id; value is a short ≤120-word addendum (markdown OK) that overrides tone/register when that persona is the active speaker. Mirrors how a human-built demo branches tone (e.g. plain English for a line manager vs precise terminology for a People Ops lead). If the demo owner supplied registers above, use those verbatim. Otherwise, infer a sensible per-persona register from the brief. Empty object if there is only one persona or no register distinction is needed.
 
 Respond with the JSON object ONLY — no prose, no markdown fences, no commentary.`;
 
@@ -730,6 +744,11 @@ Respond with the JSON object ONLY — no prose, no markdown fences, no commentar
         : [],
       personaOpenings: (config.personaOpenings && typeof config.personaOpenings === 'object') ? config.personaOpenings : {},
       personaChips: sanitizePersonaChips(config.personaChips) || {},
+      personaRegisters: (config.personaRegisters && typeof config.personaRegisters === 'object')
+        ? Object.fromEntries(Object.entries(config.personaRegisters)
+            .map(([k, v]) => [String(k), String(v || '').trim()])
+            .filter(([, v]) => v))
+        : personaRegisters,
       followupMap: sanitizeFollowupMap(config.followupMap) || [],
       infoPanel: sanitizeInfoPanel(config.infoPanel) || def.infoPanel || null,
       // Reference material — stored separately, injected at runtime.
@@ -741,7 +760,7 @@ Respond with the JSON object ONLY — no prose, no markdown fences, no commentar
       structuredInputs: {
         tone, capabilities, connectsTo, refuses, savingsLine, personaOpenings,
         styleGuidance, referenceData,
-        personaChips, followupMap,
+        personaChips, followupMap, personaRegisters,
       },
       configuredAt: Date.now(),
       reconfigureCount: (def.reconfigureCount || 0) + (isReconfigure ? 1 : 0),
@@ -890,13 +909,20 @@ Respond with the JSON object ONLY — no prose, no markdown fences, no commentar
         const llmHistory = historyToLLM(def, history);
         const calendarInstr = def.template === 'teams' ? `\n\n${RUNTIME_CALENDAR_INSTRUCTION}` : '';
         const refBlock = buildReferenceBlock(def);
-        // Order matters. Reference material FIRST (so the model attends to it
-        // as foundational context before role-play takes over), then identity
-        // / persona prompt, then output-protocol instructions closest to the
-        // generation point.
+        // Per-persona register addendum — looked up by the current sender's
+        // persona id. Mirrors getSystemPromptForRole() in the sickness-absence
+        // demo so multi-persona scenarios shift tone correctly.
+        const registers = def.personaRegisters || {};
+        const activeRegister = registers[fromLower] || registers[msg.from] || '';
+        // Order: reference material → identity → per-persona register → protocols.
         const parts = [];
         if (refBlock) parts.push(refBlock);
         parts.push(`# AGENT IDENTITY & BEHAVIOUR\n${def.systemPrompt}`);
+        if (activeRegister) {
+          const persona = (def.personas || []).find((p) => p.id === msg.from);
+          const speakerLine = persona ? `\nCurrent speaker: ${persona.name}${persona.role ? ` (${persona.role})` : ''}\n` : '\n';
+          parts.push(`# CURRENT SPEAKER — REGISTER OVERRIDE${speakerLine}\n${activeRegister}`);
+        }
         parts.push(`# OUTPUT PROTOCOLS\n${RUNTIME_ACTION_INSTRUCTION}\n\n${RUNTIME_DRAFTING_INSTRUCTION}${calendarInstr}`);
         const sysContent = parts.join('\n\n');
         const raw = await callLLM([
