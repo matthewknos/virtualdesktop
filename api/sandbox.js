@@ -832,8 +832,9 @@ ${description}
 
 ${optionalSection ? `OPTIONAL INPUTS (use verbatim where supplied):\n${optionalSection}\n` : ''}
 SIZE RULES (responses have been truncated before — stay under these):
-- DO NOT copy reference-file or inline-data content anywhere. They're injected into the runtime prompt automatically. Refer to files by name only (e.g. "see Policy.md").
-- systemPrompt ≤900 words. openingMessage ≤120 words. Each personaOpening ≤120 words. Each chip ≤30 chars. Each infoPanel bullet ≤15 words. personaRegisters ≤100 words each.
+- DO NOT copy reference-file or inline-data content anywhere. They're injected into the runtime prompt automatically.
+- DO NOT enumerate every filename in the systemPrompt. Refer collectively to "the supplied reference files" or name AT MOST 1–2 of the most relevant by short alias. The full list goes in infoPanel.references only.
+- systemPrompt ≤700 words. openingMessage ≤100 words. Each personaOpening ≤100 words. Each chip ≤30 chars. Each infoPanel bullet ≤15 words. personaRegisters ≤80 words each.
 
 Output a JSON object with ONLY these keys:
 - "systemPrompt": full system prompt — identity, tone, hard rules, persona-handling, reference files by name. ${isReconfigure ? 'Preserve prior prompt intent, add the new brief.' : 'Self-contained.'}
@@ -852,18 +853,18 @@ JSON OBJECT ONLY. No prose, no fences.`;
       { role: 'user', content: setupPrompt },
     ];
 
-    // Pick the smallest model whose context comfortably fits the prompt.
-    // With reference data no longer echoed verbatim, the 8k model is plenty
-    // for most calls (~4× cheaper than 32k). Fall back to 32k only when the
-    // prompt itself is large.
+    // Pick the right model. The 8k model is cheaper but its smaller output
+    // ceiling makes large JSON responses truncate easily. Use 32k whenever
+    // reference files are attached OR the prompt itself is large.
     const promptBytes = JSON.stringify(baseMessages).length;
-    const setupModel = promptBytes > 20_000 ? 'moonshot-v1-32k' : 'moonshot-v1-8k';
+    const hasHeavyRefs = referenceFiles.length > 0 || referenceData.length > 2000;
+    const setupModel = (hasHeavyRefs || promptBytes > 18_000) ? 'moonshot-v1-32k' : 'moonshot-v1-8k';
 
     let setupRaw, finishReason;
     try {
       const meta = await callLLM(baseMessages, {
         model: setupModel,
-        maxTokens: 4000,
+        maxTokens: 6000,
         temperature: 0.2,
         jsonMode: true,
         returnMeta: true,
@@ -876,13 +877,15 @@ JSON OBJECT ONLY. No prose, no fences.`;
 
     let config = extractJSON(setupRaw);
 
-    // Retry only when actually truncated. Use 32k just in case the prompt
-    // was a borderline fit for the 8k model.
-    if (!config && finishReason === 'length') {
+    // Retry on ANY parse failure (truncation OR malformed JSON). Escalate to
+    // 32k + bigger token budget + tighter instructions. The retry is rare so
+    // the extra cost is worth the reliability.
+    if (!config) {
       try {
+        const slimPrompt = `${setupPrompt}\n\nPREVIOUS ATTEMPT FAILED (truncated or malformed JSON). Retry now with EVERY field at its minimum size: systemPrompt ≤400 words, openingMessage ≤60 words, personaOpenings ≤60 words each, followupMap may be [], personaRegisters may be {}. Do NOT name any filenames in the systemPrompt — say "the supplied reference files" generically. Output a single valid JSON object only.`;
         const meta2 = await callLLM(
-          [baseMessages[0], { role: 'user', content: `${setupPrompt}\n\nPrevious attempt truncated. Halve every field. followupMap may be []. personaRegisters may be {}.` }],
-          { model: 'moonshot-v1-32k', maxTokens: 6000, temperature: 0.1, jsonMode: true, returnMeta: true }
+          [baseMessages[0], { role: 'user', content: slimPrompt }],
+          { model: 'moonshot-v1-32k', maxTokens: 8000, temperature: 0.1, jsonMode: true, returnMeta: true }
         );
         setupRaw = meta2.content;
         finishReason = meta2.finishReason;
