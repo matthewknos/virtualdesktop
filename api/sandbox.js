@@ -216,7 +216,7 @@ export default async function handler(req, res) {
 
   // ── GET ONE SCENARIO ──
   if (path.match(/^\/api\/sandbox\/scenarios\/[^/]+$/) && req.method === 'GET') {
-    const id = path.split('/').pop();
+    const id = path.split('/')[4];
     const def = await getScenarioDef(id);
     if (!def) return res.status(404).json({ error: 'Scenario not found' });
     return res.status(200).json(sanitizeScenario(def));
@@ -224,7 +224,7 @@ export default async function handler(req, res) {
 
   // ── DELETE USER SCENARIO ──
   if (path.match(/^\/api\/sandbox\/scenarios\/[^/]+$/) && req.method === 'DELETE') {
-    const id = path.split('/').pop();
+    const id = path.split('/')[4];
     if (SCENARIOS.find((s) => s.id === id)) {
       return res.status(403).json({ error: 'Cannot delete seeded scenarios' });
     }
@@ -243,7 +243,7 @@ export default async function handler(req, res) {
 
   // ── GET STATE ──
   if (path.match(/^\/api\/sandbox\/scenarios\/[^/]+\/state$/) && req.method === 'GET') {
-    const id = path.split('/').pop();
+    const id = path.split('/')[4];
     const sc = await ensureScenario(id);
     if (!sc) return res.status(404).json({ error: 'Scenario not found' });
     return res.status(200).json({ scenarioId: id, state: sc.state });
@@ -251,7 +251,7 @@ export default async function handler(req, res) {
 
   // ── UPDATE STATE (shallow merge) ──
   if (path.match(/^\/api\/sandbox\/scenarios\/[^/]+\/state$/) && req.method === 'POST') {
-    const id = path.split('/').pop();
+    const id = path.split('/')[4];
     const sc = await ensureScenario(id);
     if (!sc) return res.status(404).json({ error: 'Scenario not found' });
     const updates = (await readBody(req)) || {};
@@ -268,7 +268,7 @@ export default async function handler(req, res) {
 
   // ── RESET STATE ──
   if (path.match(/^\/api\/sandbox\/scenarios\/[^/]+\/state$/) && req.method === 'DELETE') {
-    const id = path.split('/').pop();
+    const id = path.split('/')[4];
     if (!(await resetScenario(id))) return res.status(404).json({ error: 'Scenario not found' });
     const sc = runtime.get(id);
     return res.status(200).json({ scenarioId: id, state: sc.state, reset: true });
@@ -276,7 +276,7 @@ export default async function handler(req, res) {
 
   // ── GET MESSAGES ──
   if (path.match(/^\/api\/sandbox\/scenarios\/[^/]+\/messages$/) && req.method === 'GET') {
-    const id = path.split('/').pop();
+    const id = path.split('/')[4];
     const sc = await ensureScenario(id);
     if (!sc) return res.status(404).json({ error: 'Scenario not found' });
     const since = url.searchParams.get('since');
@@ -290,7 +290,7 @@ export default async function handler(req, res) {
 
   // ── POST MESSAGE ──
   if (path.match(/^\/api\/sandbox\/scenarios\/[^/]+\/messages$/) && req.method === 'POST') {
-    const id = path.split('/').pop();
+    const id = path.split('/')[4];
     const sc = await ensureScenario(id);
     if (!sc) return res.status(404).json({ error: 'Scenario not found' });
     const body = (await readBody(req)) || {};
