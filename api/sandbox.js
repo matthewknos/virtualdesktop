@@ -699,10 +699,23 @@ Rules:
     if (!checkDevPassword(req, body)) {
       return res.status(403).json({ error: 'Invalid or missing dev password.' });
     }
-    const description = (body.description || '').trim();
-    if (!description) return res.status(400).json({ error: 'Missing "description"' });
-
+    let description = (body.description || '').trim();
     const isReconfigure = Boolean(def.systemPrompt);
+    // Description is optional when the request supplies reference material
+    // OR a prior configuration exists — the LLM can derive the brief from
+    // those sources. Otherwise it's required.
+    const willHaveRefs = (Array.isArray(body.referenceFiles) && body.referenceFiles.length)
+      || (Array.isArray(def.referenceFiles) && def.referenceFiles.length)
+      || (body.referenceData && String(body.referenceData).trim().length)
+      || (def.referenceData && String(def.referenceData).trim().length);
+    if (!description) {
+      if (!willHaveRefs && !isReconfigure) {
+        return res.status(400).json({ error: 'Missing "description" and no reference material supplied — provide one.' });
+      }
+      description = isReconfigure
+        ? 'Tighten and refresh from the latest reference material.'
+        : 'Build the agent grounded in the supplied reference material.';
+    }
     const priorDescriptions = Array.isArray(def.descriptions) ? def.descriptions : (def.description && isReconfigure ? [def.description] : []);
 
     // Optional structured inputs — all may be empty. The LLM will infer

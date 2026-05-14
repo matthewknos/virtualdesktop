@@ -206,6 +206,28 @@
   }
   .file-pill .file-remove:hover { color: var(--color-danger); }
   .file-pill.prior { background: rgba(0,113,227,0.06); border-color: rgba(0,113,227,0.2); }
+  .autofill-card {
+    background: linear-gradient(135deg, rgba(0,113,227,0.05), rgba(94,92,230,0.04));
+    border: 1px solid rgba(0,113,227,0.2);
+    border-radius: 16px;
+    padding: 22px 24px;
+    margin-bottom: 28px;
+  }
+  .autofill-card-header { display: flex; align-items: flex-start; gap: 12px; }
+  .autofill-card-title { font-size: 17px; font-weight: 600; margin-bottom: 4px; }
+  .autofill-card-sub { font-size: 14px; color: var(--color-graphite); line-height: 1.45; max-width: 600px; }
+  .autofill-action-row {
+    display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
+    padding-top: 6px;
+    border-top: 1px solid rgba(0,113,227,0.12);
+    margin-top: 14px;
+    padding-top: 14px;
+  }
+  .autofill-hint {
+    font-size: 12px;
+    color: var(--color-graphite);
+    margin-top: 10px;
+  }
   .autofill-btn {
     background: linear-gradient(135deg, var(--color-azure), #5e5ce6);
     color: #fff;
@@ -350,13 +372,44 @@
     <div class="field">
       <label class="field-label" for="devPassword">Dev password</label>
       <input type="password" id="devPassword" placeholder="Shared internal password" autocomplete="off">
-      <div class="field-hint">Internal dev gate — ask the team if you don't have it.</div>
+      <div class="field-hint">Internal dev gate — ask the team if you don't have it. Remembered for this browser tab.</div>
+    </div>
+
+    <!-- ✨ Upload-first auto-fill — primary path. -->
+    <div class="autofill-card" id="autofillCard">
+      <div class="autofill-card-header">
+        <div>
+          <div class="autofill-card-title">✨ Start from documents</div>
+          <div class="autofill-card-sub">Upload policy, case records, or specs. Paste reference data. We'll read everything and pre-fill the rest of the form.</div>
+        </div>
+      </div>
+
+      <div class="field" style="margin-top:18px;">
+        <label class="field-label" for="referenceFiles">Reference files</label>
+        <input type="file" id="referenceFiles" multiple accept=".md,.txt,.json,.csv,.yaml,.yml,.html,.xml,text/*">
+        <div class="field-hint">Text-like files only (.md, .txt, .json, .csv, .yaml, .html, .xml). For PDFs, paste the text into the box below.</div>
+        <div id="fileList" style="margin-top:10px;"></div>
+      </div>
+
+      <div class="field" style="margin-bottom:16px;">
+        <label class="field-label" for="referenceData">Inline reference data (optional)</label>
+        <textarea id="referenceData" style="min-height:120px;font-family:var(--font-mono);font-size:13px;" placeholder="Paste policy text, case records, dates, IDs…"></textarea>
+      </div>
+
+      <div class="autofill-action-row">
+        <button type="button" id="autofillBtn" class="autofill-btn">✨ Auto-fill the form below</button>
+        <label style="font-size:12px;color:var(--color-graphite);display:flex;align-items:center;gap:6px;">
+          <input type="checkbox" id="autofillOverwrite"> Overwrite filled fields too
+        </label>
+      </div>
+      <div id="autofillStatus" style="font-size:13px;color:var(--color-graphite);margin-top:10px;display:none;"></div>
+      <div class="autofill-hint">Cap: 8 files, 120KB per file, 400KB total. Files persist across reconfigures — the saved set shows with a blue badge.</div>
     </div>
 
     <div class="field">
-      <label class="field-label" for="description"><span id="descLabel">What should your agent do?</span></label>
-      <textarea id="description" placeholder="Example: You are Polly, a People Operations coach. Greet Mark and ask if he wants to review three recent absence cases. If yes, present each as a card with Approve / Request OH referral / Defer buttons. If no, offer to schedule a check-in for next week. Tone: warm, concise, plain English. Avoid HR jargon." required></textarea>
-      <div class="field-hint" id="descHint">Be specific about tone, what to ask first, and what choices to offer. The setup LLM bakes this into a full system prompt.</div>
+      <label class="field-label" for="description"><span id="descLabel">What should your agent do?</span> <span style="font-weight:400;color:var(--color-graphite);text-transform:none;letter-spacing:0;">— optional if files supplied</span></label>
+      <textarea id="description" placeholder="Example: You are Polly, a People Operations coach. Greet Mark and ask if he wants to review three recent absence cases…"></textarea>
+      <div class="field-hint" id="descHint">Be specific about tone, what to ask first, and what choices to offer. The setup LLM bakes this into a full system prompt. Leave blank if you uploaded files and want the LLM to write the brief for you.</div>
     </div>
 
     <details class="optional-section" id="optionalSection">
@@ -421,42 +474,6 @@
       </div>
     </details>
 
-    <details class="optional-section" id="referenceSection">
-      <summary>Reference material — files, policy text, case records</summary>
-
-      <div class="info-banner" style="background:var(--color-fog);border-color:var(--color-silver-mist);">
-        <span class="icon">📎</span>
-        <div class="body">
-          Anything you put here is injected into the agent's system prompt <strong>every turn</strong>. Treat it like grounded knowledge — the agent will quote and cite it. Cap: 8 files, 120KB per file, 400KB total (files + inline data combined).
-          <div style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-            <button type="button" id="autofillBtn" class="autofill-btn">✨ Auto-fill form from documents</button>
-            <label style="font-size:12px;color:var(--color-graphite);display:flex;align-items:center;gap:6px;">
-              <input type="checkbox" id="autofillOverwrite"> Overwrite filled fields too
-            </label>
-          </div>
-          <div id="autofillStatus" style="font-size:13px;color:var(--color-graphite);margin-top:8px;display:none;"></div>
-        </div>
-      </div>
-
-      <div class="field">
-        <label class="field-label" for="referenceFiles">Reference files</label>
-        <input type="file" id="referenceFiles" multiple accept=".md,.txt,.json,.csv,.yaml,.yml,.html,.xml,text/*">
-        <div class="field-hint">Text-like files only (.md, .txt, .json, .csv, .yaml, .html, .xml). For PDFs, copy the text into the box below instead.</div>
-        <div id="fileList" style="margin-top:10px;"></div>
-      </div>
-
-      <div class="field">
-        <label class="field-label" for="referenceData">Inline reference data (paste policy text, case records, dates, IDs)</label>
-        <textarea id="referenceData" style="min-height:160px;font-family:var(--font-mono);font-size:13px;" placeholder="e.g.
-## Worker records
-Eve Hart (W-104882) — 4 spells / 9 days rolling 12mo. Stage 1 fired.
-Tom Reed (W-118394) — 4 spells / 5 days. 3 of 4 Friday starts (p=0.014). Loop C signal, no stage trigger.
-
-## Key dates
-2026-04-01 — Framework v8.0 live
-2026-05-13 — Eve returned from latest spell"></textarea>
-      </div>
-    </details>
 
     <div class="submit-row">
       <button type="submit" class="btn-primary" id="submitBtn">Configure</button>
@@ -528,7 +545,7 @@ Tom Reed (W-118394) — 4 spells / 5 days. 3 of 4 Friday starts (p=0.014). Loop 
   const referenceDataInput = document.getElementById('referenceData');
   const fileInput = document.getElementById('referenceFiles');
   const fileListHost = document.getElementById('fileList');
-  const referenceSection = document.getElementById('referenceSection');
+  const referenceSection = null; // moved to top — no longer a <details>; left as null so existing references no-op
 
   // Files held in memory until submit. Map of name → { name, content, size, prior:boolean }
   const stagedFiles = new Map();
@@ -729,7 +746,7 @@ Tom Reed (W-118394) — 4 spells / 5 days. 3 of 4 Friday starts (p=0.014). Loop 
     return true;
   }
 
-  autofillBtn.addEventListener('click', async () => {
+  async function autofillClickHandler() {
     const id = scenarioSel.value;
     const token = tokenInput.value.trim();
     if (!id) return showError('Pick a scenario first.');
@@ -768,10 +785,12 @@ Tom Reed (W-118394) — 4 spells / 5 days. 3 of 4 Friday starts (p=0.014). Loop 
       showError(err.message || 'Auto-fill failed.');
     } finally {
       autofillBtn.disabled = false;
-      autofillBtn.textContent = '✨ Auto-fill form from documents';
+      autofillBtn.textContent = '✨ Auto-fill the form below';
       autofillBtn.classList.remove('autofill-pulse');
     }
-  });
+  }
+  // Also bind directly in case event delegation is suppressed by something.
+  if (autofillBtn) autofillBtn.addEventListener('click', (e) => { e.preventDefault(); autofillClickHandler(); });
 
   function applySuggestions(s) {
     const overwrite = autofillOverwrite.checked;
@@ -851,9 +870,8 @@ Tom Reed (W-118394) — 4 spells / 5 days. 3 of 4 Friday starts (p=0.014). Loop 
       }
     }
 
-    // Open both optional sections so the user can see what was filled in
+    // Open the optional section so the user can see what was filled in
     optionalSection.open = true;
-    referenceSection.open = true;
 
     autofillStatus.style.display = 'block';
     autofillStatus.style.color = 'var(--color-forest)';
@@ -899,10 +917,7 @@ Tom Reed (W-118394) — 4 spells / 5 days. 3 of 4 Friday starts (p=0.014). Loop 
     renderFileList();
 
     // Auto-open the optional section on reconfigure so prior inputs are visible
-    if (isReconfigure) {
-      optionalSection.open = true;
-      if ((s?.referenceFiles || []).length || (s?.referenceData || '')) referenceSection.open = true;
-    }
+    if (isReconfigure) optionalSection.open = true;
     submitBtn.textContent = isReconfigure ? 'Apply update' : 'Configure';
   }
 
@@ -942,7 +957,12 @@ Tom Reed (W-118394) — 4 spells / 5 days. 3 of 4 Friday starts (p=0.014). Loop 
     const description = descArea.value.trim();
     if (!id) return showError('Pick a scenario.');
     if (!token) return showError('Enter the dev password.');
-    if (!description) return showError('Describe what the agent should do (or what to add).');
+    // Description is required only when the user hasn't supplied reference
+    // material — otherwise the LLM derives the brief from the files/data.
+    const haveRefs = stagedFiles.size > 0 || referenceDataInput.value.trim().length > 0;
+    if (!description && !haveRefs) {
+      return showError('Describe what the agent should do, or attach reference files / paste reference data.');
+    }
 
     // Files: send full set (prior + new). For prior pills we don't have the
     // text content locally, so we tell the server which prior files to KEEP
@@ -1026,6 +1046,28 @@ Tom Reed (W-118394) — 4 spells / 5 days. 3 of 4 Friday starts (p=0.014). Loop 
     successCard.classList.add('show');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
+
+  // Persist dev password per browser tab — saves typing on every reconfigure.
+  try {
+    const cached = sessionStorage.getItem('coeSandboxDevPassword');
+    if (cached && !tokenInput.value) tokenInput.value = cached;
+  } catch { /* storage disabled */ }
+  tokenInput.addEventListener('change', () => {
+    try {
+      const v = tokenInput.value.trim();
+      if (v) sessionStorage.setItem('coeSandboxDevPassword', v);
+      else sessionStorage.removeItem('coeSandboxDevPassword');
+    } catch { /* ignore */ }
+  });
+
+  // Defensive autofill binding via event delegation — survives any earlier
+  // script error and works even if the button is re-rendered later.
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('#autofillBtn');
+    if (!btn) return;
+    e.preventDefault();
+    if (typeof autofillClickHandler === 'function') autofillClickHandler();
+  });
 
   loadScenarios();
 })();
