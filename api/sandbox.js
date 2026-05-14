@@ -457,14 +457,21 @@ Never respond to a short command with a generic email draft, a policy lecture, o
 // If an opener doesn't already carry an <<ACTIONS>> block, append one using
 // supplied fallback chips. Openings without action buttons feel dead — the
 // demo's first impression should always offer next steps.
-function ensureOpeningActions(opener, fallbackChips) {
+// When `force` is true (alwaysShowActions toggle on) we use a generic
+// fallback chip set if nothing better is available, so the opener NEVER
+// lands without buttons.
+const GENERIC_FALLBACK_CHIPS = ['Tell me more', 'Show me an example', 'What can you do?'];
+function ensureOpeningActions(opener, fallbackChips, { force = false } = {}) {
   const text = String(opener || '');
   if (!text.trim()) return text;
   if (/<<\s*ACTIONS\s*>>/i.test(text)) return text;
-  const chips = Array.isArray(fallbackChips)
+  let chips = Array.isArray(fallbackChips)
     ? fallbackChips.map((c) => String(c).trim()).filter(Boolean).slice(0, 3)
     : [];
-  if (chips.length < 2) return text; // need at least 2 to be worth showing
+  if (chips.length < 2) {
+    if (!force) return text;
+    chips = GENERIC_FALLBACK_CHIPS.slice(0, 3);
+  }
   const block = `\n\n<<ACTIONS>>${JSON.stringify(chips)}<<END>>`;
   return text.replace(/\s+$/, '') + block;
 }
@@ -867,7 +874,10 @@ Rules:
       ? `RECONFIGURE — additive only. Preserve every constraint, persona reference, hard rule, and tone choice from the prior system prompt. Weave the new brief in alongside; where they conflict, new wins.\n\nPRIOR SYSTEM PROMPT (preserve verbatim intent):\n---\n${def.systemPrompt}\n---`
       : 'First configure — build from scratch using the brief below.';
 
-    const setupPrompt = `Configure a sandbox AI agent for the "${def.template}" template.${calendarCapability}
+    const alwaysActionsClause = alwaysShowActions
+      ? `\n\nALWAYS-SHOW-ACTIONS MODE: this scenario has the alwaysShowActions toggle ON. The systemPrompt you generate MUST explicitly instruct the agent to append a trailing <<ACTIONS>>[…]<<END>> block on EVERY reply with no exceptions — including narrative replies, confirmations, apologies. The openingMessage AND every personaOpening MUST end with <<ACTIONS>>[…]<<END>> as well. Use plausible fallback chips ("Tell me more", "Continue", "What can you do?") if no scenario-specific next steps exist.`
+      : '';
+    const setupPrompt = `Configure a sandbox AI agent for the "${def.template}" template.${calendarCapability}${alwaysActionsClause}
 
 Name: ${def.name} · Agent: ${def.agent}
 Personas (id : name (role)):
@@ -964,11 +974,11 @@ JSON OBJECT ONLY. No prose, no fences.`;
     // Backfill <<ACTIONS>> on any opener the setup LLM forgot to attach them
     // to. For the global openingMessage use suggestedReplies; for each
     // persona opener use that persona's chips, falling back to suggestedReplies.
-    const ensuredOpening = ensureOpeningActions(String(config.openingMessage), cleanSuggestedReplies);
+    const ensuredOpening = ensureOpeningActions(String(config.openingMessage), cleanSuggestedReplies, { force: alwaysShowActions });
     const ensuredPersonaOpenings = Object.fromEntries(
       Object.entries(rawPersonaOpenings).map(([pid, txt]) => [
         pid,
-        ensureOpeningActions(String(txt || ''), cleanPersonaChips[pid] || cleanSuggestedReplies),
+        ensureOpeningActions(String(txt || ''), cleanPersonaChips[pid] || cleanSuggestedReplies, { force: alwaysShowActions }),
       ])
     );
 
@@ -1004,9 +1014,25 @@ JSON OBJECT ONLY. No prose, no fences.`;
     await kv.set(KV_KEY(id), updatedDef);
 
     let openMsg = null;
-    if (!isReconfigure) {
-      // First configure: wipe chat, post opener.
-      await kv.del(KV_MSGS_KEY(id));
+    // Post the opener when:
+    //   - First configure (no prior systemPrompt), OR
+    //   - Reconfigure AND there's no existing agent message in the chat that
+    //     carries action buttons (so the new opener with buttons becomes
+    //     visible without forcing the user to hit Restart).
+    let shouldPostOpener = !isReconfigure;
+    if (isReconfigure) {
+      const existing = await getMessages(id);
+      const hasAgentMessageWithActions = existing.some((m) =>
+        (m.from === (def.agent || 'agent') || m.source === 'configure' || m.source === 'reset-opener' || m.source === 'auto-agent')
+        && Array.isArray(m.actions) && m.actions.length
+      );
+      if (!hasAgentMessageWithActions) shouldPostOpener = true;
+    }
+    if (shouldPostOpener) {
+      if (!isReconfigure) {
+        // First configure: wipe chat too, opener becomes turn 1.
+        await kv.del(KV_MSGS_KEY(id));
+      }
       const parsedOpener = parseActions(updatedDef.openingMessage);
       openMsg = {
         id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
