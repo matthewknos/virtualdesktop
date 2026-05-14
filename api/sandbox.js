@@ -231,17 +231,9 @@ export default async function handler(req, res) {
     if (!KV_AVAILABLE) return res.status(404).json({ error: 'Scenario not found' });
     const def = await kv.get(KV_KEY(id));
     if (!def) return res.status(404).json({ error: 'Scenario not found' });
-    // TEMPORARY admin bypass — set ADMIN_TOKEN in Vercel env to a strong value;
-    // requests with X-Admin-Token matching it skip the per-scenario delete
-    // token check. Remove this block once stale demos are cleaned up.
-    const adminToken = process.env.ADMIN_TOKEN;
-    const adminProvided = req.headers['x-admin-token'];
-    const isAdmin = adminToken && adminProvided && adminProvided === adminToken;
-    if (!isAdmin) {
-      const provided = req.headers['x-delete-token'] || (await readBody(req)).deleteToken;
-      if (!provided || provided !== def.deleteToken) {
-        return res.status(403).json({ error: 'Invalid or missing delete token' });
-      }
+    const provided = req.headers['x-delete-token'] || (await readBody(req)).deleteToken;
+    if (!provided || provided !== def.deleteToken) {
+      return res.status(403).json({ error: 'Invalid or missing delete token' });
     }
     await kv.del(KV_KEY(id));
     await kv.srem(KV_INDEX, id);
