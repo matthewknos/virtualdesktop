@@ -922,13 +922,12 @@
 
     /* ════════════════════════════════════════════
        Suggested Replies — #suggestedReplies
+       Hidden by request — users find pre-canned prompts above the compose
+       box noisy. Action buttons attached to agent messages still render.
        ════════════════════════════════════════════ */
-    #suggestedReplies {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      padding: 0 20px 10px;
-      flex-shrink: 0;
+    #suggestedReplies,
+    #followupRow {
+      display: none !important;
     }
 
     .suggested-chip {
@@ -3922,9 +3921,18 @@ class SandboxTeamsApp {
           await this.client.resetState(this.scenarioId);
           const stateRes = await this.client.getState(this.scenarioId);
           this.state = stateRes.state;
-          this.messages = [];
-          this.lastPollTime = Date.now();
           if (this.chatView) this.chatView.clear();
+          this.messages = [];
+          this._seenMessageIds = new Set();
+          this.lastPollTime = 0;
+          // The server re-posts the opening message on reset; pull it in.
+          const msgsRes = await this.client.getMessages(this.scenarioId);
+          this.messages = msgsRes.messages || [];
+          this._seenMessageIds = new Set(this.messages.map((m) => m.id).filter(Boolean));
+          this.lastPollTime = this.messages.length
+            ? this.messages[this.messages.length - 1].timestamp
+            : Date.now();
+          if (this.chatView) this.chatView.renderMessages(this.messages);
           this.renderCalendar();
         } catch (err) {
           console.error('Restart failed:', err);

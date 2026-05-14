@@ -823,6 +823,23 @@ Respond with the JSON object ONLY — no prose, no markdown fences, no commentar
     const id = path.split('/')[4];
     if (!(await clearState(id))) return res.status(404).json({ error: 'Scenario not found' });
     const state = await getState(id);
+    // If the scenario has a configured opening message, re-post it so the
+    // user comes back to the same starting point they had on first load.
+    const def = await getScenarioDef(id);
+    if (def && def.openingMessage) {
+      const parsedOpener = parseActions(String(def.openingMessage));
+      const openMsg = {
+        id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        scenarioId: id,
+        from: def.agent || 'agent',
+        to: 'user',
+        text: parsedOpener.text,
+        timestamp: Date.now(),
+        actions: parsedOpener.actions,
+        source: 'reset-opener',
+      };
+      await appendMessage(id, openMsg);
+    }
     return res.status(200).json({ scenarioId: id, state, reset: true });
   }
 
