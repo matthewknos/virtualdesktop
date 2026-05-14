@@ -27,7 +27,8 @@
 import { kv } from '@vercel/kv';
 
 const KV_AVAILABLE = Boolean(process.env.KV_REST_API_URL || process.env.KV_URL);
-const TEMPLATES = ['teams', 'workday', 'excel'];
+const TEMPLATES = ['teams', 'workday', 'excel']; // reads accept all; CREATE_TEMPLATES limits new scenarios
+const CREATE_TEMPLATES = ['teams']; // workday + excel still WIP — disable creation
 const MAX_FILE_BYTES = 120_000;       // per file
 const MAX_TOTAL_REF_BYTES = 400_000;  // sum of all files + referenceData
 const MAX_FILES = 8;
@@ -494,8 +495,8 @@ export default async function handler(req, res) {
     const openingMessage = (body.openingMessage || '').trim();
 
     if (!name) return res.status(400).json({ error: 'Missing "name"' });
-    if (!TEMPLATES.includes(template)) {
-      return res.status(400).json({ error: `Invalid "template"; must be one of: ${TEMPLATES.join(', ')}` });
+    if (!CREATE_TEMPLATES.includes(template)) {
+      return res.status(400).json({ error: `Template "${template}" is not currently available for new scenarios. Pick one of: ${CREATE_TEMPLATES.join(', ')}.` });
     }
     if (personas.length === 0) {
       return res.status(400).json({ error: 'At least one persona is required' });

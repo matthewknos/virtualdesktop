@@ -112,6 +112,26 @@
     background: rgba(0,113,227,0.04);
     box-shadow: 0 0 0 2px rgba(0,113,227,0.18);
   }
+  .template-option.disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    background: var(--color-fog);
+  }
+  .template-option.disabled:hover { border-color: var(--color-silver-mist); }
+  .coming-soon {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-graphite);
+    background: var(--color-snow);
+    border: 1px solid var(--color-silver-mist);
+    padding: 2px 6px;
+    border-radius: 999px;
+    margin-left: 6px;
+    vertical-align: 1px;
+  }
   .template-name { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
   .template-desc { font-size: 12px; color: var(--color-graphite); line-height: 1.35; }
   @media (max-width: 640px) {
@@ -337,19 +357,19 @@
     <div class="field">
       <label class="field-label">Template</label>
       <div class="template-grid" id="templateGrid">
-        <label class="template-option" data-template="teams">
-          <input type="radio" name="template" value="teams" required>
+        <label class="template-option selected" data-template="teams">
+          <input type="radio" name="template" value="teams" required checked>
           <div class="template-name">Microsoft Teams</div>
           <div class="template-desc">Chat surface with calendar rail. Best for conversational agents.</div>
         </label>
-        <label class="template-option" data-template="workday">
-          <input type="radio" name="template" value="workday">
-          <div class="template-name">Workday</div>
+        <label class="template-option disabled" data-template="workday" aria-disabled="true">
+          <input type="radio" name="template" value="workday" disabled>
+          <div class="template-name">Workday <span class="coming-soon">Coming soon</span></div>
           <div class="template-desc">Read-only HR/finance view. Best for state-mutation agents.</div>
         </label>
-        <label class="template-option" data-template="excel">
-          <input type="radio" name="template" value="excel">
-          <div class="template-name">Excel</div>
+        <label class="template-option disabled" data-template="excel" aria-disabled="true">
+          <input type="radio" name="template" value="excel" disabled>
+          <div class="template-name">Excel <span class="coming-soon">Coming soon</span></div>
           <div class="template-desc">Flat grid renderer. Best for tabular data demos.</div>
         </label>
       </div>
