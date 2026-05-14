@@ -437,6 +437,21 @@ Examples (illustrative, not literal):
 
 Never respond to a short command with a generic email draft, a policy lecture, or unrelated content.`;
 
+// If an opener doesn't already carry an <<ACTIONS>> block, append one using
+// supplied fallback chips. Openings without action buttons feel dead — the
+// demo's first impression should always offer next steps.
+function ensureOpeningActions(opener, fallbackChips) {
+  const text = String(opener || '');
+  if (!text.trim()) return text;
+  if (/<<\s*ACTIONS\s*>>/i.test(text)) return text;
+  const chips = Array.isArray(fallbackChips)
+    ? fallbackChips.map((c) => String(c).trim()).filter(Boolean).slice(0, 3)
+    : [];
+  if (chips.length < 2) return text; // need at least 2 to be worth showing
+  const block = `\n\n<<ACTIONS>>${JSON.stringify(chips)}<<END>>`;
+  return text.replace(/\s+$/, '') + block;
+}
+
 function sanitizeInfoPanel(ip) {
   if (!ip || typeof ip !== 'object') return null;
   const arr = (x) => Array.isArray(x) ? x.map((s) => String(s)).filter(Boolean).slice(0, 8) : [];
@@ -848,9 +863,9 @@ SIZE RULES (responses have been truncated before — stay under these):
 
 Output a JSON object with ONLY these keys:
 - "systemPrompt": full system prompt — identity, tone, hard rules, persona-handling, reference files by name. ${isReconfigure ? 'Preserve prior prompt intent, add the new brief.' : 'Self-contained.'}
-- "openingMessage": agent's first line to the FIRST persona by name. Markdown OK. End with <<ACTIONS>>["A","B","C"]<<END>>.
+- "openingMessage": agent's first line to the FIRST persona by name. Markdown OK. MUST end with a literal <<ACTIONS>>["A","B","C"]<<END>> block (2–3 short next-step options in the user's voice). The opener feels dead without buttons — never omit this block on the opener.
 - "suggestedReplies": [2–4 strings, each ≤30 chars].
-- "personaOpenings": { personaId: opener } for ALL personas. Verbatim if supplied above.
+- "personaOpenings": { personaId: opener } for ALL personas. Each opener MUST also end with a <<ACTIONS>>["A","B","C"]<<END>> block — same rule as openingMessage. Use that persona's chips if supplied above. Verbatim if a per-persona opening was supplied above.
 - "personaChips": { personaId: [2–4 chips] } for ALL personas. Verbatim if supplied above.
 - "personaRegisters": { personaId: ≤100-word tone addendum } — only when personas need different register. Empty object if not.
 - "followupMap": [up to 6 { id, match (regex source, no slashes), chips: { personaId: [chips] } }]. Verbatim if supplied. Empty array if no rules help.
@@ -918,15 +933,29 @@ JSON OBJECT ONLY. No prose, no fences.`;
 
     const nextDescriptions = priorDescriptions.concat([description]);
 
+    const cleanSuggestedReplies = Array.isArray(config.suggestedReplies)
+      ? config.suggestedReplies.map((s) => String(s)).slice(0, 4)
+      : [];
+    const cleanPersonaChips = sanitizePersonaChips(config.personaChips) || {};
+    const rawPersonaOpenings = (config.personaOpenings && typeof config.personaOpenings === 'object') ? config.personaOpenings : {};
+    // Backfill <<ACTIONS>> on any opener the setup LLM forgot to attach them
+    // to. For the global openingMessage use suggestedReplies; for each
+    // persona opener use that persona's chips, falling back to suggestedReplies.
+    const ensuredOpening = ensureOpeningActions(String(config.openingMessage), cleanSuggestedReplies);
+    const ensuredPersonaOpenings = Object.fromEntries(
+      Object.entries(rawPersonaOpenings).map(([pid, txt]) => [
+        pid,
+        ensureOpeningActions(String(txt || ''), cleanPersonaChips[pid] || cleanSuggestedReplies),
+      ])
+    );
+
     const updatedDef = {
       ...def,
       systemPrompt: String(config.systemPrompt),
-      openingMessage: String(config.openingMessage),
-      suggestedReplies: Array.isArray(config.suggestedReplies)
-        ? config.suggestedReplies.map((s) => String(s)).slice(0, 4)
-        : [],
-      personaOpenings: (config.personaOpenings && typeof config.personaOpenings === 'object') ? config.personaOpenings : {},
-      personaChips: sanitizePersonaChips(config.personaChips) || {},
+      openingMessage: ensuredOpening,
+      suggestedReplies: cleanSuggestedReplies,
+      personaOpenings: ensuredPersonaOpenings,
+      personaChips: cleanPersonaChips,
       personaRegisters: (config.personaRegisters && typeof config.personaRegisters === 'object')
         ? Object.fromEntries(Object.entries(config.personaRegisters)
             .map(([k, v]) => [String(k), String(v || '').trim()])
