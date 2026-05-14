@@ -86,6 +86,63 @@
     box-shadow: 0 0 0 3px rgba(0,113,227,0.15);
   }
   textarea { resize: vertical; min-height: 180px; line-height: 1.5; }
+  textarea.compact { min-height: 80px; }
+  textarea.list { min-height: 100px; font-family: var(--font-text); }
+
+  .info-banner {
+    display: flex; gap: 14px; align-items: flex-start;
+    background: rgba(0,113,227,0.06);
+    border: 1px solid rgba(0,113,227,0.2);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 24px;
+    font-size: 14px;
+  }
+  .info-banner.warn {
+    background: #fff7ec;
+    border-color: #f0d4a0;
+    color: #4d3500;
+  }
+  .info-banner .icon { font-size: 18px; line-height: 1; padding-top: 1px; }
+  .info-banner .body { flex: 1; line-height: 1.45; }
+  .info-banner .body strong { font-weight: 600; }
+
+  .optional-section {
+    margin-top: 24px;
+    border-top: 1px solid var(--color-silver-mist);
+    padding-top: 24px;
+  }
+  .optional-section > summary {
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-graphite);
+    list-style: none;
+    user-select: none;
+    margin-bottom: 18px;
+  }
+  .optional-section > summary::-webkit-details-marker { display: none; }
+  .optional-section > summary::before {
+    content: '▸';
+    display: inline-block;
+    margin-right: 8px;
+    transition: transform 0.15s ease;
+  }
+  .optional-section[open] > summary::before { transform: rotate(90deg); }
+
+  .persona-opening-row { margin-bottom: 14px; }
+  .persona-opening-row .persona-tag {
+    display: inline-block;
+    font-size: 12px;
+    background: var(--color-fog);
+    padding: 4px 10px;
+    border-radius: 999px;
+    color: var(--color-ink);
+    margin-bottom: 6px;
+  }
+  .persona-opening-row textarea { min-height: 70px; }
 
   .submit-row {
     display: flex; align-items: center; gap: 16px;
@@ -189,7 +246,15 @@
     <div class="field">
       <label class="field-label" for="scenario">Scenario</label>
       <select id="scenario" required></select>
-      <div class="field-hint">Pick a user-created scenario. Configuring overwrites any prior agent prompt and wipes the existing chat history for that scenario.</div>
+      <div class="field-hint" id="scenarioHint">Pick a user-created scenario. First-time configure wipes existing chat and posts an opener. Reconfigure is additive — the prompt you enter is added on top of the prior brief without overriding it.</div>
+    </div>
+
+    <div class="info-banner" id="reconfigureBanner" style="display:none;">
+      <span class="icon">↻</span>
+      <div class="body">
+        <strong>Reconfiguring an existing agent.</strong> Whatever you type below is <em>added</em> to the prior brief — prior instructions, hard rules, and tone are preserved. The live chat is left in place; no opener is posted.
+        <div id="priorBriefsBlock" style="margin-top:10px;font-size:13px;color:var(--color-graphite);"></div>
+      </div>
     </div>
 
     <div class="field">
@@ -199,10 +264,47 @@
     </div>
 
     <div class="field">
-      <label class="field-label" for="description">What should your agent do?</label>
+      <label class="field-label" for="description"><span id="descLabel">What should your agent do?</span></label>
       <textarea id="description" placeholder="Example: You are Polly, a People Operations coach. Greet Mark and ask if he wants to review three recent absence cases. If yes, present each as a card with Approve / Request OH referral / Defer buttons. If no, offer to schedule a check-in for next week. Tone: warm, concise, plain English. Avoid HR jargon." required></textarea>
-      <div class="field-hint">Be specific about tone, what to ask first, and what choices to offer. The setup LLM bakes this into a full system prompt.</div>
+      <div class="field-hint" id="descHint">Be specific about tone, what to ask first, and what choices to offer. The setup LLM bakes this into a full system prompt.</div>
     </div>
+
+    <details class="optional-section" id="optionalSection">
+      <summary>Optional inputs — info panel, tone, per-persona openers</summary>
+
+      <div class="field">
+        <label class="field-label" for="tone">Agent tone & style</label>
+        <textarea id="tone" class="compact" placeholder="e.g. Warm, supportive, concise. No HR jargon. Use 24-hour time. Sign off with a quick offer."></textarea>
+        <div class="field-hint">Specific phrasing rules, register, vocabulary to avoid. Goes into the system prompt.</div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="capabilities">What the agent does (info-panel "What it does")</label>
+        <textarea id="capabilities" class="list" placeholder="One bullet per line. e.g.&#10;Drafts return-to-work prompts&#10;Surfaces pattern signals&#10;Cites the UK Sickness Absence Framework"></textarea>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="connectsTo">Connects to (info-panel "Connects to")</label>
+        <textarea id="connectsTo" class="list" placeholder="One bullet per line. e.g.&#10;Workday Absence&#10;SharePoint policy library&#10;Microsoft Teams"></textarea>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="refuses">Hard rules — what it refuses to do</label>
+        <textarea id="refuses" class="list" placeholder="One bullet per line. e.g.&#10;Disclose reason text&#10;Use escalation language&#10;Produce Stage 2/3 drafts"></textarea>
+        <div class="field-hint">Baked into the system prompt as hard rules <em>and</em> shown in the info panel.</div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="savingsLine">Estimated time saved / closing note</label>
+        <input type="text" id="savingsLine" placeholder="e.g. ~30 minutes saved per case (drafting, threshold checks, evidence assembly).">
+      </div>
+
+      <div class="field">
+        <label class="field-label">Per-persona opening messages</label>
+        <div id="personaOpenings"></div>
+        <div class="field-hint">Optional. If blank for a persona, the setup LLM writes one. Markdown allowed. End with <code>&lt;&lt;ACTIONS&gt;&gt;["A","B"]&lt;&lt;END&gt;&gt;</code> if you want quick-reply buttons.</div>
+      </div>
+    </details>
 
     <div class="submit-row">
       <button type="submit" class="btn-primary" id="submitBtn">Configure</button>
@@ -251,12 +353,24 @@
   const scenarioSel = document.getElementById('scenario');
   const tokenInput = document.getElementById('devPassword');
   const descArea = document.getElementById('description');
+  const descLabel = document.getElementById('descLabel');
+  const descHint = document.getElementById('descHint');
   const submitBtn = document.getElementById('submitBtn');
   const errorMsg = document.getElementById('errorMsg');
   const statusMsg = document.getElementById('statusMsg');
   const successCard = document.getElementById('successCard');
+  const reconfigureBanner = document.getElementById('reconfigureBanner');
+  const priorBriefsBlock = document.getElementById('priorBriefsBlock');
+  const optionalSection = document.getElementById('optionalSection');
+  const toneInput = document.getElementById('tone');
+  const capabilitiesInput = document.getElementById('capabilities');
+  const connectsToInput = document.getElementById('connectsTo');
+  const refusesInput = document.getElementById('refuses');
+  const savingsInput = document.getElementById('savingsLine');
+  const personaOpeningsHost = document.getElementById('personaOpenings');
 
   const client = new SandboxClient('');
+  let scenariosCache = [];
 
   function escapeHtml(s) {
     return String(s == null ? '' : s)
@@ -268,25 +382,82 @@
   function showStatus(msg) { statusMsg.textContent = msg; statusMsg.classList.add('show'); errorMsg.classList.remove('show'); }
   function clearMsgs() { errorMsg.classList.remove('show'); statusMsg.classList.remove('show'); }
 
+  function listToText(arr) { return Array.isArray(arr) ? arr.join('\n') : (arr || ''); }
+
+  function renderPersonaOpenings(personas, openings) {
+    personaOpeningsHost.innerHTML = (personas || []).map((p) => `
+      <div class="persona-opening-row">
+        <span class="persona-tag">${escapeHtml(p.name)} <span style="color:var(--color-graphite)">· ${escapeHtml(p.role || p.id)}</span></span>
+        <textarea data-persona-id="${escapeHtml(p.id)}" placeholder="(blank = let the setup LLM write one for ${escapeHtml(p.name)})">${escapeHtml(openings?.[p.id] || '')}</textarea>
+      </div>
+    `).join('') || '<div style="color:var(--color-graphite);font-size:13px;">No personas defined on this scenario.</div>';
+  }
+
+  function gatherPersonaOpenings() {
+    const out = {};
+    personaOpeningsHost.querySelectorAll('textarea[data-persona-id]').forEach((t) => {
+      const v = t.value.trim();
+      if (v) out[t.dataset.personaId] = v;
+    });
+    return out;
+  }
+
+  function applyScenarioToForm(s) {
+    const isReconfigure = Boolean(s && s.systemPrompt);
+    reconfigureBanner.style.display = isReconfigure ? 'flex' : 'none';
+    descLabel.textContent = isReconfigure ? 'Add to the agent brief' : 'What should your agent do?';
+    descHint.innerHTML = isReconfigure
+      ? 'Describe what to <em>add</em> or change. The setup LLM keeps the prior prompt intact and weaves this in.'
+      : 'Be specific about tone, what to ask first, and what choices to offer. The setup LLM bakes this into a full system prompt.';
+    descArea.value = '';
+    if (isReconfigure) {
+      const briefs = Array.isArray(s.descriptions) ? s.descriptions : [];
+      priorBriefsBlock.innerHTML = briefs.length
+        ? `<strong>Prior briefs (${briefs.length}):</strong><br>${briefs.map((b, i) => `<div style="margin-top:6px;"><em>(${i + 1})</em> ${escapeHtml(b)}</div>`).join('')}`
+        : '';
+    } else {
+      priorBriefsBlock.innerHTML = '';
+    }
+    // Prefill optional inputs from prior structuredInputs
+    const si = s?.structuredInputs || {};
+    toneInput.value = si.tone || '';
+    capabilitiesInput.value = listToText(si.capabilities);
+    connectsToInput.value = listToText(si.connectsTo);
+    refusesInput.value = listToText(si.refuses);
+    savingsInput.value = si.savingsLine || '';
+    renderPersonaOpenings(s?.personas || [], si.personaOpenings || s?.personaOpenings || {});
+    // Auto-open the optional section on reconfigure so prior inputs are visible
+    if (isReconfigure) optionalSection.open = true;
+    submitBtn.textContent = isReconfigure ? 'Apply update' : 'Configure';
+  }
+
   async function loadScenarios() {
     try {
       const { scenarios } = await client.listScenarios();
-      const userOnes = scenarios.filter((s) => s.source === 'user');
-      if (userOnes.length === 0) {
+      scenariosCache = scenarios.filter((s) => s.source === 'user');
+      if (scenariosCache.length === 0) {
         scenarioSel.innerHTML = '<option value="">No user scenarios yet — create one first</option>';
         submitBtn.disabled = true;
         return;
       }
-      scenarioSel.innerHTML = userOnes.map((s) =>
-        `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)} (${escapeHtml(s.id)}) — ${escapeHtml(s.template)}</option>`
-      ).join('');
-      // Honour ?scenario= URL param if present
+      scenarioSel.innerHTML = scenariosCache.map((s) => {
+        const label = `${s.name} (${s.id}) — ${s.template}${s.systemPrompt ? ' · AI-configured' : ''}`;
+        return `<option value="${escapeHtml(s.id)}">${escapeHtml(label)}</option>`;
+      }).join('');
       const preselect = new URLSearchParams(location.search).get('scenario');
-      if (preselect && userOnes.find((s) => s.id === preselect)) scenarioSel.value = preselect;
+      if (preselect && scenariosCache.find((s) => s.id === preselect)) scenarioSel.value = preselect;
+      // Apply selected scenario state to form
+      const sel = scenariosCache.find((s) => s.id === scenarioSel.value) || scenariosCache[0];
+      applyScenarioToForm(sel);
     } catch (err) {
       showError(`Failed to load scenarios: ${err.message}`);
     }
   }
+
+  scenarioSel.addEventListener('change', () => {
+    const sel = scenariosCache.find((s) => s.id === scenarioSel.value);
+    if (sel) applyScenarioToForm(sel);
+  });
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -296,17 +467,27 @@
     const description = descArea.value.trim();
     if (!id) return showError('Pick a scenario.');
     if (!token) return showError('Enter the dev password.');
-    if (!description) return showError('Describe what the agent should do.');
+    if (!description) return showError('Describe what the agent should do (or what to add).');
+
+    const payload = {
+      description,
+      tone: toneInput.value.trim(),
+      capabilities: capabilitiesInput.value.split(/\r?\n/).map((s) => s.trim()).filter(Boolean),
+      connectsTo: connectsToInput.value.split(/\r?\n/).map((s) => s.trim()).filter(Boolean),
+      refuses: refusesInput.value.split(/\r?\n/).map((s) => s.trim()).filter(Boolean),
+      savingsLine: savingsInput.value.trim(),
+      personaOpenings: gatherPersonaOpenings(),
+    };
 
     submitBtn.disabled = true;
     submitBtn.textContent = 'Generating…';
-    showStatus('Asking the setup LLM to generate the system prompt and opening message. This usually takes 3–8 seconds.');
+    showStatus('Asking the setup LLM to generate the system prompt and info panel. This usually takes 4–10 seconds.');
 
     try {
       const res = await fetch(`/api/sandbox/scenarios/${encodeURIComponent(id)}/configure`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Dev-Password': token },
-        body: JSON.stringify({ description }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         const b = await res.json().catch(() => ({ error: res.statusText }));
@@ -324,6 +505,20 @@
 
   function renderSuccess(id, data) {
     form.style.display = 'none';
+    if (data.reconfigured) {
+      const h2 = successCard.querySelector('h2');
+      const sub = successCard.querySelector('.success-sub');
+      if (h2) h2.textContent = 'Agent brief updated';
+      if (sub) sub.textContent = 'The new instructions are layered on top of the prior prompt. The live chat is untouched — your next message in the demo will use the updated system prompt.';
+    }
+    if (!data.openingMessage) {
+      // Reconfigure: hide opener preview rows since nothing was posted
+      document.querySelectorAll('.preview-row').forEach((el, i) => { if (i < 2) el.style.display = 'none'; });
+      document.getElementById('openDemoLink').href = `/sandbox/demo/?scenario=${encodeURIComponent(id)}`;
+      successCard.classList.add('show');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
     document.getElementById('previewOpening').textContent = data.openingMessage.text;
     const actionsHost = document.getElementById('previewActions');
     actionsHost.innerHTML = (data.openingMessage.actions || []).map((a) =>

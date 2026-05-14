@@ -262,6 +262,26 @@ function sanitizeScenario(def) {
   return rest;
 }
 
+// Accept either an array of strings or a newline-separated string; return a
+// cleaned array of non-empty trimmed strings.
+function arrayOfStrings(input) {
+  if (input == null) return [];
+  const raw = Array.isArray(input) ? input : String(input).split(/\r?\n/);
+  return raw.map((s) => String(s).replace(/^\s*[-*•]\s*/, '').trim()).filter(Boolean).slice(0, 8);
+}
+
+function sanitizeInfoPanel(ip) {
+  if (!ip || typeof ip !== 'object') return null;
+  const arr = (x) => Array.isArray(x) ? x.map((s) => String(s)).filter(Boolean).slice(0, 8) : [];
+  return {
+    heading: String(ip.heading || 'About this agent').slice(0, 120),
+    does: arr(ip.does),
+    connects: arr(ip.connects),
+    refuses: arr(ip.refuses),
+    closingNote: ip.closingNote ? String(ip.closingNote).slice(0, 280) : '',
+  };
+}
+
 async function readBody(req) {
   if (req.body && typeof req.body === 'object') return req.body;
   if (typeof req.body === 'string') {
@@ -376,10 +396,13 @@ export default async function handler(req, res) {
   }
 
   // ── CONFIGURE SCENARIO (AI wizard) ──
-  // Takes a plain-English description + delete token. Asks the setup LLM to
-  // produce {systemPrompt, openingMessage, suggestedReplies}; saves them on
-  // the scenario; clears prior messages; posts the opening message. The
-  // /messages auto-respond hook will then drive every subsequent turn.
+  // Takes a plain-English description (+ optional structured inputs) and a
+  // dev password. Asks the setup LLM to produce
+  //   { systemPrompt, openingMessage, suggestedReplies, infoPanel, personaOpenings? }
+  // and saves them on the scenario. First configure wipes any prior messages
+  // and posts the opening. Subsequent configures are ADDITIVE — the new
+  // description is appended to the prior brief chain, the LLM is told to
+  // preserve prior intent, and the existing chat is left in place.
   if (path.match(/^\/api\/sandbox\/scenarios\/[^/]+\/configure$/) && req.method === 'POST') {
     const id = path.split('/')[4];
     if (!KV_AVAILABLE) return res.status(503).json({ error: 'Scenario storage not configured.' });
@@ -392,26 +415,63 @@ export default async function handler(req, res) {
     const description = (body.description || '').trim();
     if (!description) return res.status(400).json({ error: 'Missing "description"' });
 
-    const personaList = (def.personas || []).map((p) => `- ${p.name} (${p.role})`).join('\n') || '- (none defined)';
+    const isReconfigure = Boolean(def.systemPrompt);
+    const priorDescriptions = Array.isArray(def.descriptions) ? def.descriptions : (def.description && isReconfigure ? [def.description] : []);
+
+    // Optional structured inputs — all may be empty. The LLM will infer
+    // anything missing from the description.
+    const tone = (body.tone || '').trim();
+    const capabilities = arrayOfStrings(body.capabilities);
+    const connectsTo = arrayOfStrings(body.connectsTo);
+    const refuses = arrayOfStrings(body.refuses);
+    const savingsLine = (body.savingsLine || '').trim();
+    const personaOpenings = (body.personaOpenings && typeof body.personaOpenings === 'object') ? body.personaOpenings : {};
+
+    const personaList = (def.personas || []).map((p) => `- ${p.id}: ${p.name} (${p.role})`).join('\n') || '- (none defined)';
     const calendarCapability = def.template === 'teams'
       ? `\n\nThis is the Teams template, which has a working calendar tab. If the demo owner's brief involves scheduling meetings, booking calls, or adding events, mention in the system prompt that the agent can add calendar events by appending a trailing block:\n<<CALENDAR>>[{"day":"Tue","startHour":14,"duration":0.5,"title":"Catch-up with Alice"}]<<END>>\nDay must be Mon–Sun (current week), startHour is 0–23 (0.5 = half hour), duration in hours. Direct the agent to ask the user for missing details (which day/time) before booking, and to confirm what was booked in the reply text.`
       : '';
+
+    const optionalSection = [
+      tone && `### Tone & style\n${tone}`,
+      capabilities.length && `### What the agent does (info-panel "What it does")\n${capabilities.map((c) => `- ${c}`).join('\n')}`,
+      connectsTo.length && `### Systems it connects to (info-panel "Connects to")\n${connectsTo.map((c) => `- ${c}`).join('\n')}`,
+      refuses.length && `### Hard rules — must refuse (info-panel "Will refuse to do")\n${refuses.map((c) => `- ${c}`).join('\n')}`,
+      savingsLine && `### Time saved estimate (info-panel closing line)\n${savingsLine}`,
+      Object.keys(personaOpenings).filter((k) => String(personaOpenings[k] || '').trim()).length
+        ? `### Per-persona opening messages (verbatim — use these exactly when generating personaOpenings)\n${Object.entries(personaOpenings)
+            .filter(([, v]) => String(v || '').trim())
+            .map(([pid, txt]) => `- ${pid}: ${String(txt).trim()}`)
+            .join('\n')}`
+        : null,
+    ].filter(Boolean).join('\n\n');
+
+    const reconfigureHeader = isReconfigure
+      ? `THIS IS A RECONFIGURE. The agent already has a prior system prompt and a live conversation. You MUST preserve every constraint, capability, persona reference, hard rule, and tone choice from the prior prompt. Treat the new brief below as an ADDITION — weave it in alongside the existing intent rather than replacing it. Where it conflicts with the prior prompt, the new brief wins; otherwise both stand.\n\nPRIOR SYSTEM PROMPT (verbatim — preserve intent):\n---\n${def.systemPrompt}\n---\n\nPRIOR BRIEF CHAIN (oldest → newest):\n${priorDescriptions.map((d, i) => `(${i + 1}) ${d}`).join('\n\n')}`
+      : 'This is the FIRST configure for this scenario. Build the system prompt from scratch using the brief below.';
+
     const setupPrompt = `You are configuring a sandbox AI agent for the CoE Sandbox platform's "${def.template}" template.${calendarCapability}
 
 Scenario name: ${def.name}
 Agent name: ${def.agent}
-Personas (who the agent talks to):
+Personas (id : name (role)) — the agent talks to one of these at a time:
 ${personaList}
 
-The demo owner has described what they want the agent to do:
+${reconfigureHeader}
+
+NEW BRIEF FROM DEMO OWNER:
 ---
 ${description}
 ---
 
+${optionalSection ? `STRUCTURED OPTIONAL INPUTS (use these verbatim where instructed; otherwise treat as authoritative for the relevant info-panel section):\n\n${optionalSection}\n` : ''}
+
 Produce a JSON object with these exact keys (and ONLY these keys):
-- "systemPrompt": a complete system prompt to drive the live conversation. Address it to the agent. Bake in the scenario name, persona names, tone, what to ask first, what to do when the user picks options, when to escalate or close out. Make it self-contained — the runtime will pass this verbatim as the system message every turn.
-- "openingMessage": the agent's first line of chat, addressed to the primary persona by name. Markdown allowed. Should set context and offer 2–3 next-step choices via action buttons. End with a trailing <<ACTIONS>>["Choice A","Choice B"]<<END>> block (literal text, no escaping).
-- "suggestedReplies": array of 2–4 short user-reply suggestions (each under 30 chars) the demo can show as quick-replies on first load.
+- "systemPrompt": a complete system prompt to drive the live conversation. Address it to the agent. Bake in scenario name, persona names, tone, what to ask first, what choices to offer, hard rules, when to escalate or close out. ${isReconfigure ? 'Preserve everything from the prior prompt above and add the new brief.' : 'Make it self-contained.'} The runtime passes this verbatim as the system message every turn.
+- "openingMessage": the agent's first line of chat, addressed to the FIRST persona by name. Markdown allowed. Set context and offer 2–3 next-step choices via action buttons. End with a trailing <<ACTIONS>>["Choice A","Choice B"]<<END>> block (literal text, no escaping).${isReconfigure ? ' On reconfigure, this is NOT posted to the existing chat — the conversation continues. Still produce a sensible one for record-keeping.' : ''}
+- "suggestedReplies": array of 2–4 short user-reply suggestions (each under 30 chars).
+- "personaOpenings": object keyed by persona id; value is the opening message that persona would see. Include ALL personas. If the demo owner supplied per-persona openings above, use those verbatim; otherwise generate one for each.
+- "infoPanel": object with keys { "heading" (short string, e.g. "About this agent"), "does" (array of 2–6 short bullets), "connects" (array of 2–5 short bullets), "refuses" (array of 2–5 short bullets), "closingNote" (one short sentence, e.g. the time-saved estimate or a usage caveat) }. If structured inputs above provided "What it does" / "Connects to" / "Refuses to do" / "Time saved", reuse them; otherwise infer from the brief.
 
 Respond with the JSON object ONLY — no prose, no markdown fences, no commentary.`;
 
@@ -420,7 +480,7 @@ Respond with the JSON object ONLY — no prose, no markdown fences, no commentar
       setupRaw = await callLLM([
         { role: 'system', content: 'You are a configuration assistant that outputs ONLY a single JSON object. No prose, no markdown, no commentary.' },
         { role: 'user', content: setupPrompt },
-      ], { maxTokens: 1600, temperature: 0.2, jsonMode: true });
+      ], { maxTokens: 2400, temperature: 0.2, jsonMode: true });
     } catch (err) {
       return res.status(502).json({ error: `Setup LLM call failed: ${err.message}` });
     }
@@ -432,7 +492,8 @@ Respond with the JSON object ONLY — no prose, no markdown fences, no commentar
       return res.status(502).json({ error: 'Setup LLM response missing required fields (systemPrompt/openingMessage).', config });
     }
 
-    // Persist on the scenario definition.
+    const nextDescriptions = priorDescriptions.concat([description]);
+
     const updatedDef = {
       ...def,
       systemPrompt: String(config.systemPrompt),
@@ -440,31 +501,39 @@ Respond with the JSON object ONLY — no prose, no markdown fences, no commentar
       suggestedReplies: Array.isArray(config.suggestedReplies)
         ? config.suggestedReplies.map((s) => String(s)).slice(0, 4)
         : [],
+      personaOpenings: (config.personaOpenings && typeof config.personaOpenings === 'object') ? config.personaOpenings : {},
+      infoPanel: sanitizeInfoPanel(config.infoPanel) || def.infoPanel || null,
+      descriptions: nextDescriptions,
+      // keep the most recent structured inputs for re-edit prefill on the form
+      structuredInputs: { tone, capabilities, connectsTo, refuses, savingsLine, personaOpenings },
       configuredAt: Date.now(),
+      reconfigureCount: (def.reconfigureCount || 0) + (isReconfigure ? 1 : 0),
     };
     await kv.set(KV_KEY(id), updatedDef);
 
-    // Reset chat: the new system prompt defines a different conversation.
-    await kv.del(KV_MSGS_KEY(id));
-
-    // Post the opening message as if from the agent.
-    const parsedOpener = parseActions(updatedDef.openingMessage);
-    const openMsg = {
-      id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-      scenarioId: id,
-      from: updatedDef.agent || 'agent',
-      to: 'user',
-      text: parsedOpener.text,
-      timestamp: Date.now(),
-      actions: parsedOpener.actions,
-      source: 'configure',
-    };
-    await appendMessage(id, openMsg);
+    let openMsg = null;
+    if (!isReconfigure) {
+      // First configure: wipe chat, post opener.
+      await kv.del(KV_MSGS_KEY(id));
+      const parsedOpener = parseActions(updatedDef.openingMessage);
+      openMsg = {
+        id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        scenarioId: id,
+        from: updatedDef.agent || 'agent',
+        to: 'user',
+        text: parsedOpener.text,
+        timestamp: Date.now(),
+        actions: parsedOpener.actions,
+        source: 'configure',
+      };
+      await appendMessage(id, openMsg);
+    }
 
     return res.status(200).json({
       id,
       scenario: sanitizeScenario(updatedDef),
       openingMessage: openMsg,
+      reconfigured: isReconfigure,
     });
   }
 

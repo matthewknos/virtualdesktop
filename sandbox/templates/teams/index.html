@@ -2618,20 +2618,13 @@
   <aside id="infoPanel" aria-labelledby="infoPanelHeading">
     <button id="infoPanelClose" type="button" aria-label="Close info panel" onclick="document.getElementById('infoPanel').classList.remove('open')">&times;</button>
     <h2 id="infoPanelHeading">About this demo</h2>
-
-    <h3>What it does</h3>
-    <ul>
-      <li>Demonstrates an AI agent embedded in Microsoft Teams</li>
-      <li>Supports conversational interactions with suggested replies</li>
-    </ul>
-
-    <h3>What it will refuse to do</h3>
-    <ul>
-      <li>Disclose real personal information</li>
-      <li>Perform actions outside its defined scope</li>
-    </ul>
-
-    <p class="closing">This is a sandbox environment for demonstration purposes only.</p>
+    <div id="infoPanelBody">
+      <h3>What it does</h3>
+      <ul><li>Demonstrates an AI agent embedded in Microsoft Teams</li></ul>
+      <h3>What it will refuse to do</h3>
+      <ul><li>Perform actions outside its defined scope</li></ul>
+      <p class="closing">This is a sandbox environment for demonstration purposes only.</p>
+    </div>
   </aside>
 
   <script src="/sandbox/sandbox-client.js"></script>
@@ -2847,9 +2840,30 @@
 (function() {
   'use strict';
 
-  const HOUR_HEIGHT = 50;
+  let HOUR_HEIGHT = 50;
+  const MIN_HOUR_HEIGHT = 44;
   const START_HOUR = 9;
   const END_HOUR = 18;
+  const HOUR_COUNT = END_HOUR - START_HOUR + 1;
+
+  // Cached last-rendered events so a resize can re-place them with the new
+  // HOUR_HEIGHT without losing data.
+  let lastEvents = [];
+
+  // Fit the hour grid to whatever vertical space the calendar pane gives us
+  // so we don't get blank space below 18:00 when the window is tall.
+  function fitGridToContainer() {
+    const container = document.getElementById('calGridContainer');
+    if (!container) return;
+    const available = container.clientHeight;
+    if (available <= 0) return;
+    const next = Math.max(MIN_HOUR_HEIGHT, Math.floor(available / HOUR_COUNT));
+    if (next === HOUR_HEIGHT) return;
+    HOUR_HEIGHT = next;
+    document.documentElement.style.setProperty('--hour-height', HOUR_HEIGHT + 'px');
+    renderCurrentTime();
+    renderEvents(lastEvents);
+  }
   const DAYS = ['Mon','Tue','Wed','Thu','Fri'];
   const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
@@ -3008,6 +3022,7 @@
     document.querySelectorAll('.event-bar').forEach(el => el.remove());
 
     if (!Array.isArray(events)) return;
+    lastEvents = events;
 
     events.forEach(ev => {
       const col = document.querySelector(`.day-col[data-day="${ev.day}"]`);
@@ -3048,6 +3063,7 @@
     updateDateRange();
     updateHeader();
     buildGrid();
+    fitGridToContainer();
     renderCurrentTime();
     if (events) renderEvents(events);
   };
@@ -3055,6 +3071,8 @@
   window.renderEvents = function(events) {
     renderEvents(events);
   };
+
+  window.fitCalendarToPane = fitGridToContainer;
 
   window.goToToday = function() {
     window.renderWeekView(new Date(), []);
@@ -3075,10 +3093,19 @@
   buildGrid();
   updateHeader();
   updateDateRange();
+  fitGridToContainer();
   renderCurrentTime();
 
   // Refresh current-time indicator every minute
   setInterval(renderCurrentTime, 60000);
+
+  // Refit on window resize and whenever the calendar pane becomes visible
+  // (it starts hidden until the rail-icon switch fires).
+  window.addEventListener('resize', fitGridToContainer);
+  const calContainer = document.getElementById('calGridContainer');
+  if (calContainer && typeof ResizeObserver !== 'undefined') {
+    new ResizeObserver(() => fitGridToContainer()).observe(calContainer);
+  }
 
 })();
 
@@ -3378,6 +3405,15 @@ class SandboxTeamsApp {
       chatList.style.display = view === 'chat' ? 'flex' : 'none';
     }
 
+    // When the calendar pane first becomes visible its clientHeight switches
+    // from 0 to its real value — refit on the next frame to fill it.
+    if (view === 'calendar') {
+      requestAnimationFrame(() => {
+        if (typeof window.fitCalendarToPane === 'function') window.fitCalendarToPane();
+        this.renderCalendar();
+      });
+    }
+
     // Rail active states
     document.querySelectorAll('#rail .rail-item').forEach((item) => {
       const label = item.querySelector('.rail-label')?.textContent?.trim();
@@ -3672,11 +3708,36 @@ class SandboxTeamsApp {
       nameEl.textContent = this.scenario.agent || this.scenario.name;
     }
 
-    // Info panel heading
-    const infoHeading = document.getElementById('infoPanelHeading');
-    if (infoHeading && this.scenario) {
-      infoHeading.textContent = `${this.scenario.name} — info`;
+    // Info panel — scenario-driven
+    this._renderInfoPanel();
+  }
+
+  _renderInfoPanel() {
+    const heading = document.getElementById('infoPanelHeading');
+    const body = document.getElementById('infoPanelBody');
+    if (!heading || !body || !this.scenario) return;
+    const ip = this.scenario.infoPanel;
+    const escape = (s) => String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    heading.textContent = (ip && ip.heading) || `${this.scenario.name} — info`;
+    const sections = [];
+    if (ip && ip.does && ip.does.length) {
+      sections.push(`<h3>What it does</h3><ul>${ip.does.map((d) => `<li>${escape(d)}</li>`).join('')}</ul>`);
     }
+    if (ip && ip.connects && ip.connects.length) {
+      sections.push(`<h3>Connects to</h3><ul>${ip.connects.map((d) => `<li>${escape(d)}</li>`).join('')}</ul>`);
+    }
+    if (ip && ip.refuses && ip.refuses.length) {
+      sections.push(`<h3>What it will refuse to do</h3><ul>${ip.refuses.map((d) => `<li>${escape(d)}</li>`).join('')}</ul>`);
+    }
+    if (ip && ip.closingNote) {
+      sections.push(`<p class="closing">${escape(ip.closingNote)}</p>`);
+    }
+    if (sections.length === 0) {
+      sections.push(`<p class="closing">This agent hasn't been configured with detail yet. Open <a href="/sandbox/configure?scenario=${encodeURIComponent(this.scenarioId)}" style="color:inherit;text-decoration:underline;">Configure with AI</a> to give it a brief.</p>`);
+    }
+    body.innerHTML = sections.join('');
   }
 
   _wireEvents() {
