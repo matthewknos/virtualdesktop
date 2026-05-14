@@ -512,6 +512,26 @@ function ensureOpeningActions(opener, fallbackChips, { force = false } = {}) {
   return text + `\n\n<<ACTIONS>>${JSON.stringify(chips)}<<END>>`;
 }
 
+function sanitizeCalendarEvents(input) {
+  if (!Array.isArray(input)) return [];
+  return input.slice(0, 30).map((e) => {
+    if (!e || typeof e !== 'object') return null;
+    const day = VALID_DAYS.includes(e.day) ? e.day : null;
+    const startHour = Number(e.startHour);
+    const duration = Number(e.duration);
+    const title = String(e.title || '').slice(0, 80).trim();
+    if (!day || !title || !Number.isFinite(startHour) || !Number.isFinite(duration)) return null;
+    return {
+      day,
+      startHour,
+      duration: Math.max(0.25, duration),
+      title,
+      color: e.color ? String(e.color).slice(0, 16) : undefined,
+      accent: e.accent ? String(e.accent).slice(0, 16) : undefined,
+    };
+  }).filter(Boolean);
+}
+
 function sanitizeInfoPanel(ip) {
   if (!ip || typeof ip !== 'object') return null;
   const arr = (x) => Array.isArray(x) ? x.map((s) => String(s)).filter(Boolean).slice(0, 8) : [];
@@ -1037,6 +1057,7 @@ JSON OBJECT ONLY. No prose, no fences.`;
       referenceData,
       styleGuidance,
       alwaysShowActions,
+      seedCalendarEvents: def.template === 'teams' ? sanitizeCalendarEvents(config.seedCalendarEvents) : [],
       descriptions: nextDescriptions,
       // keep the most recent structured inputs for re-edit prefill on the form
       structuredInputs: {
@@ -1047,7 +1068,57 @@ JSON OBJECT ONLY. No prose, no fences.`;
       configuredAt: Date.now(),
       reconfigureCount: (def.reconfigureCount || 0) + (isReconfigure ? 1 : 0),
     };
-    await kv.set(KV_KEY(id), updatedDef);
+    // Calendar event extraction — runs only for teams template with reference
+    // material attached. The main setup LLM doesn't see file content (kept
+    // out for cost), so a small dedicated call reads the files and extracts
+    // events to seed state.calendar with.
+    let extractedCalendar = sanitizeCalendarEvents(updatedDef.seedCalendarEvents);
+    if (def.template === 'teams' && (referenceFiles.length || referenceData.length > 100)) {
+      try {
+        const fileSnippets = referenceFiles.map((f) => {
+          const head = f.content.slice(0, 6000);
+          return `### File: ${f.name}\n${head}${f.content.length > 6000 ? '\n…[truncated]' : ''}`;
+        }).join('\n\n');
+        const extractPrompt = `Extract calendar events from the reference material below for a Teams demo calendar tab. Return ONE JSON object with this exact shape:
+{ "events": [ { "day": "Mon"|"Tue"|"Wed"|"Thu"|"Fri"|"Sat"|"Sun", "startHour": 0-23 (decimals OK e.g. 9.5 = 09:30), "duration": hours (decimals OK), "title": "≤60 chars" }, … ] }
+
+Rules:
+- Cover ONE representative week. If the material describes multiple weeks, pick the most detailed.
+- Include meetings, focus blocks, 1:1s, standups — everything time-bound.
+- For client/external meetings, prefix title with "ext —".
+- For focus blocks, prefix with "Focus: ".
+- For 1:1s, format as "1:1 X ↔ Y".
+- Cap at 30 events. If no events, return { "events": [] }.
+- JSON only, no prose.
+
+${referenceData ? `Inline reference data:\n${referenceData.slice(0, 6000)}\n\n` : ''}${fileSnippets ? `Reference files:\n${fileSnippets}` : ''}`;
+        const extracted = await callLLM(
+          [
+            { role: 'system', content: 'Extract structured calendar events as a single JSON object. No prose.' },
+            { role: 'user', content: extractPrompt },
+          ],
+          { model: 'moonshot-v1-32k', maxTokens: 2000, temperature: 0.1, jsonMode: true }
+        );
+        const parsed = extractJSON(extracted);
+        if (parsed && Array.isArray(parsed.events) && parsed.events.length) {
+          extractedCalendar = sanitizeCalendarEvents(parsed.events);
+          // Persist back on the def for visibility on the configure form.
+          updatedDef.seedCalendarEvents = extractedCalendar;
+          await kv.set(KV_KEY(id), updatedDef);
+        }
+      } catch (err) {
+        console.error('calendar extract failed:', err.message);
+      }
+    }
+
+    // Seed the Teams calendar tab. Replace any prior state.calendar with the
+    // freshly-extracted seed when we have one — a new configure supersedes
+    // anything the agent had previously added at runtime via <<CALENDAR>>.
+    if (def.template === 'teams' && extractedCalendar.length) {
+      const state = await getState(id);
+      state.calendar = extractedCalendar;
+      await setState(id, state);
+    }
 
     let openMsg = null;
     // Decide whether to repost the opener.
@@ -1101,6 +1172,7 @@ JSON OBJECT ONLY. No prose, no fences.`;
       openingMessage: openMsg,
       reconfigured: isReconfigure,
       chatReset: Boolean(isReconfigure && wipeChat),
+      seededCalendarCount: extractedCalendar.length,
     });
   }
 

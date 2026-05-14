@@ -1037,10 +1037,16 @@
       const sub = successCard.querySelector('.success-sub');
       if (h2) h2.textContent = 'Agent brief updated';
       if (sub) {
-        sub.textContent = data.chatReset
+        const calNote = data.seededCalendarCount
+          ? ` ${data.seededCalendarCount} calendar event${data.seededCalendarCount === 1 ? '' : 's'} extracted from your reference material — they'll appear in the Teams demo's Calendar tab.`
+          : '';
+        sub.textContent = (data.chatReset
           ? 'The new instructions are layered on top of the prior prompt. The chat was reset to surface the new opener with its buttons — refresh the demo tab to see it.'
-          : 'The new instructions are layered on top of the prior prompt. The live chat is untouched — your next message in the demo will use the updated system prompt.';
+          : 'The new instructions are layered on top of the prior prompt. The live chat is untouched — your next message in the demo will use the updated system prompt.') + calNote;
       }
+    } else if (data.seededCalendarCount) {
+      const sub = successCard.querySelector('.success-sub');
+      if (sub) sub.textContent += ` ${data.seededCalendarCount} calendar event${data.seededCalendarCount === 1 ? '' : 's'} extracted from your reference material — they'll appear in the Teams demo's Calendar tab.`;
     }
     if (!data.openingMessage) {
       // Reconfigure: hide opener preview rows since nothing was posted
