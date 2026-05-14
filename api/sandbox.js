@@ -375,20 +375,36 @@ function sanitizeFollowupMap(input) {
 function buildReferenceBlock(def) {
   const sections = [];
   if (def.styleGuidance) {
-    sections.push(`## Style guidance\n${def.styleGuidance}`);
+    sections.push(`## Style guidance (formatting, voice, conventions)\n${def.styleGuidance}`);
   }
   if (def.referenceData) {
-    sections.push(`## Reference data (inline notes, case records, dates)\n${def.referenceData}`);
+    sections.push(`## Inline reference data (case records, dates, IDs, policy excerpts)\n${def.referenceData}`);
   }
   if (Array.isArray(def.referenceFiles) && def.referenceFiles.length) {
     const fileSections = def.referenceFiles
       .map((f) => `### File: ${f.name}\n${f.content}`)
       .join('\n\n');
-    sections.push(`## Reference files (treat these as ground truth — quote and cite by filename when relevant)\n${fileSections}`);
+    sections.push(`## Reference files (full text — ground truth, quote and cite by filename)\n${fileSections}`);
   }
   if (sections.length === 0) return '';
-  return `\n\n# REFERENCE MATERIAL\nThe demo owner has supplied the following. Treat it as authoritative. If something contradicts your general knowledge, the material below wins. Cite filenames when you quote from them.\n\n${sections.join('\n\n')}`;
+  return `# REFERENCE MATERIAL — AUTHORITATIVE
+The demo owner has supplied the material below as your source of truth. Strict rules:
+- This material WINS over your general training knowledge whenever they conflict.
+- For any factual claim about policy, threshold, case, person, or date, base it ON THIS MATERIAL — not on generic HR/legal knowledge.
+- When you draft a conversation, prompt, message, or letter, weave in specifics from this material (names, dates, IDs, policy section numbers, exact wording). Do not produce generic templates.
+- Cite source filenames inline when you quote (e.g. "per Policy.md §4.2: …").
+- If the user asks something the supplied material doesn't cover, say so plainly. Never substitute generic boilerplate.
+
+${sections.join('\n\n')}
+
+# END OF REFERENCE MATERIAL`;
 }
+
+const RUNTIME_DRAFTING_INSTRUCTION = `When asked to draft a conversation prompt, message, letter, talking points, or any content the user will copy/send:
+- Render the draft itself as a markdown blockquote (each line prefixed with "> "), so it visually reads as a draft and not your own voice.
+- The draft's voice is the configured speaker (e.g. the line manager talking to their report, or HR talking to the worker) — NOT yours. Do not sign it off with your own agent name.
+- Ground specifics in the supplied reference material (names, dates, policy section numbers, exact wording). Avoid generic HR boilerplate.
+- Keep a short framing sentence above the blockquote ("Here's a draft you can adapt:") and a short offer below ("Want me to adjust the tone or shorten it?"). Don't pad with explanations the user didn't ask for.`;
 
 function sanitizeInfoPanel(ip) {
   if (!ip || typeof ip !== 'object') return null;
@@ -857,11 +873,19 @@ Respond with the JSON object ONLY — no prose, no markdown fences, no commentar
         const llmHistory = historyToLLM(def, history);
         const calendarInstr = def.template === 'teams' ? `\n\n${RUNTIME_CALENDAR_INSTRUCTION}` : '';
         const refBlock = buildReferenceBlock(def);
-        const sysContent = `${def.systemPrompt}\n\n${RUNTIME_ACTION_INSTRUCTION}${calendarInstr}${refBlock}`;
+        // Order matters. Reference material FIRST (so the model attends to it
+        // as foundational context before role-play takes over), then identity
+        // / persona prompt, then output-protocol instructions closest to the
+        // generation point.
+        const parts = [];
+        if (refBlock) parts.push(refBlock);
+        parts.push(`# AGENT IDENTITY & BEHAVIOUR\n${def.systemPrompt}`);
+        parts.push(`# OUTPUT PROTOCOLS\n${RUNTIME_ACTION_INSTRUCTION}\n\n${RUNTIME_DRAFTING_INSTRUCTION}${calendarInstr}`);
+        const sysContent = parts.join('\n\n');
         const raw = await callLLM([
           { role: 'system', content: sysContent },
           ...llmHistory,
-        ], { maxTokens: 800 });
+        ], { maxTokens: 1500 });
         // Strip calendar block first so it doesn't end up in the rendered chat.
         const cal = def.template === 'teams' ? parseCalendar(raw) : { text: raw, events: null };
         const parsed = parseActions(cal.text);
