@@ -291,7 +291,7 @@ function historyToLLM(scenarioDef, messages) {
   });
 }
 
-const RUNTIME_ACTION_INSTRUCTION = `Action-button protocol — append a trailing block on its own line in this exact format when you want to offer the user button choices:
+const RUNTIME_ACTION_INSTRUCTION_DEFAULT = `Action-button protocol — append a trailing block on its own line in this exact format when you want to offer the user button choices:
 <<ACTIONS>>["First option","Second option","Third option"]<<END>>
 
 Format rules:
@@ -303,6 +303,23 @@ When to include the block:
 - Default: omit on small narrative-only replies that have no obvious next step.
 - BUT — if the AGENT IDENTITY & BEHAVIOUR section above tells you to always include actions, always offer next steps, always end with a choice, or similar — that instruction WINS. Include an <<ACTIONS>> block every turn even on narrative replies, using plausible next-step options drawn from context (clarifying questions, "Tell me more about X", "Show me Y", "Continue", etc.).
 - Any conflict between this default and the scenario's identity instructions is resolved in favour of the identity instructions.`;
+
+const RUNTIME_ACTION_INSTRUCTION_ALWAYS_ON = `Action-button protocol — MANDATORY on EVERY reply, no exceptions. Append a trailing block on its own line in this exact format:
+<<ACTIONS>>["First option","Second option","Third option"]<<END>>
+
+Format rules:
+- 2–3 short options, each under 30 chars.
+- Phrase options in the USER's voice (what they would say / tap next).
+- Match register to the active speaker.
+
+THIS RULE OVERRIDES ANY DEFAULT BEHAVIOUR. Even on narrative-only replies, on confirmations, on apologies, on "let me think" turns — ALWAYS include an <<ACTIONS>> block with plausible next steps drawn from context. Acceptable fallbacks when no obvious decision exists: ["Tell me more", "Show me an example", "Continue"] or ["Got it", "What else?", "End for now"]. Never end a reply without the block.`;
+
+// Pick the right protocol based on the scenario's alwaysShowActions toggle.
+function actionInstructionFor(def) {
+  return def && def.alwaysShowActions
+    ? RUNTIME_ACTION_INSTRUCTION_ALWAYS_ON
+    : RUNTIME_ACTION_INSTRUCTION_DEFAULT;
+}
 
 const RUNTIME_CALENDAR_INSTRUCTION = `When the user asks you to schedule, book, or add a call/meeting to their calendar, append a calendar block on its own line in this exact format AFTER your normal text (and before any <<ACTIONS>> block):
 <<CALENDAR>>[{"day":"Tue","startHour":14,"duration":0.5,"title":"Catch-up with Alice"}]<<END>>
@@ -755,6 +772,12 @@ Rules:
     const referenceData = (body.referenceData || '').trim();
     const personaChips = sanitizePersonaChips(body.personaChips);
     const followupMap = sanitizeFollowupMap(body.followupMap);
+    // Boolean toggle — when true, the runtime forces an <<ACTIONS>> block on
+    // every reply (even pure-narrative ones). When undefined on the body we
+    // preserve the prior value rather than clearing it.
+    const alwaysShowActions = (typeof body.alwaysShowActions === 'boolean')
+      ? body.alwaysShowActions
+      : Boolean(def.alwaysShowActions);
     // Per-persona register: short addendum injected into the system prompt
     // when that persona is the active speaker. Mirrors getSystemPromptForRole
     // in the sickness-absence demo.
@@ -967,6 +990,7 @@ JSON OBJECT ONLY. No prose, no fences.`;
       referenceFiles,
       referenceData,
       styleGuidance,
+      alwaysShowActions,
       descriptions: nextDescriptions,
       // keep the most recent structured inputs for re-edit prefill on the form
       structuredInputs: {
@@ -1135,7 +1159,7 @@ JSON OBJECT ONLY. No prose, no fences.`;
           const speakerLine = persona ? `\nCurrent speaker: ${persona.name}${persona.role ? ` (${persona.role})` : ''}\n` : '\n';
           parts.push(`# CURRENT SPEAKER — REGISTER OVERRIDE${speakerLine}\n${activeRegister}`);
         }
-        parts.push(`# OUTPUT PROTOCOLS\n${RUNTIME_ACTION_INSTRUCTION}\n\n${RUNTIME_COMMAND_INSTRUCTION}\n\n${RUNTIME_DRAFTING_INSTRUCTION}${calendarInstr}`);
+        parts.push(`# OUTPUT PROTOCOLS\n${actionInstructionFor(def)}\n\n${RUNTIME_COMMAND_INSTRUCTION}\n\n${RUNTIME_DRAFTING_INSTRUCTION}${calendarInstr}`);
         const sysContent = parts.join('\n\n');
         const raw = await callLLM([
           { role: 'system', content: sysContent },
