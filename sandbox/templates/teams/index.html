@@ -3386,6 +3386,10 @@ class ChatView {
       .replace(/<<CALENDAR>>[\s\S]*?<<END>>/g, '')
       .replace(/<<ACTIONS>>[\s\S]*$/g, '')
       .replace(/<<CALENDAR>>[\s\S]*$/g, '')
+      // Orphan closing tags (full <<END>> or truncated <<END>) sometimes leak
+      // when the LLM emits the closer without the opener.
+      .replace(/<<\s*END\s*>>?/g, '')
+      .replace(/<<\s*END\b/g, '')
       .trim();
     return this._renderMarkdown(cleaned);
   }

@@ -215,11 +215,15 @@ function parseActions(raw) {
         .filter(Boolean);
     }
   } catch { /* malformed action block — leave as null */ }
-  // Strip both the well-formed block and the open-ended fallback shape.
+  // Strip the well-formed block, open-ended fallback, dangling opener, AND
+  // any orphan closing tags (full <<END>> or truncated <<END>) that the LLM
+  // occasionally emits without a matching opener.
   const cleaned = raw
-    .replace(/<<ACTIONS>>[\s\S]*?<<END>>/, '')
-    .replace(/<<ACTIONS>>\s*\[[\s\S]*?\]\s*/, '')
-    .replace(/<<ACTIONS>>[\s\S]*$/, '') // last-resort: nuke a dangling opener
+    .replace(/<<ACTIONS>>[\s\S]*?<<END>>/g, '')
+    .replace(/<<ACTIONS>>\s*\[[\s\S]*?\]\s*/g, '')
+    .replace(/<<ACTIONS>>[\s\S]*$/g, '')
+    .replace(/<<\s*END\s*>>?/g, '') // orphan <<END>> or <<END>
+    .replace(/<<\s*END\b/g, '')
     .trim();
   return { text: cleaned, actions };
 }
@@ -400,11 +404,28 @@ ${sections.join('\n\n')}
 # END OF REFERENCE MATERIAL`;
 }
 
-const RUNTIME_DRAFTING_INSTRUCTION = `When asked to draft a conversation prompt, message, letter, talking points, or any content the user will copy/send:
-- Render the draft itself as a markdown blockquote (each line prefixed with "> "), so it visually reads as a draft and not your own voice.
-- The draft's voice is the configured speaker (e.g. the line manager talking to their report, or HR talking to the worker) — NOT yours. Do not sign it off with your own agent name.
-- Ground specifics in the supplied reference material (names, dates, policy section numbers, exact wording). Avoid generic HR boilerplate.
-- Keep a short framing sentence above the blockquote ("Here's a draft you can adapt:") and a short offer below ("Want me to adjust the tone or shorten it?"). Don't pad with explanations the user didn't ask for.`;
+const RUNTIME_DRAFTING_INSTRUCTION = `Drafting rules — apply ONLY when the user EXPLICITLY asks for one (phrases like "draft…", "write the message", "help me write", "give me the wording", "what would I say"). Do NOT draft in response to short imperative commands ("Submit Timesheet", "Approve", "Escalate", "Continue") — those are commitments, not requests for content.
+
+When you do draft:
+- Render the draft itself as a markdown blockquote (each line prefixed with "> ") so it visually reads as a draft, not your own voice.
+- The draft's voice is the configured speaker (e.g. the line manager talking to their report). NOT yours. Do not sign it with your own agent name.
+- Ground specifics in supplied reference material (names, dates, policy section numbers). Avoid generic boilerplate.
+- One short framing line above ("Here's a draft you can adapt:") and one short offer below ("Want me to adjust the tone?"). Nothing else.
+- The draft must be the thing the user actually asked for. If they asked you to chase someone for a missing timesheet, draft a chaser TO that person — don't draft a draft they'd send. Read the brief carefully.`;
+
+const RUNTIME_COMMAND_INSTRUCTION = `Interpreting user replies — many user messages will arrive as button labels you previously offered. Treat short imperative verbs ("Submit Timesheet", "Approve", "Escalate to PM", "Cancel", "Yes", "Done") as the user committing to / requesting that action — NOT as a request to draft, explain, or restate.
+
+Your response to a short command should:
+- Acknowledge what the user has chosen in one short sentence.
+- State what happens next (what you'll do, what they'll see, what changes in the system) — referring to the actual scenario context. If your scenario data names a specific Workday module, person, or document, name it.
+- Offer the next sensible step via a fresh <<ACTIONS>> block, OR end cleanly if no follow-up is needed.
+
+Examples (illustrative, not literal):
+- User: "Submit Timesheet" → "Submitting your timesheet to Workday now. You'll see it in the Inbox queue under 'Pending approval' within a few minutes. Want me to chase your line manager if it sits there past Friday?"
+- User: "Approve" → "Approved. The R&R nomination is now in the recognition queue. Anything else for this batch?"
+- User: "Escalate to PM" → "Routing this to your PM. They'll see it in their Workday Inbox with the absence context attached."
+
+Never respond to a short command with a generic email draft, a policy lecture, or unrelated content.`;
 
 function sanitizeInfoPanel(ip) {
   if (!ip || typeof ip !== 'object') return null;
@@ -932,7 +953,7 @@ JSON OBJECT ONLY. No prose, no fences.`;
           const speakerLine = persona ? `\nCurrent speaker: ${persona.name}${persona.role ? ` (${persona.role})` : ''}\n` : '\n';
           parts.push(`# CURRENT SPEAKER — REGISTER OVERRIDE${speakerLine}\n${activeRegister}`);
         }
-        parts.push(`# OUTPUT PROTOCOLS\n${RUNTIME_ACTION_INSTRUCTION}\n\n${RUNTIME_DRAFTING_INSTRUCTION}${calendarInstr}`);
+        parts.push(`# OUTPUT PROTOCOLS\n${RUNTIME_ACTION_INSTRUCTION}\n\n${RUNTIME_COMMAND_INSTRUCTION}\n\n${RUNTIME_DRAFTING_INSTRUCTION}${calendarInstr}`);
         const sysContent = parts.join('\n\n');
         const raw = await callLLM([
           { role: 'system', content: sysContent },
