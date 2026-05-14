@@ -136,6 +136,19 @@
     border-radius: 999px;
     margin-bottom: 14px;
   }
+  .source-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--color-graphite);
+    background: var(--color-fog);
+    padding: 3px 8px;
+    border-radius: 999px;
+    margin-left: 6px;
+    vertical-align: 1px;
+  }
 
   .card-title {
     font-family: var(--font-display);
@@ -278,7 +291,10 @@
     and connect your agent via API — no need to rebuild Teams chrome every time.
   </p>
 
-  <div class="section-title">Scenarios</div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+    <div class="section-title" style="margin-bottom:0">Scenarios</div>
+    <a href="/sandbox/new" style="background:var(--color-azure);color:#fff;text-decoration:none;font-size:14px;font-weight:500;padding:8px 16px;border-radius:999px;">+ Create new demo</a>
+  </div>
   <div class="grid" id="scenario-grid">
     <!-- Filled by JS -->
   </div>
@@ -294,11 +310,19 @@
       <tbody>
         <tr>
           <td><span class="method">GET</span> <span class="path">/api/sandbox/scenarios</span></td>
-          <td class="desc">List every scenario with personas and descriptions.</td>
+          <td class="desc">List every scenario (seeded + user-created).</td>
+        </tr>
+        <tr>
+          <td><span class="method">POST</span> <span class="path">/api/sandbox/scenarios</span></td>
+          <td class="desc">Create a user scenario. Body: <code>name, template, personas, description?, agent?, openingMessage?</code>. Returns id, delete token, demo URL.</td>
         </tr>
         <tr>
           <td><span class="method">GET</span> <span class="path">/api/sandbox/scenarios/:id</span></td>
           <td class="desc">Get one scenario definition.</td>
+        </tr>
+        <tr>
+          <td><span class="method">DELETE</span> <span class="path">/api/sandbox/scenarios/:id</span></td>
+          <td class="desc">Delete a user scenario. Requires <code>X-Delete-Token</code> header.</td>
         </tr>
         <tr>
           <td><span class="method">GET</span> <span class="path">/api/sandbox/scenarios/:id/state</span></td>
@@ -353,20 +377,29 @@
 <script>
   const client = new SandboxClient('');
 
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   async function loadScenarios() {
     try {
       const { scenarios } = await client.listScenarios();
       const grid = document.getElementById('scenario-grid');
       grid.innerHTML = scenarios.map(s => `
-        <a class="card" href="demo/?scenario=${s.id}">
-          <span class="card-agent">${s.agent}</span>
-          <div class="card-title">${s.name}</div>
-          <div class="card-desc">${s.description}</div>
+        <a class="card" href="/sandbox/demo/?scenario=${s.id}">
+          <span class="card-agent">${escapeHtml(s.agent)}</span>${s.source === 'user' ? '<span class="source-badge">User</span>' : ''}
+          <div class="card-title">${escapeHtml(s.name)}</div>
+          <div class="card-desc">${escapeHtml(s.description || '')}</div>
           <div class="card-meta">
-            ${s.personas.map(p => `
+            ${(s.personas || []).map(p => `
               <span class="persona-pill">
-                <span class="avatar">${p.initials || p.name.charAt(0)}</span>
-                ${p.name}
+                <span class="avatar">${escapeHtml(p.initials || (p.name || '?').charAt(0))}</span>
+                ${escapeHtml(p.name)}
               </span>
             `).join('')}
           </div>
