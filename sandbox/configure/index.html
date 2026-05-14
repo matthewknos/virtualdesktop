@@ -206,6 +206,33 @@
   }
   .file-pill .file-remove:hover { color: var(--color-danger); }
   .file-pill.prior { background: rgba(0,113,227,0.06); border-color: rgba(0,113,227,0.2); }
+  .autofill-btn {
+    background: linear-gradient(135deg, var(--color-azure), #5e5ce6);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: 9px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: opacity 0.15s ease, transform 0.05s ease;
+  }
+  .autofill-btn:hover { opacity: 0.92; }
+  .autofill-btn:active { transform: translateY(1px); }
+  .autofill-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .autofill-pulse { animation: autofillPulse 1.4s ease-in-out infinite; }
+  @keyframes autofillPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(0,113,227,0); }
+    50% { box-shadow: 0 0 0 4px rgba(0,113,227,0.25); }
+  }
+  .field-autofilled {
+    animation: fieldFlash 0.6s ease-out;
+  }
+  @keyframes fieldFlash {
+    0% { background: rgba(46, 160, 67, 0.18); }
+    100% { background: transparent; }
+  }
 
   .submit-row {
     display: flex; align-items: center; gap: 16px;
@@ -401,6 +428,13 @@
         <span class="icon">📎</span>
         <div class="body">
           Anything you put here is injected into the agent's system prompt <strong>every turn</strong>. Treat it like grounded knowledge — the agent will quote and cite it. Cap: 8 files, 120KB per file, 400KB total (files + inline data combined).
+          <div style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <button type="button" id="autofillBtn" class="autofill-btn">✨ Auto-fill form from documents</button>
+            <label style="font-size:12px;color:var(--color-graphite);display:flex;align-items:center;gap:6px;">
+              <input type="checkbox" id="autofillOverwrite"> Overwrite filled fields too
+            </label>
+          </div>
+          <div id="autofillStatus" style="font-size:13px;color:var(--color-graphite);margin-top:8px;display:none;"></div>
         </div>
       </div>
 
@@ -672,6 +706,159 @@ Tom Reed (W-118394) — 4 spells / 5 days. 3 of 4 Friday starts (p=0.014). Loop 
     const sel = scenariosCache.find((s) => s.id === scenarioSel.value);
     addFollowupRow(sel?.personas || [], { id: '', match: '', chips: {} });
   });
+
+  // ── Auto-fill from documents ──
+  // Send any staged files + reference data + brief to the analyse endpoint;
+  // merge suggestions into form fields. By default only blank fields are
+  // filled; the overwrite toggle replaces existing values too.
+  const autofillBtn = document.getElementById('autofillBtn');
+  const autofillStatus = document.getElementById('autofillStatus');
+  const autofillOverwrite = document.getElementById('autofillOverwrite');
+
+  function flashField(el) {
+    if (!el) return;
+    el.classList.add('field-autofilled');
+    setTimeout(() => el.classList.remove('field-autofilled'), 700);
+  }
+
+  function setIfEmptyOrOverwrite(el, value, overwrite) {
+    if (!el || !value) return false;
+    if (!overwrite && el.value && el.value.trim()) return false;
+    el.value = value;
+    flashField(el);
+    return true;
+  }
+
+  autofillBtn.addEventListener('click', async () => {
+    const id = scenarioSel.value;
+    const token = tokenInput.value.trim();
+    if (!id) return showError('Pick a scenario first.');
+    if (!token) return showError('Enter the dev password before auto-filling.');
+
+    const newFiles = [];
+    stagedFiles.forEach((f) => { if (!f.prior) newFiles.push({ name: f.name, content: f.content }); });
+    if (!newFiles.length && !referenceDataInput.value.trim() && !descArea.value.trim() && stagedFiles.size === 0) {
+      return showError('Upload at least one file, paste reference data, or type a brief first.');
+    }
+
+    clearMsgs();
+    autofillBtn.disabled = true;
+    autofillBtn.textContent = 'Reading documents…';
+    autofillBtn.classList.add('autofill-pulse');
+    autofillStatus.style.display = 'block';
+    autofillStatus.textContent = 'Sending to the setup LLM. Usually 4–10 seconds.';
+
+    try {
+      const res = await fetch(`/api/sandbox/scenarios/${encodeURIComponent(id)}/analyse`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Dev-Password': token },
+        body: JSON.stringify({
+          description: descArea.value.trim(),
+          referenceData: referenceDataInput.value.trim(),
+          referenceFiles: newFiles,
+        }),
+      });
+      if (!res.ok) {
+        const b = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(b.error || `HTTP ${res.status}`);
+      }
+      const { suggestions } = await res.json();
+      applySuggestions(suggestions);
+    } catch (err) {
+      showError(err.message || 'Auto-fill failed.');
+    } finally {
+      autofillBtn.disabled = false;
+      autofillBtn.textContent = '✨ Auto-fill form from documents';
+      autofillBtn.classList.remove('autofill-pulse');
+    }
+  });
+
+  function applySuggestions(s) {
+    const overwrite = autofillOverwrite.checked;
+    const sel = scenariosCache.find((sc) => sc.id === scenarioSel.value);
+    const personas = sel?.personas || [];
+    let filledCount = 0;
+
+    if (setIfEmptyOrOverwrite(descArea, s.suggestedDescription, overwrite)) filledCount++;
+    if (setIfEmptyOrOverwrite(toneInput, s.tone, overwrite)) filledCount++;
+    if (setIfEmptyOrOverwrite(styleInput, s.styleGuidance, overwrite)) filledCount++;
+    if (setIfEmptyOrOverwrite(savingsInput, s.savingsLine, overwrite)) filledCount++;
+
+    const listFields = [
+      { el: capabilitiesInput, arr: s.capabilities },
+      { el: connectsToInput, arr: s.connectsTo },
+      { el: refusesInput, arr: s.refuses },
+    ];
+    listFields.forEach(({ el, arr }) => {
+      if (Array.isArray(arr) && arr.length) {
+        const next = arr.join('\n');
+        if (setIfEmptyOrOverwrite(el, next, overwrite)) filledCount++;
+      }
+    });
+
+    // Per-persona blocks — rerender with merged values.
+    const mergePersonaMap = (existing, suggested) => {
+      const out = { ...(existing || {}) };
+      Object.entries(suggested || {}).forEach(([pid, val]) => {
+        if (!out[pid] || overwrite) out[pid] = val;
+      });
+      return out;
+    };
+
+    if (s.personaOpenings && Object.keys(s.personaOpenings).length) {
+      const current = {};
+      personaOpeningsHost.querySelectorAll('textarea[data-persona-id]').forEach((t) => {
+        if (t.value.trim()) current[t.dataset.personaId] = t.value;
+      });
+      const merged = mergePersonaMap(current, s.personaOpenings);
+      renderPersonaOpenings(personas, merged);
+      personaOpeningsHost.querySelectorAll('textarea').forEach(flashField);
+      filledCount++;
+    }
+
+    if (s.personaChips && Object.keys(s.personaChips).length) {
+      const current = {};
+      personaChipsHost.querySelectorAll('textarea[data-persona-id]').forEach((t) => {
+        const arr = t.value.split(/\r?\n/).map((x) => x.trim()).filter(Boolean);
+        if (arr.length) current[t.dataset.personaId] = arr;
+      });
+      const merged = {};
+      Object.keys({ ...current, ...s.personaChips }).forEach((pid) => {
+        merged[pid] = (current[pid] && !overwrite) ? current[pid] : s.personaChips[pid] || current[pid] || [];
+      });
+      renderPersonaChips(personas, merged);
+      personaChipsHost.querySelectorAll('textarea').forEach(flashField);
+      filledCount++;
+    }
+
+    if (s.personaRegisters && Object.keys(s.personaRegisters).length) {
+      const current = {};
+      personaRegistersHost.querySelectorAll('textarea[data-persona-id]').forEach((t) => {
+        if (t.value.trim()) current[t.dataset.personaId] = t.value;
+      });
+      const merged = mergePersonaMap(current, s.personaRegisters);
+      renderPersonaRegisters(personas, merged);
+      personaRegistersHost.querySelectorAll('textarea').forEach(flashField);
+      filledCount++;
+    }
+
+    if (Array.isArray(s.followupMap) && s.followupMap.length) {
+      const currentRules = gatherFollowupMap();
+      const haveAny = currentRules.length > 0;
+      if (!haveAny || overwrite) {
+        renderFollowupRules(personas, s.followupMap);
+        filledCount++;
+      }
+    }
+
+    // Open both optional sections so the user can see what was filled in
+    optionalSection.open = true;
+    referenceSection.open = true;
+
+    autofillStatus.style.display = 'block';
+    autofillStatus.style.color = 'var(--color-forest)';
+    autofillStatus.textContent = `Auto-filled ${filledCount} field${filledCount === 1 ? '' : 's'}. Review and edit anything that's off, then hit Configure.`;
+  }
 
   function applyScenarioToForm(s) {
     const isReconfigure = Boolean(s && s.systemPrompt);

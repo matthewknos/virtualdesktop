@@ -555,6 +555,133 @@ export default async function handler(req, res) {
     return res.status(200).json(sanitizeScenario(def, { stripFileContent: true }));
   }
 
+  // ── ANALYSE — auto-fill configure fields from uploaded material ──
+  // POST /api/sandbox/scenarios/:id/analyse
+  // Body: { description?, referenceFiles?, referenceData?, devPassword? }
+  // Returns: { suggestions: { tone, styleGuidance, capabilities[], connectsTo[],
+  //   refuses[], savingsLine, personaOpenings{}, personaChips{}, personaRegisters{},
+  //   followupMap[], suggestedDescription } }
+  // The client merges these into the configure form (typically into blank fields
+  // only) and the user reviews before hitting Configure.
+  if (path.match(/^\/api\/sandbox\/scenarios\/[^/]+\/analyse$/) && req.method === 'POST') {
+    const id = path.split('/')[4];
+    if (!KV_AVAILABLE) return res.status(503).json({ error: 'Scenario storage not configured.' });
+    const def = await kv.get(KV_KEY(id));
+    if (!def) return res.status(404).json({ error: 'Scenario not found.' });
+    const body = await readBody(req);
+    if (!checkDevPassword(req, body)) {
+      return res.status(403).json({ error: 'Invalid or missing dev password.' });
+    }
+
+    const inputDesc = (body.description || '').trim();
+    const inputRefData = (body.referenceData || '').trim();
+    const incomingFiles = sanitizeReferenceFiles(body.referenceFiles, inputRefData.length);
+    if (incomingFiles.error) return res.status(400).json({ error: incomingFiles.error });
+
+    // Merge with prior files (same model as configure) so analyse can run
+    // against the saved set too.
+    const allPrior = Array.isArray(def.referenceFiles) ? def.referenceFiles : [];
+    const priorFiles = allPrior.filter((pf) => !incomingFiles.files.find((nf) => nf.name === pf.name));
+    const filesToAnalyse = priorFiles.concat(incomingFiles.files);
+
+    if (!filesToAnalyse.length && !inputRefData && !inputDesc) {
+      return res.status(400).json({ error: 'Upload at least one reference file, paste reference data, or write a one-line brief before auto-filling.' });
+    }
+
+    // For analyse we DO send file content (snippets) to the LLM — that's the
+    // point. Cap each file's contribution to keep the prompt lean.
+    const FILE_SNIPPET_BYTES = 6000;
+    const fileSnippets = filesToAnalyse.map((f) => {
+      const head = f.content.slice(0, FILE_SNIPPET_BYTES);
+      const truncated = f.content.length > FILE_SNIPPET_BYTES;
+      return `### File: ${f.name} (${(f.size / 1024).toFixed(1)} KB${truncated ? `, first ${FILE_SNIPPET_BYTES} chars shown` : ''})\n${head}`;
+    }).join('\n\n');
+
+    const personaList = (def.personas || []).map((p) => `- ${p.id}: ${p.name} (${p.role})`).join('\n') || '- (no personas defined yet)';
+
+    const analysePrompt = `Read the supplied reference material and propose a configuration for an AI agent embedded in a Microsoft Teams demo.
+
+Scenario: ${def.name} · Agent: ${def.agent} · Template: ${def.template}
+Personas:
+${personaList}
+
+${inputDesc ? `Demo owner's one-line brief: ${inputDesc}\n` : ''}
+${inputRefData ? `Inline reference data:\n---\n${inputRefData.slice(0, 4000)}${inputRefData.length > 4000 ? '\n…[truncated]…' : ''}\n---\n` : ''}
+${fileSnippets ? `Reference files:\n${fileSnippets}\n` : ''}
+
+Infer a configuration that grounds the agent in this material. Output a SINGLE JSON object with these keys (any may be omitted if you cannot reasonably infer):
+- "suggestedDescription": a 2–4 sentence brief for the configure form, describing what the agent should do, in plain English.
+- "tone": short tone & voice guidance (≤80 words).
+- "styleGuidance": short output-shape guidance — markdown conventions, draft format, citation style (≤80 words).
+- "capabilities": [3–6 short bullets, ≤15 words each] of what the agent does. Pulled from the material.
+- "connectsTo": [2–5 short bullets] of systems / sources named in the material.
+- "refuses": [2–5 short bullets] of hard rules the agent should not break. Pulled from policy / explicit prohibitions in the material.
+- "savingsLine": one short sentence estimating time saved or stating a usage caveat.
+- "personaOpenings": { personaId: opener ≤120 words }. Generate one per persona, addressed to that persona by name, grounded in the material. End with <<ACTIONS>>["A","B","C"]<<END>> if next-steps are obvious.
+- "personaChips": { personaId: [2–4 chips, ≤30 chars each] } of plausible first-load quick replies for each persona.
+- "personaRegisters": { personaId: ≤100-word tone shift } ONLY when different personas need genuinely different register. Otherwise empty object.
+- "followupMap": [up to 6 { id, match (regex source, no slashes), chips: { personaId: [chips] } }] of follow-up rules keyed off plausible user phrases.
+
+Rules:
+- Ground every suggestion in the supplied material. Do NOT invent generic HR/PMO boilerplate.
+- Quote specific names, dates, numbers, section IDs from the files where relevant.
+- Keep total response under 2500 tokens.
+- JSON object only. No prose, no fences.`;
+
+    const promptBytes = analysePrompt.length;
+    const analyseModel = promptBytes > 20_000 ? 'moonshot-v1-32k' : 'moonshot-v1-8k';
+
+    let raw, finishReason;
+    try {
+      const meta = await callLLM(
+        [
+          { role: 'system', content: 'You output ONE JSON object that proposes a sandbox-agent configuration grounded in the supplied reference material. No prose, no markdown fences.' },
+          { role: 'user', content: analysePrompt },
+        ],
+        { model: analyseModel, maxTokens: 3500, temperature: 0.25, jsonMode: true, returnMeta: true }
+      );
+      raw = meta.content;
+      finishReason = meta.finishReason;
+    } catch (err) {
+      return res.status(502).json({ error: `Analyse LLM call failed: ${err.message}` });
+    }
+
+    const parsed = extractJSON(raw);
+    if (!parsed) {
+      return res.status(502).json({
+        error: finishReason === 'length'
+          ? 'Analyse LLM ran out of tokens before finishing the JSON. Try with fewer or smaller reference files.'
+          : 'Analyse LLM returned non-JSON.',
+        finishReason,
+        rawPreview: String(raw).slice(0, 600),
+      });
+    }
+
+    const arr = (x, max = 8) => Array.isArray(x) ? x.map((s) => String(s)).filter(Boolean).slice(0, max) : [];
+    const objStr = (x) => (x && typeof x === 'object')
+      ? Object.fromEntries(Object.entries(x).map(([k, v]) => [String(k), String(v || '').trim()]).filter(([, v]) => v))
+      : {};
+    const objArr = (x) => (x && typeof x === 'object')
+      ? Object.fromEntries(Object.entries(x).map(([k, v]) => [String(k), arr(v, 6)]).filter(([, v]) => v.length))
+      : {};
+
+    const suggestions = {
+      suggestedDescription: String(parsed.suggestedDescription || '').trim(),
+      tone: String(parsed.tone || '').trim(),
+      styleGuidance: String(parsed.styleGuidance || '').trim(),
+      capabilities: arr(parsed.capabilities, 6),
+      connectsTo: arr(parsed.connectsTo, 5),
+      refuses: arr(parsed.refuses, 5),
+      savingsLine: String(parsed.savingsLine || '').trim(),
+      personaOpenings: objStr(parsed.personaOpenings),
+      personaChips: objArr(parsed.personaChips),
+      personaRegisters: objStr(parsed.personaRegisters),
+      followupMap: sanitizeFollowupMap(parsed.followupMap),
+    };
+
+    return res.status(200).json({ id, suggestions });
+  }
+
   // ── CONFIGURE SCENARIO (AI wizard) ──
   // Takes a plain-English description (+ optional structured inputs) and a
   // dev password. Asks the setup LLM to produce
