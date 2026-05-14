@@ -171,10 +171,30 @@ function extractJSON(raw) {
   return null;
 }
 
+// Strip model-end artefacts and stray special tokens before any other parsing.
+// Moonshot sometimes appends `<|endoftext|>` or chat-template tokens which
+// would otherwise leak into the rendered bubble.
+function stripModelArtefacts(raw) {
+  if (!raw) return raw;
+  return String(raw)
+    .replace(/<\|endoftext\|>/g, '')
+    .replace(/<\|im_end\|>/g, '')
+    .replace(/<\|im_start\|>/g, '')
+    .replace(/<\|eot_id\|>/g, '')
+    .replace(/<\|end_of_text\|>/g, '');
+}
+
 // Parse a trailing <<ACTIONS>>["Yes","No"]<<END>> block emitted by the agent.
-// Returns { text, actions } — text has the block stripped.
+// Returns { text, actions } — text has the block stripped. Also tolerates
+// the model dropping the <<END>> sentinel and using a stop-token instead.
 function parseActions(raw) {
-  const m = raw.match(/<<ACTIONS>>(.*?)<<END>>/s);
+  raw = stripModelArtefacts(raw);
+  let m = raw.match(/<<ACTIONS>>([\s\S]*?)<<END>>/);
+  // Fallback: <<ACTIONS>>[...]  with no <<END>> — grab the first JSON array.
+  if (!m) {
+    const fallback = raw.match(/<<ACTIONS>>\s*(\[[\s\S]*?\])/);
+    if (fallback) m = [fallback[0], fallback[1]];
+  }
   if (!m) return { text: raw.trim(), actions: null };
   let actions = null;
   try {
@@ -191,7 +211,13 @@ function parseActions(raw) {
         .filter(Boolean);
     }
   } catch { /* malformed action block — leave as null */ }
-  return { text: raw.replace(/<<ACTIONS>>[\s\S]*?<<END>>/, '').trim(), actions };
+  // Strip both the well-formed block and the open-ended fallback shape.
+  const cleaned = raw
+    .replace(/<<ACTIONS>>[\s\S]*?<<END>>/, '')
+    .replace(/<<ACTIONS>>\s*\[[\s\S]*?\]\s*/, '')
+    .replace(/<<ACTIONS>>[\s\S]*$/, '') // last-resort: nuke a dangling opener
+    .trim();
+  return { text: cleaned, actions };
 }
 
 // Parse a trailing <<CALENDAR>>[{...}]<<END>> block — the agent's way of
@@ -200,7 +226,12 @@ function parseActions(raw) {
 // matching the teams template's calendar schema: { day, startHour, duration, title }.
 const VALID_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 function parseCalendar(raw) {
-  const m = raw.match(/<<CALENDAR>>(.*?)<<END>>/s);
+  raw = stripModelArtefacts(raw);
+  let m = raw.match(/<<CALENDAR>>([\s\S]*?)<<END>>/);
+  if (!m) {
+    const fallback = raw.match(/<<CALENDAR>>\s*(\[[\s\S]*?\])/);
+    if (fallback) m = [fallback[0], fallback[1]];
+  }
   if (!m) return { text: raw, events: null };
   let events = null;
   try {
@@ -226,7 +257,12 @@ function parseCalendar(raw) {
       .filter(Boolean);
     if (events.length === 0) events = null;
   } catch { /* malformed — ignore */ }
-  return { text: raw.replace(/<<CALENDAR>>[\s\S]*?<<END>>/, '').trim(), events };
+  const cleaned = raw
+    .replace(/<<CALENDAR>>[\s\S]*?<<END>>/, '')
+    .replace(/<<CALENDAR>>\s*\[[\s\S]*?\]\s*/, '')
+    .replace(/<<CALENDAR>>[\s\S]*$/, '')
+    .trim();
+  return { text: cleaned, events };
 }
 
 // Build conversation history for runtime LLM calls.

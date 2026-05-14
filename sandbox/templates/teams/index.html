@@ -3331,7 +3331,21 @@ class ChatView {
 
   _markdownToHtml(text) {
     if (!text) return '';
-    let html = this.app._escapeHtml(text);
+    // Defence in depth — strip leaked LLM control tokens and any orphaned
+    // <<ACTIONS>>… / <<CALENDAR>>… blocks the server somehow didn't catch
+    // (e.g. messages stored before the parser was hardened).
+    const cleaned = String(text)
+      .replace(/<\|endoftext\|>/g, '')
+      .replace(/<\|im_end\|>/g, '')
+      .replace(/<\|im_start\|>/g, '')
+      .replace(/<\|eot_id\|>/g, '')
+      .replace(/<\|end_of_text\|>/g, '')
+      .replace(/<<ACTIONS>>[\s\S]*?<<END>>/g, '')
+      .replace(/<<CALENDAR>>[\s\S]*?<<END>>/g, '')
+      .replace(/<<ACTIONS>>[\s\S]*$/g, '')
+      .replace(/<<CALENDAR>>[\s\S]*$/g, '')
+      .trim();
+    let html = this.app._escapeHtml(cleaned);
     html = html
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
       .replace(/`(.+?)`/g, '<code>$1</code>')
@@ -3405,7 +3419,10 @@ class SandboxTeamsApp {
       // 4. Load existing messages
       const msgsRes = await this.client.getMessages(this.scenarioId);
       this.messages = msgsRes.messages || [];
-      this.lastPollTime = Date.now();
+      this._seenMessageIds = new Set(this.messages.map((m) => m.id).filter(Boolean));
+      this.lastPollTime = this.messages.length
+        ? this.messages[this.messages.length - 1].timestamp
+        : Date.now();
 
       // 5. Ensure view containers exist inside #conversationPane
       this._ensureViewContainers();
@@ -3518,10 +3535,21 @@ class SandboxTeamsApp {
   async sendMessage(text) {
     const t = (text || '').trim();
     if (!t) return;
+    if (this.sendInFlight) return; // one message at a time
 
     const from = this.agentMode
       ? 'agent'
       : (this.currentPersona?.id || 'unknown');
+
+    // Clear compose IMMEDIATELY — don't wait on the network round-trip.
+    const composeInput = document.getElementById('composeInput');
+    if (composeInput) {
+      composeInput.value = '';
+      composeInput.style.height = '';
+    }
+
+    this._setSendInFlight(true);
+    this._showTyping(true);
 
     try {
       await this.client.postMessage(this.scenarioId, {
@@ -3530,33 +3558,59 @@ class SandboxTeamsApp {
         text: t,
       });
 
-      // Clear compose
-      const composeInput = document.getElementById('composeInput');
-      if (composeInput) {
-        composeInput.value = '';
-        composeInput.style.height = '';
-      }
-
       // Refresh followup chips against the user's last message
       if (this.chatView && !this.agentMode) {
         this.chatView._renderFollowupChips(t);
       }
 
-      // Immediate poll so the user's own message appears quickly
+      // Immediate poll so the user's own message + agent reply appear quickly
       await this.poll();
     } catch (err) {
       console.error('sendMessage failed:', err);
+    } finally {
+      this._showTyping(false);
+      this._setSendInFlight(false);
+    }
+  }
+
+  _setSendInFlight(flag) {
+    this.sendInFlight = flag;
+    const compose = document.getElementById('composeInput');
+    const sendBtn = document.getElementById('sendBtn') || document.querySelector('#composeBox button[type="submit"], .send-btn');
+    if (compose) compose.disabled = flag;
+    if (sendBtn) sendBtn.disabled = flag;
+  }
+
+  _showTyping(flag) {
+    const ind = document.getElementById('typingIndicator');
+    if (!ind) return;
+    ind.classList.toggle('visible', !!flag);
+    // Scroll the messages container so the indicator stays in view.
+    if (flag) {
+      const container = document.getElementById('messagesContainer');
+      if (container) container.scrollTop = container.scrollHeight;
     }
   }
 
   /** Poll for new messages since last check. */
   async poll() {
+    if (this.pollInFlight) return; // serialise — prevents duplicate appends
+    this.pollInFlight = true;
     try {
       const res = await this.client.getMessages(
         this.scenarioId,
         this.lastPollTime
       );
-      const newMessages = res.messages || [];
+      const raw = res.messages || [];
+      // Dedupe against anything we already have (id-based — covers the race
+      // where the interval poll fires while sendMessage's poll is in flight).
+      if (!this._seenMessageIds) this._seenMessageIds = new Set(this.messages.map((m) => m.id));
+      const newMessages = raw.filter((m) => {
+        if (!m.id) return true;
+        if (this._seenMessageIds.has(m.id)) return false;
+        this._seenMessageIds.add(m.id);
+        return true;
+      });
       if (newMessages.length) {
         this.messages.push(...newMessages);
         if (this.chatView) {
@@ -3572,9 +3626,14 @@ class SandboxTeamsApp {
           await this._refreshState();
         }
       }
-      this.lastPollTime = Date.now();
+      // Advance lastPollTime to the latest message we've seen (not now) so a
+      // concurrent poll never re-fetches a message we already processed.
+      const latest = this.messages.length ? this.messages[this.messages.length - 1].timestamp : Date.now();
+      this.lastPollTime = Math.max(this.lastPollTime, latest);
     } catch (err) {
       console.error('poll failed:', err);
+    } finally {
+      this.pollInFlight = false;
     }
   }
 
@@ -3704,13 +3763,16 @@ class SandboxTeamsApp {
     const scroll = document.getElementById('chatListScroll');
     if (!scroll || !this.scenario) return;
 
-    // Keep it minimal: agent entry + persona entries
+    // Single chat thread — the conversation with the agent. Persona switching
+    // (when more than one) lives in a small dropdown inside the active entry
+    // so we don't fake multiple chat threads of the user talking to themselves.
     scroll.innerHTML = '';
+    const personas = this.scenario.personas || [];
+    const activePersona = this.currentPersona || personas[0];
 
-    // Agent entry (active by default)
     const agentEntry = document.createElement('div');
     agentEntry.className = 'chat-entry active';
-    agentEntry.dataset.role = this.scenario.personas?.[0]?.id || '';
+    agentEntry.dataset.role = activePersona?.id || '';
     agentEntry.innerHTML = `
       <div class="ce-avatar" style="background:var(--teams-accent);">
         ${this._initials(this.scenario.agent || 'A')}
@@ -3721,38 +3783,23 @@ class SandboxTeamsApp {
           <span class="ce-date">Today</span>
         </div>
         <div class="ce-preview">${this._escapeHtml(this.scenario.name)}</div>
+        ${personas.length > 1 ? `
+          <div class="ce-row" style="margin-top:6px;">
+            <label style="font-size:11px;color:var(--teams-text-muted);margin-right:6px;">You are:</label>
+            <select id="personaPicker" style="font-size:12px;background:transparent;color:var(--teams-text);border:1px solid var(--teams-border);border-radius:6px;padding:2px 6px;">
+              ${personas.map((p) => `<option value="${this._escapeHtml(p.id)}"${activePersona?.id === p.id ? ' selected' : ''}>${this._escapeHtml(p.name)}${p.role ? ` — ${this._escapeHtml(p.role)}` : ''}</option>`).join('')}
+            </select>
+          </div>` : ''}
       </div>
     `;
-    agentEntry.addEventListener('click', () => {
-      this.switchView('chat');
-      if (this.scenario.personas?.[0]) {
-        this.selectPersona(this.scenario.personas[0].id);
-      }
-    });
+    agentEntry.addEventListener('click', () => this.switchView('chat'));
     scroll.appendChild(agentEntry);
 
-    // Persona entries
-    (this.scenario.personas || []).forEach((p) => {
-      const entry = document.createElement('div');
-      entry.className = 'chat-entry';
-      entry.dataset.role = p.id;
-      entry.innerHTML = `
-        <div class="ce-avatar" style="background:${this._personaColor(p.id)};">
-          ${p.initials || p.name.charAt(0)}
-        </div>
-        <div class="ce-body">
-          <div class="ce-row">
-            <span class="ce-name">${this._escapeHtml(p.name)}</span>
-          </div>
-          <div class="ce-preview">${this._escapeHtml(p.role || '')}</div>
-        </div>
-      `;
-      entry.addEventListener('click', () => {
-        this.switchView('chat');
-        this.selectPersona(p.id);
-      });
-      scroll.appendChild(entry);
-    });
+    const picker = scroll.querySelector('#personaPicker');
+    if (picker) {
+      picker.addEventListener('click', (e) => e.stopPropagation());
+      picker.addEventListener('change', (e) => this.selectPersona(e.target.value));
+    }
   }
 
   _updateChrome() {
