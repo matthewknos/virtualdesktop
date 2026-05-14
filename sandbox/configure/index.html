@@ -1036,7 +1036,11 @@
       const h2 = successCard.querySelector('h2');
       const sub = successCard.querySelector('.success-sub');
       if (h2) h2.textContent = 'Agent brief updated';
-      if (sub) sub.textContent = 'The new instructions are layered on top of the prior prompt. The live chat is untouched — your next message in the demo will use the updated system prompt.';
+      if (sub) {
+        sub.textContent = data.chatReset
+          ? 'The new instructions are layered on top of the prior prompt. The chat was reset to surface the new opener with its buttons — refresh the demo tab to see it.'
+          : 'The new instructions are layered on top of the prior prompt. The live chat is untouched — your next message in the demo will use the updated system prompt.';
+      }
     }
     if (!data.openingMessage) {
       // Reconfigure: hide opener preview rows since nothing was posted

@@ -1014,25 +1014,37 @@ JSON OBJECT ONLY. No prose, no fences.`;
     await kv.set(KV_KEY(id), updatedDef);
 
     let openMsg = null;
-    // Post the opener when:
-    //   - First configure (no prior systemPrompt), OR
-    //   - Reconfigure AND there's no existing agent message in the chat that
-    //     carries action buttons (so the new opener with buttons becomes
-    //     visible without forcing the user to hit Restart).
+    // Decide whether to repost the opener.
+    //   - First configure: always post (after wiping chat).
+    //   - Reconfigure: WIPE chat + post the new opener when the new opener
+    //     carries action buttons and the existing first agent message doesn't.
+    //     This is the only reliable way to guarantee the user sees the new
+    //     opener with buttons — otherwise the old buttonless opener stays
+    //     stuck at the top of the chat forever.
     let shouldPostOpener = !isReconfigure;
+    let wipeChat = !isReconfigure;
     if (isReconfigure) {
       const existing = await getMessages(id);
-      const hasAgentMessageWithActions = existing.some((m) =>
-        (m.from === (def.agent || 'agent') || m.source === 'configure' || m.source === 'reset-opener' || m.source === 'auto-agent')
-        && Array.isArray(m.actions) && m.actions.length
-      );
-      if (!hasAgentMessageWithActions) shouldPostOpener = true;
+      const firstAgentMsg = existing.find((m) => {
+        const f = String(m.from || '').toLowerCase();
+        return m.source === 'configure' || m.source === 'reset-opener' || f === 'agent' || f === String(def.agent || '').toLowerCase();
+      });
+      const parsedNew = parseActions(updatedDef.openingMessage);
+      const firstHasActions = firstAgentMsg && Array.isArray(firstAgentMsg.actions) && firstAgentMsg.actions.length > 0;
+      const newHasActions = Array.isArray(parsedNew.actions) && parsedNew.actions.length > 0;
+      if (!firstAgentMsg) {
+        shouldPostOpener = true;
+      } else if (newHasActions && !firstHasActions) {
+        shouldPostOpener = true;
+        wipeChat = true;
+      } else if (alwaysShowActions) {
+        // Toggle's on — always refresh the opener so the latest brief shows.
+        shouldPostOpener = true;
+        wipeChat = true;
+      }
     }
     if (shouldPostOpener) {
-      if (!isReconfigure) {
-        // First configure: wipe chat too, opener becomes turn 1.
-        await kv.del(KV_MSGS_KEY(id));
-      }
+      if (wipeChat) await kv.del(KV_MSGS_KEY(id));
       const parsedOpener = parseActions(updatedDef.openingMessage);
       openMsg = {
         id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
@@ -1052,6 +1064,7 @@ JSON OBJECT ONLY. No prose, no fences.`;
       scenario: sanitizeScenario(updatedDef),
       openingMessage: openMsg,
       reconfigured: isReconfigure,
+      chatReset: Boolean(isReconfigure && wipeChat),
     });
   }
 
