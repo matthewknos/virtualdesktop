@@ -291,9 +291,18 @@ function historyToLLM(scenarioDef, messages) {
   });
 }
 
-const RUNTIME_ACTION_INSTRUCTION = `When you want to offer the user button choices, append a trailing block on its own line in this exact format:
+const RUNTIME_ACTION_INSTRUCTION = `Action-button protocol — append a trailing block on its own line in this exact format when you want to offer the user button choices:
 <<ACTIONS>>["First option","Second option","Third option"]<<END>>
-Use 2–3 short options (each under 30 chars). Omit the block entirely when no choice is needed.`;
+
+Format rules:
+- 2–3 short options, each under 30 chars.
+- Phrase options in the USER's voice (what they would say / tap next), not the agent's.
+- Match register to the active speaker.
+
+When to include the block:
+- Default: omit on small narrative-only replies that have no obvious next step.
+- BUT — if the AGENT IDENTITY & BEHAVIOUR section above tells you to always include actions, always offer next steps, always end with a choice, or similar — that instruction WINS. Include an <<ACTIONS>> block every turn even on narrative replies, using plausible next-step options drawn from context (clarifying questions, "Tell me more about X", "Show me Y", "Continue", etc.).
+- Any conflict between this default and the scenario's identity instructions is resolved in favour of the identity instructions.`;
 
 const RUNTIME_CALENDAR_INSTRUCTION = `When the user asks you to schedule, book, or add a call/meeting to their calendar, append a calendar block on its own line in this exact format AFTER your normal text (and before any <<ACTIONS>> block):
 <<CALENDAR>>[{"day":"Tue","startHour":14,"duration":0.5,"title":"Catch-up with Alice"}]<<END>>
