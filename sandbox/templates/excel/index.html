@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Excel | CoE Sandbox</title>
+<style>
+  :root {
+    --ribbon: #217346;
+    --bg: #f3f2f1;
+    --grid: #e1e1e1;
+    --text: #1d1d1f;
+    --muted: #605e5c;
+    --font: 'Segoe UI', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; font-family: var(--font); font-size: 13px; color: var(--text); background: var(--bg); overflow: hidden; }
+
+  /* Ribbon */
+  #ribbon {
+    height: 44px; background: var(--ribbon); color: #fff;
+    display: flex; align-items: center; padding: 0 16px; gap: 16px; flex-shrink: 0;
+  }
+  #ribbon .logo { font-weight: 700; font-size: 16px; }
+  #ribbon .tabs { display: flex; gap: 2px; }
+  #ribbon .tab { padding: 6px 14px; font-size: 12px; border-radius: 4px; cursor: pointer; }
+  #ribbon .tab:hover { background: rgba(255,255,255,0.15); }
+  #ribbon .tab.active { background: rgba(255,255,255,0.25); font-weight: 600; }
+  #ribbon .spacer { flex: 1; }
+  #ribbon .scenario { font-size: 12px; opacity: 0.9; }
+
+  /* Formula bar */
+  #formulaBar {
+    height: 36px; background: #fff; border-bottom: 1px solid var(--grid);
+    display: flex; align-items: center; padding: 0 12px; gap: 10px;
+  }
+  #cellRef {
+    width: 70px; font-size: 12px; color: var(--muted); font-weight: 600;
+    border-right: 1px solid var(--grid); padding-right: 10px;
+  }
+  #formulaInput {
+    flex: 1; border: none; outline: none; font-size: 13px; font-family: var(--font);
+  }
+
+  /* Grid */
+  #sheetContainer { flex: 1; overflow: auto; position: relative; }
+  #grid {
+    display: grid;
+    grid-template-columns: 40px repeat(10, 120px);
+    background: #fff;
+  }
+  .cell, .header-cell, .corner-cell {
+    border-right: 1px solid var(--grid); border-bottom: 1px solid var(--grid);
+    padding: 4px 8px; min-height: 24px; display: flex; align-items: center;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .corner-cell { background: #f3f2f1; position: sticky; left: 0; top: 0; z-index: 3; }
+  .header-cell {
+    background: #f3f2f1; font-weight: 600; font-size: 11px; color: var(--muted);
+    justify-content: center; position: sticky; top: 0; z-index: 2;
+  }
+  .row-header {
+    background: #f3f2f1; font-size: 11px; color: var(--muted); justify-content: center;
+    position: sticky; left: 0; z-index: 2;
+  }
+  .cell { cursor: cell; }
+  .cell:hover { background: #e8f4ea; }
+  .cell.selected { outline: 2px solid var(--ribbon); outline-offset: -2px; position: relative; z-index: 1; }
+  .cell.num { text-align: right; justify-content: flex-end; }
+
+  /* Sheet tabs */
+  #sheetTabs {
+    height: 32px; background: #f3f2f1; border-top: 1px solid var(--grid);
+    display: flex; align-items: center; padding: 0 8px; gap: 2px;
+  }
+  .sheet-tab {
+    padding: 6px 16px; font-size: 12px; cursor: pointer;
+    border-radius: 4px 4px 0 0; border: 1px solid transparent; border-bottom: none;
+  }
+  .sheet-tab:hover { background: #e1e1e1; }
+  .sheet-tab.active { background: #fff; border-color: var(--grid); font-weight: 600; }
+
+  .empty-state {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; color: var(--muted); gap: 12px;
+  }
+</style>
+</head>
+<body style="display:flex;flex-direction:column;height:100vh;">
+
+<div id="ribbon">
+  <div class="logo">📊 Sandbox Excel</div>
+  <div class="tabs">
+    <div class="tab active">Home</div>
+    <div class="tab">Insert</div>
+    <div class="tab">Data</div>
+  </div>
+  <div class="spacer"></div>
+  <div class="scenario" id="scenarioName">Loading…</div>
+</div>
+
+<div id="formulaBar">
+  <div id="cellRef">A1</div>
+  <input id="formulaInput" placeholder="Select a cell…" readonly>
+</div>
+
+<div id="sheetContainer">
+  <div id="grid"></div>
+</div>
+
+<div id="sheetTabs">
+  <div class="sheet-tab active">Data</div>
+  <div class="sheet-tab">Summary</div>
+</div>
+
+<script src="../../sandbox-client.js"></script>
+<script>
+class ExcelApp {
+  constructor() {
+    this.client = new SandboxClient('');
+    this.scenarioId = new URLSearchParams(location.search).get('scenario');
+    this.scenario = null;
+    this.state = null;
+    this.selected = { r: 0, c: 0 };
+    this.data = [];
+    this.headers = [];
+    this.init();
+  }
+
+  async init() {
+    if (!this.scenarioId) { this.showError('No scenario specified'); return; }
+    try {
+      this.scenario = await this.client.getScenario(this.scenarioId);
+      const s = await this.client.getState(this.scenarioId);
+      this.state = s.state;
+      document.getElementById('scenarioName').textContent = this.scenario.name;
+      this.flattenState();
+      this.renderGrid();
+    } catch (e) {
+      this.showError(e.message);
+    }
+  }
+
+  flattenState() {
+    // Convert nested state into flat rows for the grid
+    // Priority: workers/employees → timesheet days → generic key-value
+    const rows = [];
+    const people = this.state.workers || this.state.employees || [];
+    if (people.length) {
+      const keys = Object.keys(people[0]).filter(k => typeof people[0][k] !== 'object');
+      rows.push(keys.map(k => k.charAt(0).toUpperCase() + k.slice(1)));
+      people.forEach(p => rows.push(keys.map(k => p[k] ?? '')));
+    } else if (this.state.timesheet?.days) {
+      rows.push(['Day', 'Date', 'Hours', 'Project', 'Submitted']);
+      this.state.timesheet.days.forEach(d => rows.push([d.day, d.date, d.hours, d.project || '', d.submitted ? 'Yes' : 'No']));
+    } else {
+      // Generic key-value
+      rows.push(['Key', 'Value']);
+      Object.entries(this.state).forEach(([k, v]) => {
+        if (typeof v !== 'object') rows.push([k, v]);
+      });
+    }
+    this.data = rows;
+    this.headers = rows[0] || [];
+  }
+
+  renderGrid() {
+    const grid = document.getElementById('grid');
+    if (!this.data.length) {
+      grid.innerHTML = `<div class="empty-state"><div style="font-size:48px">📊</div><div>No data to display</div></div>`;
+      return;
+    }
+
+    const cols = Math.max(this.headers.length, 10);
+    const rows = this.data.length + 1;
+    grid.style.gridTemplateColumns = `40px repeat(${cols}, 120px)`;
+
+    let html = '<div class="corner-cell"></div>';
+    for (let c = 0; c < cols; c++) html += `<div class="header-cell">${String.fromCharCode(65 + c)}</div>`;
+
+    this.data.forEach((row, r) => {
+      html += `<div class="row-header">${r + 1}</div>`;
+      for (let c = 0; c < cols; c++) {
+        const val = row[c] ?? '';
+        const isNum = typeof val === 'number';
+        const selected = r === this.selected.r && c === this.selected.c ? 'selected' : '';
+        html += `<div class="cell ${isNum ? 'num' : ''} ${selected}" data-r="${r}" data-c="${c}">${val}</div>`;
+      }
+    });
+
+    grid.innerHTML = html;
+
+    grid.querySelectorAll('.cell').forEach(cell => {
+      cell.addEventListener('click', () => {
+        this.selected = { r: +cell.dataset.r, c: +cell.dataset.c };
+        this.updateFormulaBar();
+        grid.querySelectorAll('.cell').forEach(c => c.classList.remove('selected'));
+        cell.classList.add('selected');
+      });
+    });
+  }
+
+  updateFormulaBar() {
+    const col = String.fromCharCode(65 + this.selected.c);
+    const row = this.selected.r + 1;
+    document.getElementById('cellRef').textContent = `${col}${row}`;
+    document.getElementById('formulaInput').value = this.data[this.selected.r]?.[this.selected.c] ?? '';
+  }
+
+  showError(msg) {
+    document.getElementById('grid').innerHTML = `<div class="empty-state"><div style="font-size:48px">⚠️</div><div>${msg}</div></div>`;
+  }
+}
+
+const app = new ExcelApp();
+</script>
+</body>
+</html>

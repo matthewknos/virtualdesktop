@@ -4,5 +4,8 @@
   "redirects": [
     { "source": "/r-and-r/proposal", "destination": "/r-and-r/agent-design", "permanent": true },
     { "source": "/r-and-r/technical", "destination": "/r-and-r/delivery-plan", "permanent": true }
+  ],
+  "rewrites": [
+    { "source": "/api/sandbox/:path*", "destination": "/api/sandbox" }
   ]
 }

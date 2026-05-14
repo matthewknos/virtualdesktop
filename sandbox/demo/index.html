@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CoE Sandbox — Loading…</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    background: #1f1f1f; color: #ffffff;
+    display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 16px;
+  }
+  .spinner {
+    width: 40px; height: 40px; border: 3px solid #424242; border-top-color: #5b5fc7; border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .status { font-size: 14px; color: #adadad; }
+  .error { color: #e75a5a; max-width: 480px; text-align: center; padding: 0 24px; }
+  .error code { background: #2d2c2c; padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+  .back { margin-top: 12px; color: #5b5fc7; text-decoration: none; font-size: 13px; }
+  .back:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+  <div class="spinner" id="spinner"></div>
+  <div class="status" id="status">Loading scenario…</div>
+
+<script src="../sandbox-client.js"></script>
+<script>
+(async () => {
+  const scenarioId = new URLSearchParams(location.search).get('scenario');
+  const statusEl = document.getElementById('status');
+
+  if (!scenarioId) {
+    document.getElementById('spinner').style.display = 'none';
+    statusEl.className = 'error';
+    statusEl.innerHTML = 'No scenario specified.<br>Use <code>?scenario=timesheet-chaser</code>';
+    return;
+  }
+
+  try {
+    const client = new SandboxClient('');
+    const scenario = await client.getScenario(scenarioId);
+    const template = scenario.template || 'teams';
+    const dest = `./templates/${template}/?scenario=${encodeURIComponent(scenarioId)}`;
+    statusEl.textContent = `Loading ${scenario.name} — ${template} template…`;
+    location.replace(dest);
+  } catch (err) {
+    document.getElementById('spinner').style.display = 'none';
+    statusEl.className = 'error';
+    statusEl.innerHTML = `
+      Failed to load scenario <code>${scenarioId}</code>.<br>
+      ${err.message}<br><br>
+      <a class="back" href="/sandbox">← Back to sandbox</a>
+    `;
+  }
+})();
+</script>
+</body>
+</html>
