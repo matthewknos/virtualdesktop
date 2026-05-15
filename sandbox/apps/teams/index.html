@@ -4189,8 +4189,11 @@ document.addEventListener('DOMContentLoaded', () => {
   try {
     _sandboxApp = new SandboxTeamsApp();
     window.sandboxApp = _sandboxApp;
-    if (_sandboxApp.scenarioId) {
-      _sandboxApp.init();
+    // Always init — init() handles mock mode when no scenario is provided
+    _sandboxApp.init();
+    // Hide welcome card in mock mode (no scenario)
+    if (!_sandboxApp.scenarioId && sceneCard) {
+      sceneCard.style.display = 'none';
     }
   } catch (err) {
     const msg = 'SandboxTeamsApp setup failed: ' + (err && err.message ? err.message : String(err));

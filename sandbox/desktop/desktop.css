@@ -48,7 +48,6 @@ body {
 #desktop {
   position: fixed;
   top: 28px; left: 0; right: 0; bottom: 0;
-  z-index: 1;
 }
 
 /* Desktop Icons */
@@ -125,16 +124,25 @@ body {
   border-bottom: 1px solid rgba(255,255,255,0.05);
   cursor: grab;
   user-select: none;
+  pointer-events: none;
 }
 .window-titlebar:active { cursor: grabbing; }
 
-.traffic-lights { display: flex; gap: 8px; }
+.traffic-lights {
+  display: flex;
+  gap: 10px;
+  padding: 6px;
+  margin: -6px;
+  cursor: pointer;
+  pointer-events: auto;
+}
 .traffic-light {
-  width: 12px; height: 12px;
+  width: 14px; height: 14px;
   border-radius: 50%;
   border: 1px solid rgba(0,0,0,0.1);
   cursor: pointer;
   transition: transform 0.1s;
+  pointer-events: auto;
 }
 .traffic-light:hover { transform: scale(1.15); }
 .light-close { background: #ff5f57; }
@@ -147,7 +155,7 @@ body {
   font-size: 13px;
   font-weight: 500;
   opacity: 0.9;
-  margin-left: -52px;
+  margin-left: -62px;
 }
 
 .window-body {
