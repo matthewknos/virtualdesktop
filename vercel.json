@@ -1,13 +1,4 @@
 {
-  "cleanUrls": true,
-  "trailingSlash": false,
-  "redirects": [
-    { "source": "/r-and-r/proposal", "destination": "/r-and-r/agent-design", "permanent": true },
-    { "source": "/r-and-r/technical", "destination": "/r-and-r/delivery-plan", "permanent": true }
-  ],
-  "rewrites": [
-    { "source": "/api/sandbox/:path*",      "destination": "/api/sandbox" },
-    { "source": "/api/mock/graph/:path*",   "destination": "/api/mock/graph" },
-    { "source": "/api/mock/workday/:path*", "destination": "/api/mock/workday" }
-  ]
+  "version": 2,
+  "public": true
 }

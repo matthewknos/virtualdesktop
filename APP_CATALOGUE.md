@@ -9,7 +9,7 @@
 
 | Symbol | Meaning |
 |---|---|
-| ✅ | Already exists (in sandbox/desktop or as a live prototype) |
+| ✅ | Already exists (in VirtualDesktop or as a live prototype) |
 | 🟡 | Stub exists but needs full implementation |
 | 🔴 | Not built yet — needed for agent demo |
 | 📦 | Reuse existing system app (Workday/Teams/Outlook) |

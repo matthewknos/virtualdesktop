@@ -4,7 +4,7 @@ html, body { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMa
 
 /* ── Wallpaper ─────────────────────────────────────────────────────────── */
 body {
-  background: url('/sandbox/desktop/background.jpg') no-repeat center center fixed;
+  background: url('/background.jpg') no-repeat center center fixed;
   background-size: cover;
   color: #fff;
 }
