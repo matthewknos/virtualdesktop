@@ -9,6 +9,32 @@ body {
   color: #fff;
 }
 
+/* ── Reduced Motion ────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Focus Visible ─────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.dock-app:focus-visible,
+.desktop-icon:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+.traffic-light:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
 /* ── Menu Bar ──────────────────────────────────────────────────────────── */
 #menu-bar {
   position: fixed;
@@ -29,9 +55,28 @@ body {
 .menu-left, .menu-right { display: flex; align-items: center; gap: 12px; }
 .apple-logo { font-size: 15px; opacity: 0.9; }
 .app-name { font-weight: 600; }
-.menu-nav { display: flex; gap: 12px; opacity: 0.85; }
-.menu-nav span { cursor: default; }
-.menu-nav span:hover { opacity: 1; background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+.menu-nav {
+  display: flex;
+  gap: 12px;
+  opacity: 0.85;
+}
+.menu-btn {
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  cursor: default;
+  padding: 2px 6px;
+  border-radius: 3px;
+  opacity: 0.85;
+}
+.menu-btn:hover {
+  opacity: 1;
+  background: rgba(255,255,255,0.1);
+}
+
 #menu-tenant {
   cursor: pointer;
   padding: 2px 8px;
@@ -40,6 +85,9 @@ body {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  border: none;
+  color: inherit;
+  font: inherit;
 }
 #menu-tenant:hover { background: rgba(255,255,255,0.2); }
 #menu-clock { font-variant-numeric: tabular-nums; opacity: 0.9; }
@@ -68,8 +116,13 @@ body {
   cursor: pointer;
   text-align: center;
   transition: transform 0.15s ease;
+  border-radius: 8px;
+  padding: 4px;
 }
 .desktop-icon:hover { transform: scale(1.05); }
+.desktop-icon:focus-visible {
+  background: rgba(255,255,255,0.1);
+}
 .desktop-icon .icon-bg {
   width: 56px; height: 56px;
   border-radius: 14px;
@@ -201,6 +254,9 @@ body {
   cursor: pointer;
   transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), margin 0.2s;
   display: flex; align-items: center; justify-content: center;
+  background: none;
+  border: none;
+  padding: 0;
 }
 .dock-app:hover { transform: scale(1.2) translateY(-8px); }
 .dock-app::after {
@@ -214,6 +270,31 @@ body {
   transition: opacity 0.2s;
 }
 .dock-app.active::after { opacity: 1; }
+
+/* Dock tooltip */
+.dock-app::before {
+  content: attr(title);
+  position: absolute;
+  top: -36px;
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: rgba(0,0,0,0.8);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s, transform 0.15s;
+  z-index: 10001;
+}
+.dock-app:hover::before,
+.dock-app:focus-visible::before {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
 
 .app-icon {
   width: 44px; height: 44px;
@@ -265,3 +346,32 @@ body {
 }
 #tenant-save { background: #3b82f6; color: #fff; }
 #tenant-cancel { background: rgba(255,255,255,0.1); color: #fff; }
+
+/* ── App Stub ──────────────────────────────────────────────────────────── */
+.app-stub {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 40px;
+  text-align: center;
+  color: rgba(255,255,255,0.6);
+  gap: 12px;
+}
+.app-stub svg {
+  width: 48px;
+  height: 48px;
+  stroke: rgba(255,255,255,0.3);
+  stroke-width: 1.5;
+}
+.app-stub h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.8);
+}
+.app-stub p {
+  font-size: 13px;
+  max-width: 320px;
+  line-height: 1.5;
+}

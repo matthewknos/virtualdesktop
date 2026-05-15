@@ -1,17 +1,40 @@
 /**
  * CoE Virtual Desktop — Window Manager & App Launcher
+ * Audit refactored: accessibility, keyboard nav, boundary constraints,
+ * event cleanup, reduced-motion support, configurable app URLs.
  */
+
+/* ── Configuration ──────────────────────────────────────────────────────── */
+const CONFIG = {
+  // External app URLs (point to coe-prototypes until apps are inlined)
+  appBaseUrl: 'https://coe-prototypes.vercel.app',
+  zIndex: { base: 10, focused: 100, maximized: 20000, modal: 20000, menubar: 10000 },
+  minWindow: { w: 320, h: 200 },
+  defaultWindow: { w: 900, h: 640, finderW: 640, finderH: 420 },
+  dragOffset: 24,
+  dragMaxOffset: 8,
+};
 
 const API_BASE = location.origin.includes('localhost') ? 'http://localhost:3001' : '';
 let tenant = localStorage.getItem('coe-tenant') || 'dev';
 let activeWindow = null;
 let windowCounter = 0;
 const windows = new Map();
+const globalListeners = new Map(); // id -> { mousemove, mouseup }
+
+/* ── App Registry ───────────────────────────────────────────────────────── */
+const APPS = {
+  finder:  { title: 'Finder',  icon: 'finder-icon',  src: null },
+  teams:   { title: 'Teams',   icon: 'teams-icon',   src: `${CONFIG.appBaseUrl}/sandbox/apps/teams` },
+  outlook: { title: 'Outlook', icon: 'outlook-icon', src: `${CONFIG.appBaseUrl}/sandbox/apps/outlook` },
+  workday: { title: 'Workday', icon: 'workday-icon', src: `${CONFIG.appBaseUrl}/sandbox/apps/workday` },
+};
 
 /* ── Clock ──────────────────────────────────────────────────────────────── */
 function updateClock() {
   const now = new Date();
-  document.getElementById('menu-clock').textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const el = document.getElementById('menu-clock');
+  if (el) el.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 setInterval(updateClock, 1000);
 updateClock();
@@ -20,34 +43,44 @@ updateClock();
 function setTenant(name) {
   tenant = name.replace(/[^a-z0-9-_]/gi, '').toLowerCase() || 'dev';
   localStorage.setItem('coe-tenant', tenant);
-  document.getElementById('menu-tenant').textContent = tenant;
+  const el = document.getElementById('menu-tenant');
+  if (el) el.textContent = tenant;
   // Reload all open app iframes so they pick up the new tenant
-  windows.forEach((win, id) => {
+  windows.forEach((win) => {
     const iframe = win.querySelector('iframe');
-    if (iframe) iframe.src = iframe.src;
+    if (iframe) {
+      try {
+        const url = new URL(iframe.src);
+        url.searchParams.set('tenant', tenant);
+        iframe.src = url.toString();
+      } catch {
+        // Cross-origin iframe may block URL read; fallback to src reload
+        iframe.src = iframe.src;
+      }
+    }
   });
 }
 setTenant(tenant);
 
-document.getElementById('menu-tenant').addEventListener('click', () => {
-  document.getElementById('tenant-input').value = tenant;
-  document.getElementById('tenant-modal').classList.remove('hidden');
-});
-document.getElementById('tenant-save').addEventListener('click', () => {
-  setTenant(document.getElementById('tenant-input').value);
-  document.getElementById('tenant-modal').classList.add('hidden');
-});
-document.getElementById('tenant-cancel').addEventListener('click', () => {
-  document.getElementById('tenant-modal').classList.add('hidden');
+document.getElementById('menu-tenant')?.addEventListener('click', () => {
+  const input = document.getElementById('tenant-input');
+  const modal = document.getElementById('tenant-modal');
+  if (input) input.value = tenant;
+  if (modal) {
+    modal.classList.remove('hidden');
+    input?.focus();
+  }
 });
 
-/* ── App Registry ───────────────────────────────────────────────────────── */
-const APPS = {
-  finder: { title: 'Finder', icon: 'finder-icon', src: null },
-  teams:  { title: 'Teams',  icon: 'teams-icon',  src: '/sandbox/apps/teams' },
-  outlook:{ title: 'Outlook',icon: 'outlook-icon',src: '../apps/outlook' },
-  workday:{ title: 'Workday',icon: 'workday-icon',src: '../apps/workday' },
-};
+document.getElementById('tenant-save')?.addEventListener('click', () => {
+  const input = document.getElementById('tenant-input');
+  if (input) setTenant(input.value);
+  document.getElementById('tenant-modal')?.classList.add('hidden');
+});
+
+document.getElementById('tenant-cancel')?.addEventListener('click', () => {
+  document.getElementById('tenant-modal')?.classList.add('hidden');
+});
 
 /* ── Launch App ─────────────────────────────────────────────────────────── */
 function launchApp(appKey) {
@@ -69,78 +102,121 @@ function launchApp(appKey) {
   win.className = 'window';
   win.dataset.app = appKey;
   win.dataset.id = id;
+  win.setAttribute('role', 'dialog');
+  win.setAttribute('aria-label', app.title);
+  win.setAttribute('tabindex', '-1');
 
-  // Stagger new windows
-  const offset = (windowCounter % 8) * 24;
-  win.style.left = `${120 + offset}px`;
-  win.style.top = `${80 + offset}px`;
-  win.style.width = appKey === 'finder' ? '640px' : '900px';
-  win.style.height = appKey === 'finder' ? '420px' : '640px';
+  // Stagger new windows with viewport constraints
+  const offset = (windowCounter % CONFIG.dragMaxOffset) * CONFIG.dragOffset;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const isFinder = appKey === 'finder';
+  const w = isFinder ? CONFIG.defaultWindow.finderW : CONFIG.defaultWindow.w;
+  const h = isFinder ? CONFIG.defaultWindow.finderH : CONFIG.defaultWindow.h;
+
+  let left = Math.min(120 + offset, vw - w - 20);
+  let top = Math.min(80 + offset, vh - h - 40);
+  if (left < 0) left = 20;
+  if (top < 28) top = 40;
+
+  win.style.left = `${left}px`;
+  win.style.top = `${top}px`;
+  win.style.width = `${w}px`;
+  win.style.height = `${h}px`;
+
+  const iframeSrc = app.src ? `${app.src}?tenant=${tenant}` : null;
+  const stubContent = appStubHtml(app);
 
   win.innerHTML = `
     <div class="window-titlebar">
-      <div class="traffic-lights">
-        <div class="traffic-light light-close" data-action="close"></div>
-        <div class="traffic-light light-minimize" data-action="minimize"></div>
-        <div class="traffic-light light-maximize" data-action="maximize"></div>
+      <div class="traffic-lights" role="toolbar" aria-label="Window controls">
+        <button type="button" class="traffic-light light-close" data-action="close" aria-label="Close ${app.title}"></button>
+        <button type="button" class="traffic-light light-minimize" data-action="minimize" aria-label="Minimize ${app.title}"></button>
+        <button type="button" class="traffic-light light-maximize" data-action="maximize" aria-label="Maximize ${app.title}"></button>
       </div>
       <div class="window-title">${app.title}</div>
     </div>
     <div class="window-body">
-      ${app.src
-        ? `<iframe src="${app.src}?tenant=${tenant}" allow="fullscreen"></iframe>`
-        : `<div style="padding:40px;text-align:center;opacity:0.6;font-size:14px;">Finder — File browser coming soon</div>`
+      ${iframeSrc
+        ? `<iframe src="${iframeSrc}" allow="fullscreen" loading="lazy" title="${app.title} app"></iframe>`
+        : stubContent
       }
     </div>
   `;
 
-  document.getElementById('windows').appendChild(win);
+  document.getElementById('windows')?.appendChild(win);
   windows.set(id, win);
   focusWindow(id);
   setupWindowDrag(win);
   setupWindowControls(win, id);
   updateDockIndicator(appKey, true);
-  maximizeWindow(id);
+  updateMenuAppName(app.title);
+}
+
+function appStubHtml(app) {
+  return `
+    <div class="app-stub">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <path d="M3 9h18M9 21V9"/>
+      </svg>
+      <h3>${app.title}</h3>
+      <p>This application is coming soon to the Virtual Desktop.<br>Check the app catalogue for updates.</p>
+    </div>
+  `;
 }
 
 /* ── Window Controls ────────────────────────────────────────────────────── */
 function focusWindow(id) {
   windows.forEach((w) => {
-    if (w.dataset.maximized !== 'true') w.style.zIndex = 10;
+    if (w.dataset.maximized !== 'true') w.style.zIndex = CONFIG.zIndex.base;
   });
   const win = windows.get(id);
   if (win) {
-    win.style.zIndex = win.dataset.maximized === 'true' ? 20000 : 100;
+    win.style.zIndex = win.dataset.maximized === 'true' ? CONFIG.zIndex.maximized : CONFIG.zIndex.focused;
     activeWindow = id;
-    document.querySelector('.app-name').textContent = APPS[win.dataset.app]?.title || 'Finder';
+    const appTitle = APPS[win.dataset.app]?.title || 'Finder';
+    updateMenuAppName(appTitle);
     updateDockIndicator(win.dataset.app, true);
+    win.focus();
   }
+}
+
+function updateMenuAppName(title) {
+  const el = document.getElementById('menu-app-name');
+  if (el) el.textContent = title;
 }
 
 function closeWindow(id) {
   const win = windows.get(id);
   if (!win) return;
+  cleanupWindowListeners(id);
   win.style.transform = 'scale(0.9)';
   win.style.opacity = '0';
   setTimeout(() => {
     win.remove();
     windows.delete(id);
-    // Check if any window of this app type remains
     const appKey = win.dataset.app;
     const hasOpen = [...windows.values()].some(w => w.dataset.app === appKey);
     if (!hasOpen) updateDockIndicator(appKey, false);
     updateDockVisibility();
+    if (windows.size === 0) updateMenuAppName('Finder');
   }, 180);
 }
 
 function minimizeWindow(id) {
   const win = windows.get(id);
-  if (win) win.classList.add('minimized');
+  if (win) {
+    win.classList.add('minimized');
+    const appKey = win.dataset.app;
+    const hasVisible = [...windows.values()].some(w => w.dataset.app === appKey && !w.classList.contains('minimized'));
+    if (!hasVisible) updateDockIndicator(appKey, false);
+  }
 }
 
 function updateDockVisibility() {
   const anyMaximized = [...windows.values()].some(w => w.dataset.maximized === 'true');
-  document.getElementById('dock').classList.toggle('dock-hidden', anyMaximized);
+  document.getElementById('dock')?.classList.toggle('dock-hidden', anyMaximized);
 }
 
 function maximizeWindow(id) {
@@ -160,7 +236,7 @@ function maximizeWindow(id) {
     win.style.width = '100%';
     win.style.height = 'calc(100vh - 28px)';
     win.style.borderRadius = '0';
-    win.style.zIndex = '20000';
+    win.style.zIndex = String(CONFIG.zIndex.maximized);
     win.dataset.maximized = 'true';
   } else {
     win.style.position = win.dataset.prevPosition || 'absolute';
@@ -169,7 +245,7 @@ function maximizeWindow(id) {
     win.style.width = win.dataset.prevWidth || '900px';
     win.style.height = win.dataset.prevHeight || '640px';
     win.style.borderRadius = '12px';
-    win.style.zIndex = win.dataset.prevZIndex || '100';
+    win.style.zIndex = win.dataset.prevZIndex || String(CONFIG.zIndex.focused);
     win.dataset.maximized = 'false';
   }
   updateDockVisibility();
@@ -191,11 +267,42 @@ function setupWindowControls(win, id) {
 /* ── Window Drag ────────────────────────────────────────────────────────── */
 function setupWindowDrag(win) {
   const titlebar = win.querySelector('.window-titlebar');
+  if (!titlebar) return;
   let dragging = false;
   let startX, startY, startLeft, startTop;
 
+  const onMouseMove = (e) => {
+    if (!dragging) return;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const rect = win.getBoundingClientRect();
+    const minW = Math.max(rect.width, CONFIG.minWindow.w);
+    const minH = Math.max(rect.height, CONFIG.minWindow.h);
+
+    let newLeft = startLeft + e.clientX - startX;
+    let newTop = startTop + e.clientY - startY;
+
+    // Boundary constraints: keep at least 60px visible
+    newLeft = Math.max(-minW + 60, Math.min(newLeft, vw - 60));
+    newTop = Math.max(28, Math.min(newTop, vh - 40));
+
+    win.style.left = `${newLeft}px`;
+    win.style.top = `${newTop}px`;
+  };
+
+  const onMouseUp = () => {
+    if (dragging) {
+      dragging = false;
+      win.style.transition = '';
+    }
+  };
+
+  const id = win.dataset.id;
+  globalListeners.set(id, { mousemove: onMouseMove, mouseup: onMouseUp });
+
   titlebar.addEventListener('mousedown', (e) => {
-    if (e.target.classList.contains('traffic-light')) return;
+    if (e.target.classList.contains('traffic-light') || e.target.closest('.traffic-light')) return;
+    if (win.dataset.maximized === 'true') return;
     dragging = true;
     startX = e.clientX;
     startY = e.clientY;
@@ -204,18 +311,17 @@ function setupWindowDrag(win) {
     win.style.transition = 'none';
   });
 
-  window.addEventListener('mousemove', (e) => {
-    if (!dragging) return;
-    win.style.left = `${startLeft + e.clientX - startX}px`;
-    win.style.top = `${startTop + e.clientY - startY}px`;
-  });
+  window.addEventListener('mousemove', onMouseMove);
+  window.addEventListener('mouseup', onMouseUp);
+}
 
-  window.addEventListener('mouseup', () => {
-    if (dragging) {
-      dragging = false;
-      win.style.transition = '';
-    }
-  });
+function cleanupWindowListeners(id) {
+  const listeners = globalListeners.get(id);
+  if (listeners) {
+    window.removeEventListener('mousemove', listeners.mousemove);
+    window.removeEventListener('mouseup', listeners.mouseup);
+    globalListeners.delete(id);
+  }
 }
 
 /* ── Dock ───────────────────────────────────────────────────────────────── */
@@ -223,15 +329,15 @@ function updateDockIndicator(appKey, active) {
   document.querySelectorAll('.dock-app').forEach(el => {
     if (el.dataset.app === appKey) {
       el.classList.toggle('active', active);
+      el.setAttribute('aria-pressed', String(active));
     }
   });
 }
 
 function setupDock() {
   document.querySelectorAll('.dock-app').forEach(el => {
-    el.addEventListener('click', () => {
+    const activate = () => {
       const appKey = el.dataset.app;
-      // If minimized, restore
       for (const [id, win] of windows) {
         if (win.dataset.app === appKey && win.classList.contains('minimized')) {
           win.classList.remove('minimized');
@@ -240,6 +346,13 @@ function setupDock() {
         }
       }
       launchApp(appKey);
+    };
+    el.addEventListener('click', activate);
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        activate();
+      }
     });
   });
 }
@@ -247,9 +360,43 @@ function setupDock() {
 /* ── Desktop Icons ──────────────────────────────────────────────────────── */
 function setupDesktopIcons() {
   document.querySelectorAll('.desktop-icon').forEach(el => {
-    el.addEventListener('dblclick', () => launchApp(el.dataset.app));
+    const activate = () => launchApp(el.dataset.app);
+    el.addEventListener('dblclick', activate);
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        activate();
+      }
+    });
   });
 }
+
+/* ── Global Keyboard Shortcuts ──────────────────────────────────────────── */
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const modal = document.getElementById('tenant-modal');
+    if (modal && !modal.classList.contains('hidden')) {
+      modal.classList.add('hidden');
+      return;
+    }
+    if (activeWindow) closeWindow(activeWindow);
+  }
+
+  if ((e.metaKey || e.ctrlKey) && e.key === 'w') {
+    e.preventDefault();
+    if (activeWindow) closeWindow(activeWindow);
+  }
+
+  if ((e.metaKey || e.ctrlKey) && e.key === 'm') {
+    e.preventDefault();
+    if (activeWindow) minimizeWindow(activeWindow);
+  }
+
+  if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
+    e.preventDefault();
+    launchApp('finder');
+  }
+});
 
 /* ── Init ───────────────────────────────────────────────────────────────── */
 setupDock();

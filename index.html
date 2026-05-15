@@ -3,97 +3,98 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="AI CoE Virtual Desktop — Agent demo sandbox with window manager, app launcher, and tenant switching." />
   <title>CoE Virtual Desktop</title>
   <link rel="stylesheet" href="/desktop.css" />
 </head>
 <body>
   <!-- Top Menu Bar -->
-  <header id="menu-bar">
+  <header id="menu-bar" role="banner">
     <div class="menu-left">
-      <span class="apple-logo"><svg width="12" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.84-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.21-1.96 1.06-3.11-1.05.05-2.31.71-3.06 1.64-.68.84-1.27 2.18-1.11 3.27 1.19.09 2.38-.78 3.11-1.8z"/></svg></span>
-      <span class="app-name">Finder</span>
-      <nav class="menu-nav">
-        <span>File</span>
-        <span>Edit</span>
-        <span>View</span>
-        <span>Window</span>
-        <span>Help</span>
+      <span class="apple-logo" aria-hidden="true"><svg width="12" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.84-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.21-1.96 1.06-3.11-1.05.05-2.31.71-3.06 1.64-.68.84-1.27 2.18-1.11 3.27 1.19.09 2.38-.78 3.11-1.8z"/></svg></span>
+      <span class="app-name" id="menu-app-name" aria-live="polite">Finder</span>
+      <nav class="menu-nav" aria-label="Application menu">
+        <button type="button" class="menu-btn" data-menu="File" tabindex="-1">File</button>
+        <button type="button" class="menu-btn" data-menu="Edit" tabindex="-1">Edit</button>
+        <button type="button" class="menu-btn" data-menu="View" tabindex="-1">View</button>
+        <button type="button" class="menu-btn" data-menu="Window" tabindex="-1">Window</button>
+        <button type="button" class="menu-btn" data-menu="Help" tabindex="-1">Help</button>
       </nav>
     </div>
     <div class="menu-right">
-      <span id="menu-tenant">dev</span>
-      <span id="menu-clock">--:--</span>
+      <button type="button" id="menu-tenant" aria-label="Current tenant, click to change">dev</button>
+      <span id="menu-clock" aria-label="Current time">--:--</span>
     </div>
   </header>
 
   <!-- Desktop -->
-  <main id="desktop">
+  <main id="desktop" role="main" aria-label="Desktop">
     <!-- Desktop Icons -->
-    <div class="desktop-icons">
-      <div class="desktop-icon" data-app="finder">
+    <div class="desktop-icons" role="list" aria-label="Desktop applications">
+      <div class="desktop-icon" role="listitem" data-app="finder" tabindex="0" aria-label="Finder, double click to open">
         <div class="icon-bg finder-icon">
-          <img src="/documents/finder.png" alt="Finder" />
+          <img src="/documents/finder.png" alt="" />
         </div>
         <span>Finder</span>
       </div>
-      <div class="desktop-icon" data-app="teams">
+      <div class="desktop-icon" role="listitem" data-app="teams" tabindex="0" aria-label="Teams, double click to open">
         <div class="icon-bg teams-icon">
-          <img src="/assets/appicon.png" alt="Teams" />
+          <img src="/assets/appicon.png" alt="" />
         </div>
         <span>Teams</span>
       </div>
-      <div class="desktop-icon" data-app="outlook">
+      <div class="desktop-icon" role="listitem" data-app="outlook" tabindex="0" aria-label="Outlook, double click to open">
         <div class="icon-bg outlook-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 8l10 6 10-6"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 8l10 6 10-6"/></svg>
         </div>
         <span>Outlook</span>
       </div>
-      <div class="desktop-icon" data-app="workday">
+      <div class="desktop-icon" role="listitem" data-app="workday" tabindex="0" aria-label="Workday, double click to open">
         <div class="icon-bg workday-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
         </div>
         <span>Workday</span>
       </div>
     </div>
 
     <!-- Windows Container -->
-    <div id="windows"></div>
+    <div id="windows" role="region" aria-label="Open windows"></div>
   </main>
 
   <!-- Dock -->
-  <footer id="dock">
+  <footer id="dock" role="toolbar" aria-label="Application dock">
     <div class="dock-apps">
-      <div class="dock-app active" data-app="finder" title="Finder">
+      <div class="dock-app active" data-app="finder" title="Finder" role="button" tabindex="0" aria-label="Finder">
         <div class="app-icon finder-icon">
-          <img src="/documents/finder.png" alt="Finder" />
+          <img src="/documents/finder.png" alt="" />
         </div>
       </div>
-      <div class="dock-app" data-app="teams" title="Teams">
+      <div class="dock-app" data-app="teams" title="Teams" role="button" tabindex="0" aria-label="Teams">
         <div class="app-icon teams-icon">
-          <img src="/assets/appicon.png" alt="Teams" />
+          <img src="/assets/appicon.png" alt="" />
         </div>
       </div>
-      <div class="dock-app" data-app="outlook" title="Outlook">
+      <div class="dock-app" data-app="outlook" title="Outlook" role="button" tabindex="0" aria-label="Outlook">
         <div class="app-icon outlook-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 8l10 6 10-6"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 8l10 6 10-6"/></svg>
         </div>
       </div>
-      <div class="dock-app" data-app="workday" title="Workday">
+      <div class="dock-app" data-app="workday" title="Workday" role="button" tabindex="0" aria-label="Workday">
         <div class="app-icon workday-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
         </div>
       </div>
     </div>
   </footer>
 
   <!-- Tenant Selector Modal -->
-  <div id="tenant-modal" class="modal hidden">
+  <div id="tenant-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="tenant-modal-title">
     <div class="modal-content">
-      <h2>Select Tenant</h2>
-      <input type="text" id="tenant-input" placeholder="tenant-name" value="dev" />
+      <h2 id="tenant-modal-title">Select Tenant</h2>
+      <input type="text" id="tenant-input" placeholder="tenant-name" value="dev" aria-label="Tenant name" />
       <div class="modal-actions">
-        <button id="tenant-save">Load</button>
-        <button id="tenant-cancel">Cancel</button>
+        <button type="button" id="tenant-save">Load</button>
+        <button type="button" id="tenant-cancel">Cancel</button>
       </div>
     </div>
   </div>
