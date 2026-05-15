@@ -44,7 +44,7 @@ document.getElementById('tenant-cancel').addEventListener('click', () => {
 /* ── App Registry ───────────────────────────────────────────────────────── */
 const APPS = {
   finder: { title: 'Finder', icon: 'finder-icon', src: null },
-  teams:  { title: 'Teams',  icon: 'teams-icon',  src: '../apps/teams' },
+  teams:  { title: 'Teams',  icon: 'teams-icon',  src: '/sandbox/apps/teams' },
   outlook:{ title: 'Outlook',icon: 'outlook-icon',src: '../apps/outlook' },
   workday:{ title: 'Workday',icon: 'workday-icon',src: '../apps/workday' },
 };
