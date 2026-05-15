@@ -116,9 +116,12 @@ function launchApp(appKey) {
   const app = APPS[appKey];
   if (!app) return;
 
-  // If app already open, focus it
+  // If app already open (including minimized), focus/restore it
   for (const [id, win] of windows) {
-    if (win.dataset.app === appKey && !win.classList.contains('minimized')) {
+    if (win.dataset.app === appKey) {
+      if (win.classList.contains('minimized')) {
+        win.classList.remove('minimized');
+      }
       focusWindow(id);
       return;
     }
@@ -232,7 +235,7 @@ function closeWindow(id) {
     const appKey = win.dataset.app;
     const hasOpen = [...windows.values()].some(w => w.dataset.app === appKey);
     if (!hasOpen) updateDockIndicator(appKey, false);
-    if (windows.size === 0) updateMenuAppName('');
+    if (windows.size === 0) updateMenuAppName('Virtual Desktop');
     activeWindow = null;
     updateDockVisibility();
   }, 180);
@@ -248,8 +251,9 @@ function minimizeWindow(id) {
     focusWindow(remaining[0][0]);
   } else {
     activeWindow = null;
-    updateMenuAppName('');
+    updateMenuAppName('Virtual Desktop');
   }
+  updateDockVisibility();
 }
 
 function maximizeWindow(id) {
@@ -280,6 +284,12 @@ function maximizeWindow(id) {
     win.style.borderRadius = '12px';
     win.style.zIndex = win.dataset.prevZIndex || String(CONFIG.zIndex.focused);
     win.dataset.maximized = 'false';
+  }
+  // Update traffic-light aria-label to reflect state
+  const maxBtn = win.querySelector('.light-maximize');
+  if (maxBtn) {
+    const appTitle = APPS[win.dataset.app]?.title || '';
+    maxBtn.setAttribute('aria-label', win.dataset.maximized === 'true' ? `Restore ${appTitle}` : `Zoom ${appTitle}`);
   }
 }
 
