@@ -143,11 +143,13 @@ function maximizeWindow(id) {
     win.dataset.prevTop = win.style.top;
     win.dataset.prevWidth = win.style.width;
     win.dataset.prevHeight = win.style.height;
+    win.dataset.prevZIndex = win.style.zIndex;
     win.style.left = '0';
     win.style.top = '28px';
     win.style.width = '100%';
     win.style.height = 'calc(100vh - 28px)';
     win.style.borderRadius = '0';
+    win.style.zIndex = '20000';
     win.dataset.maximized = 'true';
   } else {
     win.style.left = win.dataset.prevLeft || '120px';
@@ -155,6 +157,7 @@ function maximizeWindow(id) {
     win.style.width = win.dataset.prevWidth || '900px';
     win.style.height = win.dataset.prevHeight || '640px';
     win.style.borderRadius = '12px';
+    win.style.zIndex = win.dataset.prevZIndex || '100';
     win.dataset.maximized = 'false';
   }
 }

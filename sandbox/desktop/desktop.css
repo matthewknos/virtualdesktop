@@ -107,6 +107,7 @@ body {
   overflow: hidden;
   min-width: 320px; min-height: 200px;
   animation: windowOpen 0.2s ease;
+  z-index: 11;
 }
 @keyframes windowOpen {
   from { opacity: 0; transform: scale(0.96) translateY(10px); }
