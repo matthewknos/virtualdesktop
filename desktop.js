@@ -1,26 +1,25 @@
 /**
  * CoE Virtual Desktop — Window Manager & App Launcher
- * Audit refactored: accessibility, keyboard nav, boundary constraints,
- * event cleanup, reduced-motion support, configurable app URLs.
+ * v2: Fullscreen apps, working minimize, always-visible dock,
+ *     window resize, context menu, menu dropdowns, Finder stub.
  */
 
 /* ── Configuration ──────────────────────────────────────────────────────── */
 const CONFIG = {
-  // External app URLs (point to coe-prototypes until apps are inlined)
   appBaseUrl: 'https://coe-prototypes.vercel.app',
   zIndex: { base: 10, focused: 100, maximized: 20000, modal: 20000, menubar: 10000 },
   minWindow: { w: 320, h: 200 },
-  defaultWindow: { w: 900, h: 640, finderW: 640, finderH: 420 },
+  finderWindow: { w: 640, h: 420 },
   dragOffset: 24,
   dragMaxOffset: 8,
 };
 
-const API_BASE = location.origin.includes('localhost') ? 'http://localhost:3001' : '';
 let tenant = localStorage.getItem('coe-tenant') || 'dev';
 let activeWindow = null;
 let windowCounter = 0;
 const windows = new Map();
-const globalListeners = new Map(); // id -> { mousemove, mouseup }
+const globalListeners = new Map();
+let tenantTrigger = null;
 
 /* ── App Registry ───────────────────────────────────────────────────────── */
 const APPS = {
@@ -32,9 +31,8 @@ const APPS = {
 
 /* ── Clock ──────────────────────────────────────────────────────────────── */
 function updateClock() {
-  const now = new Date();
   const el = document.getElementById('menu-clock');
-  if (el) el.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  if (el) el.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 setInterval(updateClock, 1000);
 updateClock();
@@ -53,7 +51,7 @@ function showToast(message, duration = 3000) {
   setTimeout(() => toast.classList.remove('show'), duration);
 }
 
-/* ── Tenant ─────────────────────────────────────────────────────────────── */
+/* ── Tenant Modal ───────────────────────────────────────────────────────── */
 function setTenant(name) {
   tenant = name.replace(/[^a-z0-9-_]/gi, '').toLowerCase() || 'dev';
   localStorage.setItem('coe-tenant', tenant);
@@ -68,7 +66,6 @@ function setTenant(name) {
         url.searchParams.set('tenant', tenant);
         iframe.src = url.toString();
       } catch {
-        // Cross-origin iframe: can't read src, attempt reload
         iframe.src = iframe.src;
         crossOriginCount++;
       }
@@ -80,9 +77,7 @@ function setTenant(name) {
 }
 setTenant(tenant);
 
-let tenantTrigger = null;
-document.getElementById('menu-tenant')?.addEventListener('click', (e) => {
-  tenantTrigger = e.currentTarget;
+function openModal() {
   const input = document.getElementById('tenant-input');
   const modal = document.getElementById('tenant-modal');
   if (input) input.value = tenant;
@@ -90,17 +85,7 @@ document.getElementById('menu-tenant')?.addEventListener('click', (e) => {
     modal.classList.remove('hidden');
     input?.focus();
   }
-});
-
-document.getElementById('tenant-save')?.addEventListener('click', () => {
-  const input = document.getElementById('tenant-input');
-  if (input) setTenant(input.value);
-  closeModal();
-});
-
-document.getElementById('tenant-cancel')?.addEventListener('click', () => {
-  closeModal();
-});
+}
 
 function closeModal() {
   const modal = document.getElementById('tenant-modal');
@@ -111,7 +96,18 @@ function closeModal() {
   }
 }
 
-// Close modal on backdrop click
+document.getElementById('menu-tenant')?.addEventListener('click', (e) => {
+  tenantTrigger = e.currentTarget;
+  openModal();
+});
+
+document.getElementById('tenant-save')?.addEventListener('click', () => {
+  const input = document.getElementById('tenant-input');
+  if (input) setTenant(input.value);
+  closeModal();
+});
+
+document.getElementById('tenant-cancel')?.addEventListener('click', closeModal);
 document.getElementById('tenant-modal')?.addEventListener('click', (e) => {
   if (e.target === e.currentTarget) closeModal();
 });
@@ -121,7 +117,7 @@ function launchApp(appKey) {
   const app = APPS[appKey];
   if (!app) return;
 
-  // If app already open and not Finder, focus it
+  // If non-Finder app already open, focus it
   if (appKey !== 'finder') {
     for (const [id, win] of windows) {
       if (win.dataset.app === appKey && !win.classList.contains('minimized')) {
@@ -140,36 +136,25 @@ function launchApp(appKey) {
   win.setAttribute('aria-label', app.title);
   win.setAttribute('tabindex', '-1');
 
-  // Stagger new windows with viewport constraints
-  const offset = (windowCounter % CONFIG.dragMaxOffset) * CONFIG.dragOffset;
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  const isFinder = appKey === 'finder';
-  const w = isFinder ? CONFIG.defaultWindow.finderW : CONFIG.defaultWindow.w;
-  const h = isFinder ? CONFIG.defaultWindow.finderH : CONFIG.defaultWindow.h;
-
-  let left = Math.min(120 + offset, vw - w - 20);
-  let top = Math.min(80 + offset, vh - h - 40);
-  if (left < 0) left = 20;
-  if (top < 28) top = 40;
-
-  win.style.left = `${left}px`;
-  win.style.top = `${top}px`;
-  win.style.width = `${w}px`;
-  win.style.height = `${h}px`;
+  // All apps open fullscreen instantly
+  win.style.position = 'fixed';
+  win.style.left = '0';
+  win.style.top = '28px';
+  win.style.width = '100%';
+  win.style.height = 'calc(100vh - 28px)';
+  win.style.borderRadius = '0';
+  win.style.zIndex = String(CONFIG.zIndex.focused);
+  win.dataset.maximized = 'true';
 
   const iframeSrc = app.src ? `${app.src}?tenant=${tenant}` : null;
-  const stubContent = appStubHtml(app);
-  const loaderHtml = iframeSrc
-    ? `<div class="iframe-loader" id="loader-${id}"><div class="spinner"></div></div>`
-    : '';
+  const loaderHtml = iframeSrc ? `<div class="iframe-loader" id="loader-${id}"><div class="spinner"></div></div>` : '';
 
   win.innerHTML = `
     <div class="window-titlebar">
       <div class="traffic-lights" role="toolbar" aria-label="Window controls">
         <button type="button" class="traffic-light light-close" data-action="close" aria-label="Close ${app.title}"></button>
         <button type="button" class="traffic-light light-minimize" data-action="minimize" aria-label="Minimize ${app.title}"></button>
-        <button type="button" class="traffic-light light-maximize" data-action="maximize" aria-label="Maximize ${app.title}"></button>
+        <button type="button" class="traffic-light light-maximize" data-action="maximize" aria-label="Restore ${app.title}"></button>
       </div>
       <div class="window-title">${app.title}</div>
     </div>
@@ -177,40 +162,66 @@ function launchApp(appKey) {
       ${loaderHtml}
       ${iframeSrc
         ? `<iframe src="${iframeSrc}" allow="fullscreen" loading="lazy" title="${app.title} app" id="frame-${id}"></iframe>`
-        : stubContent
+        : finderStubHtml()
       }
     </div>
+    <div class="resize-handle resize-n" aria-hidden="true"></div>
+    <div class="resize-handle resize-e" aria-hidden="true"></div>
+    <div class="resize-handle resize-s" aria-hidden="true"></div>
+    <div class="resize-handle resize-w" aria-hidden="true"></div>
+    <div class="resize-handle resize-ne" aria-hidden="true"></div>
+    <div class="resize-handle resize-se" aria-hidden="true"></div>
+    <div class="resize-handle resize-sw" aria-hidden="true"></div>
+    <div class="resize-handle resize-nw" aria-hidden="true"></div>
   `;
-
-  // Hide loader when iframe loads
-  if (iframeSrc) {
-    const frame = win.querySelector(`#frame-${id}`);
-    const loader = win.querySelector(`#loader-${id}`);
-    if (frame && loader) {
-      frame.addEventListener('load', () => loader.classList.add('hidden'), { once: true });
-      // Fallback: hide loader after 8s regardless
-      setTimeout(() => loader.classList.add('hidden'), 8000);
-    }
-  }
 
   document.getElementById('windows')?.appendChild(win);
   windows.set(id, win);
   focusWindow(id);
   setupWindowDrag(win);
+  setupWindowResize(win, id);
   setupWindowControls(win, id);
   updateDockIndicator(appKey, true);
   updateMenuAppName(app.title);
+
+  if (iframeSrc) {
+    const frame = win.querySelector(`#frame-${id}`);
+    const loader = win.querySelector(`#loader-${id}`);
+    if (frame && loader) {
+      frame.addEventListener('load', () => loader.classList.add('hidden'), { once: true });
+      setTimeout(() => loader.classList.add('hidden'), 8000);
+    }
+  }
 }
 
-function appStubHtml(app) {
+function finderStubHtml() {
   return `
-    <div class="app-stub">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-        <rect x="3" y="3" width="18" height="18" rx="2"/>
-        <path d="M3 9h18M9 21V9"/>
-      </svg>
-      <h3>${app.title}</h3>
-      <p>This application is coming soon to the Virtual Desktop.<br>Check the app catalogue for updates.</p>
+    <div class="finder-stub">
+      <div class="finder-sidebar">
+        <div class="finder-section">
+          <h4>Favorites</h4>
+          <div class="finder-item active"><span>🏠</span> Desktop</div>
+          <div class="finder-item"><span>📄</span> Documents</div>
+          <div class="finder-item"><span>⬇️</span> Downloads</div>
+        </div>
+        <div class="finder-section">
+          <h4>Locations</h4>
+          <div class="finder-item"><span>💻</span> Macintosh HD</div>
+          <div class="finder-item"><span>☁️</span> iCloud Drive</div>
+        </div>
+      </div>
+      <div class="finder-main">
+        <div class="finder-toolbar">
+          <span>Desktop</span>
+          <span class="finder-count">4 items</span>
+        </div>
+        <div class="finder-grid">
+          <div class="finder-file"><span class="file-icon">📁</span><span class="file-name">Projects</span></div>
+          <div class="finder-file"><span class="file-icon">📁</span><span class="file-name">Designs</span></div>
+          <div class="finder-file"><span class="file-icon">📄</span><span class="file-name">README.md</span></div>
+          <div class="finder-file"><span class="file-icon">🖼️</span><span class="file-name">background.jpg</span></div>
+        </div>
+      </div>
     </div>
   `;
 }
@@ -240,7 +251,7 @@ function closeWindow(id) {
   const win = windows.get(id);
   if (!win) return;
   cleanupWindowListeners(id);
-  win.style.transform = 'scale(0.9)';
+  win.style.transform = 'scale(0.92)';
   win.style.opacity = '0';
   setTimeout(() => {
     win.remove();
@@ -248,24 +259,23 @@ function closeWindow(id) {
     const appKey = win.dataset.app;
     const hasOpen = [...windows.values()].some(w => w.dataset.app === appKey);
     if (!hasOpen) updateDockIndicator(appKey, false);
-    updateDockVisibility();
     if (windows.size === 0) updateMenuAppName('Finder');
+    activeWindow = null;
   }, 180);
 }
 
 function minimizeWindow(id) {
   const win = windows.get(id);
-  if (win) {
-    win.classList.add('minimized');
-    const appKey = win.dataset.app;
-    const hasVisible = [...windows.values()].some(w => w.dataset.app === appKey && !w.classList.contains('minimized'));
-    if (!hasVisible) updateDockIndicator(appKey, false);
+  if (!win) return;
+  win.classList.add('minimized');
+  // Update active window to next available
+  const remaining = [...windows.entries()].filter(([_, w]) => !w.classList.contains('minimized'));
+  if (remaining.length > 0) {
+    focusWindow(remaining[0][0]);
+  } else {
+    activeWindow = null;
+    updateMenuAppName('Finder');
   }
-}
-
-function updateDockVisibility() {
-  const anyMaximized = [...windows.values()].some(w => w.dataset.maximized === 'true');
-  document.getElementById('dock')?.classList.toggle('dock-hidden', anyMaximized);
 }
 
 function maximizeWindow(id) {
@@ -297,7 +307,6 @@ function maximizeWindow(id) {
     win.style.zIndex = win.dataset.prevZIndex || String(CONFIG.zIndex.focused);
     win.dataset.maximized = 'false';
   }
-  updateDockVisibility();
 }
 
 function setupWindowControls(win, id) {
@@ -330,8 +339,6 @@ function setupWindowDrag(win) {
 
     let newLeft = startLeft + e.clientX - startX;
     let newTop = startTop + e.clientY - startY;
-
-    // Boundary constraints: keep at least 60px visible
     newLeft = Math.max(-minW + 60, Math.min(newLeft, vw - 60));
     newTop = Math.max(28, Math.min(newTop, vh - 40));
 
@@ -346,8 +353,8 @@ function setupWindowDrag(win) {
     }
   };
 
-  const id = win.dataset.id;
-  globalListeners.set(id, { mousemove: onMouseMove, mouseup: onMouseUp });
+  const wid = win.dataset.id;
+  globalListeners.set(wid, { mousemove: onMouseMove, mouseup: onMouseUp });
 
   titlebar.addEventListener('mousedown', (e) => {
     if (e.target.classList.contains('traffic-light') || e.target.closest('.traffic-light')) return;
@@ -362,6 +369,63 @@ function setupWindowDrag(win) {
 
   window.addEventListener('mousemove', onMouseMove);
   window.addEventListener('mouseup', onMouseUp);
+}
+
+/* ── Window Resize ──────────────────────────────────────────────────────── */
+function setupWindowResize(win, id) {
+  if (win.dataset.maximized === 'true') return;
+  const handles = win.querySelectorAll('.resize-handle');
+  handles.forEach(handle => {
+    handle.addEventListener('mousedown', (e) => {
+      e.stopPropagation();
+      if (win.dataset.maximized === 'true') return;
+      const direction = Array.from(handle.classList).find(c => c.startsWith('resize-') && c !== 'resize-handle');
+      if (!direction) return;
+      startResize(e, win, direction.replace('resize-', ''));
+    });
+  });
+}
+
+function startResize(e, win, dir) {
+  e.preventDefault();
+  const startX = e.clientX;
+  const startY = e.clientY;
+  const startLeft = win.offsetLeft;
+  const startTop = win.offsetTop;
+  const startWidth = win.offsetWidth;
+  const startHeight = win.offsetHeight;
+  const minW = CONFIG.minWindow.w;
+  const minH = CONFIG.minWindow.h;
+
+  const onMove = (ev) => {
+    const dx = ev.clientX - startX;
+    const dy = ev.clientY - startY;
+
+    if (dir.includes('e')) {
+      win.style.width = `${Math.max(minW, startWidth + dx)}px`;
+    }
+    if (dir.includes('s')) {
+      win.style.height = `${Math.max(minH, startHeight + dy)}px`;
+    }
+    if (dir.includes('w')) {
+      const newW = Math.max(minW, startWidth - dx);
+      win.style.width = `${newW}px`;
+      win.style.left = `${startLeft + (startWidth - newW)}px`;
+    }
+    if (dir.includes('n')) {
+      const newH = Math.max(minH, startHeight - dy);
+      win.style.height = `${newH}px`;
+      win.style.top = `${startTop + (startHeight - newH)}px`;
+    }
+  };
+
+  const onUp = () => {
+    window.removeEventListener('mousemove', onMove);
+    window.removeEventListener('mouseup', onUp);
+  };
+
+  window.addEventListener('mousemove', onMove);
+  window.addEventListener('mouseup', onUp);
 }
 
 function cleanupWindowListeners(id) {
@@ -387,6 +451,7 @@ function setupDock() {
   document.querySelectorAll('.dock-app').forEach(el => {
     const activate = () => {
       const appKey = el.dataset.app;
+      // Restore minimized window
       for (const [id, win] of windows) {
         if (win.dataset.app === appKey && win.classList.contains('minimized')) {
           win.classList.remove('minimized');
@@ -403,7 +468,6 @@ function setupDock() {
         activate();
       }
     });
-    // Touch support
     let touchStartTime = 0;
     el.addEventListener('touchstart', () => { touchStartTime = Date.now(); }, { passive: true });
     el.addEventListener('touchend', (e) => {
@@ -426,7 +490,6 @@ function setupDesktopIcons() {
         activate();
       }
     });
-    // Touch support
     let touchStartTime = 0;
     el.addEventListener('touchstart', () => { touchStartTime = Date.now(); }, { passive: true });
     el.addEventListener('touchend', (e) => {
@@ -438,12 +501,107 @@ function setupDesktopIcons() {
   });
 }
 
+/* ── Context Menu ───────────────────────────────────────────────────────── */
+function setupContextMenu() {
+  const desktop = document.getElementById('desktop');
+  let menu = document.getElementById('desktop-context-menu');
+  if (!menu) {
+    menu = document.createElement('div');
+    menu.id = 'desktop-context-menu';
+    menu.className = 'context-menu';
+    menu.innerHTML = `
+      <div class="context-item" data-action="new-finder">New Finder Window</div>
+      <div class="context-item" data-action="change-tenant">Change Tenant</div>
+      <div class="context-divider"></div>
+      <div class="context-item" data-action="refresh">Refresh Desktop</div>
+    `;
+    document.body.appendChild(menu);
+    menu.querySelectorAll('.context-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const action = item.dataset.action;
+        if (action === 'new-finder') launchApp('finder');
+        if (action === 'change-tenant') { tenantTrigger = document.getElementById('menu-tenant'); openModal(); }
+        if (action === 'refresh') location.reload();
+        menu.classList.remove('show');
+      });
+    });
+  }
+
+  desktop?.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    menu.style.left = `${e.clientX}px`;
+    menu.style.top = `${e.clientY}px`;
+    menu.classList.add('show');
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!menu.contains(e.target)) menu.classList.remove('show');
+  });
+}
+
+/* ── Menu Dropdowns ─────────────────────────────────────────────────────── */
+function setupMenuDropdowns() {
+  const menus = {
+    File: ['New Window', 'Close Window', null, 'Get Info'],
+    Edit: ['Undo', 'Cut', 'Copy', 'Paste'],
+    View: ['as Icons', 'as List', 'as Columns'],
+    Window: ['Minimize', 'Zoom', null, 'Bring All to Front'],
+    Help: ['Virtual Desktop Help', 'Keyboard Shortcuts'],
+  };
+
+  document.querySelectorAll('.menu-btn').forEach(btn => {
+    const name = btn.dataset.menu;
+    const items = menus[name] || [];
+
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      // Close any open dropdown
+      document.querySelectorAll('.menu-dropdown').forEach(d => d.remove());
+
+      const dropdown = document.createElement('div');
+      dropdown.className = 'menu-dropdown';
+      dropdown.style.top = '28px';
+      dropdown.style.left = `${btn.offsetLeft}px`;
+
+      items.forEach(item => {
+        if (item === null) {
+          dropdown.appendChild(document.createElement('div')).className = 'menu-dropdown-divider';
+        } else {
+          const div = document.createElement('div');
+          div.className = 'menu-dropdown-item';
+          div.textContent = item;
+          div.addEventListener('click', () => {
+            if (item === 'New Window') launchApp('finder');
+            if (item === 'Close Window' && activeWindow) closeWindow(activeWindow);
+            if (item === 'Minimize' && activeWindow) minimizeWindow(activeWindow);
+            if (item === 'Zoom' && activeWindow) maximizeWindow(activeWindow);
+            if (item === 'Keyboard Shortcuts') showToast('Esc: close, Cmd+W: close win, Cmd+M: minimize, Cmd+N: new Finder', 5000);
+            dropdown.remove();
+          });
+          dropdown.appendChild(div);
+        }
+      });
+
+      btn.parentElement.appendChild(dropdown);
+    });
+  });
+
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.menu-dropdown').forEach(d => d.remove());
+  });
+}
+
 /* ── Global Keyboard Shortcuts ──────────────────────────────────────────── */
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     const modal = document.getElementById('tenant-modal');
     if (modal && !modal.classList.contains('hidden')) {
-      modal.classList.add('hidden');
+      closeModal();
+      return;
+    }
+    const anyDropdown = document.querySelector('.menu-dropdown');
+    if (anyDropdown) {
+      anyDropdown.remove();
       return;
     }
     if (activeWindow) closeWindow(activeWindow);
@@ -453,12 +611,10 @@ document.addEventListener('keydown', (e) => {
     e.preventDefault();
     if (activeWindow) closeWindow(activeWindow);
   }
-
   if ((e.metaKey || e.ctrlKey) && e.key === 'm') {
     e.preventDefault();
     if (activeWindow) minimizeWindow(activeWindow);
   }
-
   if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
     e.preventDefault();
     launchApp('finder');
@@ -468,3 +624,5 @@ document.addEventListener('keydown', (e) => {
 /* ── Init ───────────────────────────────────────────────────────────────── */
 setupDock();
 setupDesktopIcons();
+setupContextMenu();
+setupMenuDropdowns();
