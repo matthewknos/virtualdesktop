@@ -103,6 +103,30 @@
   }
   .toolbar button.primary { background: var(--wd-purple); color: #fff; border-color: var(--wd-purple); }
   .toolbar button:hover { opacity: 0.9; }
+
+  /* Error Toast */
+  #errorToast {
+    position: fixed;
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #c92a2a;
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 300;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+    display: none;
+    align-items: center;
+    gap: 10px;
+    max-width: 560px;
+    width: max-content;
+  }
+  #errorToast.visible { display: flex; }
+  #errorToast .close { cursor: pointer; opacity: 0.8; font-size: 16px; line-height: 1; }
+  #errorToast .close:hover { opacity: 1; }
 </style>
 </head>
 <body>
@@ -286,7 +310,20 @@ class WorkdayApp {
   }
 
   showError(msg) {
-    document.getElementById('content').innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><div style="color:#c92a2a">${msg}</div></div>`;
+    const text = String(msg);
+    document.getElementById('content').innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><div style="color:#c92a2a">${text}</div></div>`;
+    let toast = document.getElementById('errorToast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'errorToast';
+      toast.innerHTML = '<span class="msg"></span><span class="close" aria-label="Dismiss">&times;</span>';
+      document.body.appendChild(toast);
+      toast.querySelector('.close').addEventListener('click', () => toast.classList.remove('visible'));
+    }
+    toast.querySelector('.msg').textContent = text;
+    toast.classList.add('visible');
+    clearTimeout(this._errorToastTimer);
+    this._errorToastTimer = setTimeout(() => toast.classList.remove('visible'), 6000);
   }
 }
 

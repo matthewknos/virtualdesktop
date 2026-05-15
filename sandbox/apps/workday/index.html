@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Workday</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #1e1e1e; color: #fff; height: 100vh; display: flex; }
+  .sidebar { width: 240px; background: #2d2d2d; border-right: 1px solid #3e3e3e; display: flex; flex-direction: column; }
+  .sidebar-header { padding: 16px; font-weight: 600; font-size: 16px; border-bottom: 1px solid #3e3e3e; }
+  .nav-list { padding: 8px; }
+  .nav-item { padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+  .nav-item:hover, .nav-item.active { background: #3e3e3e; }
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .main-header { padding: 16px; border-bottom: 1px solid #3e3e3e; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+  .content { flex: 1; overflow-y: auto; padding: 16px; }
+  .card { background: #2d2d2d; border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+  .card h3 { font-size: 14px; font-weight: 600; margin-bottom: 8px; opacity: 0.8; }
+  .card-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; border-bottom: 1px solid #3e3e3e; }
+  .card-row:last-child { border-bottom: none; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; }
+  .badge-draft { background: #6b7280; }
+  .badge-submitted { background: #3b82f6; }
+  .badge-approved { background: #10b981; }
+  .loading { padding: 20px; text-align: center; opacity: 0.5; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="sidebar">
+  <div class="sidebar-header">Workday</div>
+  <div class="nav-list">
+    <div class="nav-item active" data-view="profile">My Profile</div>
+    <div class="nav-item" data-view="timesheet">Timesheet</div>
+    <div class="nav-item" data-view="absence">Time Off</div>
+  </div>
+</div>
+<div class="main">
+  <div class="main-header" id="header">My Profile</div>
+  <div class="content" id="content"><div class="loading">Loading…</div></div>
+</div>
+<script>
+const params = new URLSearchParams(location.search);
+const tenant = params.get('tenant') || 'dev';
+const API = location.origin.includes('localhost') ? 'http://localhost:3001' : '';
+const headers = { 'Authorization': 'Bearer dev', 'X-Mock-Tenant': tenant };
+
+async function loadProfile() {
+  const res = await fetch(`${API}/api/mock/workday/ccx/api/v1/workers`, { headers });
+  const data = await res.json();
+  const worker = (data.data || [])[0];
+  if (!worker) return;
+  document.getElementById('header').textContent = worker.descriptor;
+  const box = document.getElementById('content');
+  box.innerHTML = `
+    <div class="card">
+      <h3>Worker Details</h3>
+      <div class="card-row"><span>ID</span><span>${worker.id}</span></div>
+      <div class="card-row"><span>Title</span><span>${worker.businessTitle}</span></div>
+      <div class="card-row"><span>Department</span><span>${worker.supervisoryOrganization?.descriptor}</span></div>
+      <div class="card-row"><span>Manager</span><span>${worker.manager?.descriptor}</span></div>
+      <div class="card-row"><span>Hire Date</span><span>${worker.hireDate}</span></div>
+    </div>
+  `;
+}
+
+loadProfile().catch(console.error);
+</script>
+</body>
+</html>

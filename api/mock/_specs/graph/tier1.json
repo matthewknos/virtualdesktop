@@ -1,0 +1,372 @@
+{
+  "system": "msgraph",
+  "version": "v1.0",
+  "specDate": "2026-05",
+  "basePathPrefix": "/v1.0",
+  "entities": {
+    "user": {
+      "description": "Azure AD / Entra ID user account",
+      "idField": "id",
+      "idFormat": "guid",
+      "odataType": "#microsoft.graph.user",
+      "pathTemplates": [
+        { "path": "/v1.0/me",              "methods": ["GET", "PATCH"], "relation": "me" },
+        { "path": "/v1.0/users",           "methods": ["GET", "POST"],  "relation": "collection" },
+        { "path": "/v1.0/users/{userId}",  "methods": ["GET", "PATCH", "DELETE"], "relation": "single", "params": { "userId": "user" } }
+      ],
+      "navigationProperties": {
+        "manager":       { "path": "/v1.0/users/{userId}/manager",       "entity": "user",  "cardinality": "single" },
+        "directReports": { "path": "/v1.0/users/{userId}/directReports", "entity": "user",  "cardinality": "collection" },
+        "memberOf":      { "path": "/v1.0/users/{userId}/memberOf",      "entity": "group", "cardinality": "collection" }
+      },
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id":                   { "type": "string", "format": "uuid", "readOnly": true },
+          "displayName":          { "type": "string" },
+          "givenName":            { "type": "string" },
+          "surname":              { "type": "string" },
+          "mail":                 { "type": "string", "format": "email" },
+          "userPrincipalName":    { "type": "string" },
+          "jobTitle":             { "type": "string" },
+          "department":           { "type": "string" },
+          "officeLocation":       { "type": "string" },
+          "mobilePhone":          { "type": "string" },
+          "businessPhones":       { "type": "array", "items": { "type": "string" } },
+          "accountEnabled":       { "type": "boolean" },
+          "createdDateTime":      { "type": "string", "format": "date-time", "readOnly": true },
+          "lastModifiedDateTime": { "type": "string", "format": "date-time", "readOnly": true },
+          "preferredLanguage":    { "type": "string" },
+          "usageLocation":        { "type": "string" },
+          "assignedLicenses":     { "type": "array", "readOnly": true },
+          "proxyAddresses":       { "type": "array", "items": { "type": "string" }, "readOnly": true },
+          "onPremisesSyncEnabled":{ "type": ["boolean", "null"] }
+        }
+      },
+      "createRequired": ["displayName", "userPrincipalName", "accountEnabled"],
+      "createDefaults": { "accountEnabled": true, "businessPhones": [], "assignedLicenses": [], "proxyAddresses": [] },
+      "filterableFields": ["displayName", "mail", "userPrincipalName", "department", "jobTitle", "accountEnabled"],
+      "searchableFields": ["displayName", "mail", "userPrincipalName", "jobTitle"],
+      "sortableFields": ["displayName", "mail", "createdDateTime"],
+      "expandable": ["manager", "directReports", "memberOf"]
+    },
+
+    "message": {
+      "description": "Mail message in a user mailbox",
+      "idField": "id",
+      "idFormat": "string",
+      "odataType": "#microsoft.graph.message",
+      "pathTemplates": [
+        { "path": "/v1.0/me/messages",                      "methods": ["GET", "POST"],          "relation": "collection", "ownerEntity": "me" },
+        { "path": "/v1.0/me/messages/{messageId}",          "methods": ["GET", "PATCH", "DELETE"],"relation": "single",     "ownerEntity": "me", "params": { "messageId": "message" } },
+        { "path": "/v1.0/users/{userId}/messages",          "methods": ["GET"],                  "relation": "collection", "ownerEntity": "user" },
+        { "path": "/v1.0/users/{userId}/messages/{messageId}","methods": ["GET"],                "relation": "single",     "ownerEntity": "user" }
+      ],
+      "actions": [
+        { "path": "/v1.0/me/messages/{messageId}/reply",    "method": "POST", "handler": "message-reply" },
+        { "path": "/v1.0/me/messages/{messageId}/replyAll", "method": "POST", "handler": "message-reply-all" },
+        { "path": "/v1.0/me/messages/{messageId}/forward",  "method": "POST", "handler": "message-forward" },
+        { "path": "/v1.0/me/messages/{messageId}/move",     "method": "POST", "handler": "message-move" }
+      ],
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id":               { "type": "string", "readOnly": true },
+          "subject":          { "type": "string" },
+          "bodyPreview":      { "type": "string", "readOnly": true },
+          "body":             { "type": "object", "properties": { "contentType": { "type": "string", "enum": ["text","html"] }, "content": { "type": "string" } } },
+          "from":             { "type": "object", "properties": { "emailAddress": { "type": "object", "properties": { "name": { "type": "string" }, "address": { "type": "string" } } } } },
+          "toRecipients":     { "type": "array" },
+          "ccRecipients":     { "type": "array" },
+          "bccRecipients":    { "type": "array" },
+          "replyTo":          { "type": "array" },
+          "isRead":           { "type": "boolean" },
+          "isDraft":          { "type": "boolean" },
+          "importance":       { "type": "string", "enum": ["low","normal","high"] },
+          "hasAttachments":   { "type": "boolean" },
+          "receivedDateTime": { "type": "string", "format": "date-time", "readOnly": true },
+          "sentDateTime":     { "type": "string", "format": "date-time", "readOnly": true },
+          "createdDateTime":  { "type": "string", "format": "date-time", "readOnly": true },
+          "lastModifiedDateTime": { "type": "string", "format": "date-time", "readOnly": true },
+          "conversationId":   { "type": "string", "readOnly": true },
+          "internetMessageId":{ "type": "string", "readOnly": true },
+          "parentFolderId":   { "type": "string" }
+        }
+      },
+      "createRequired": ["subject"],
+      "createDefaults": { "isRead": false, "isDraft": true, "importance": "normal", "hasAttachments": false, "toRecipients": [], "ccRecipients": [], "bccRecipients": [] },
+      "filterableFields": ["isRead", "isDraft", "importance", "receivedDateTime", "sentDateTime", "hasAttachments", "subject"],
+      "sortableFields": ["receivedDateTime", "sentDateTime", "subject"],
+      "defaultOrderBy": "receivedDateTime desc"
+    },
+
+    "event": {
+      "description": "Calendar event",
+      "idField": "id",
+      "idFormat": "string",
+      "odataType": "#microsoft.graph.event",
+      "pathTemplates": [
+        { "path": "/v1.0/me/events",                          "methods": ["GET", "POST"],           "relation": "collection", "ownerEntity": "me" },
+        { "path": "/v1.0/me/events/{eventId}",                "methods": ["GET", "PATCH", "DELETE"], "relation": "single",     "ownerEntity": "me" },
+        { "path": "/v1.0/me/calendar/events",                 "methods": ["GET", "POST"],           "relation": "collection", "ownerEntity": "me" },
+        { "path": "/v1.0/me/calendar/calendarView",           "methods": ["GET"],                   "relation": "view",       "ownerEntity": "me" },
+        { "path": "/v1.0/users/{userId}/events",              "methods": ["GET"],                   "relation": "collection", "ownerEntity": "user" },
+        { "path": "/v1.0/users/{userId}/calendar/calendarView","methods": ["GET"],                  "relation": "view",       "ownerEntity": "user" }
+      ],
+      "actions": [
+        { "path": "/v1.0/me/events/{eventId}/accept",             "method": "POST", "handler": "event-accept" },
+        { "path": "/v1.0/me/events/{eventId}/decline",            "method": "POST", "handler": "event-decline" },
+        { "path": "/v1.0/me/events/{eventId}/tentativelyAccept",  "method": "POST", "handler": "event-tentative" }
+      ],
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id":                { "type": "string", "readOnly": true },
+          "subject":           { "type": "string" },
+          "body":              { "type": "object", "properties": { "contentType": { "type": "string" }, "content": { "type": "string" } } },
+          "start":             { "type": "object", "properties": { "dateTime": { "type": "string" }, "timeZone": { "type": "string" } } },
+          "end":               { "type": "object", "properties": { "dateTime": { "type": "string" }, "timeZone": { "type": "string" } } },
+          "location":          { "type": "object", "properties": { "displayName": { "type": "string" } } },
+          "attendees":         { "type": "array" },
+          "organizer":         { "type": "object", "readOnly": true },
+          "isAllDay":          { "type": "boolean" },
+          "isCancelled":       { "type": "boolean" },
+          "isOnlineMeeting":   { "type": "boolean" },
+          "onlineMeetingUrl":  { "type": "string" },
+          "showAs":            { "type": "string", "enum": ["free","tentative","busy","oof","workingElsewhere","unknown"] },
+          "sensitivity":       { "type": "string", "enum": ["normal","personal","private","confidential"] },
+          "importance":        { "type": "string", "enum": ["low","normal","high"] },
+          "responseStatus":    { "type": "object" },
+          "recurrence":        { "type": ["object","null"] },
+          "createdDateTime":   { "type": "string", "format": "date-time", "readOnly": true },
+          "lastModifiedDateTime": { "type": "string", "format": "date-time", "readOnly": true },
+          "iCalUId":           { "type": "string", "readOnly": true },
+          "webLink":           { "type": "string", "readOnly": true },
+          "categories":        { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "createRequired": ["subject", "start", "end"],
+      "createDefaults": { "isAllDay": false, "isCancelled": false, "isOnlineMeeting": false, "attendees": [], "categories": [], "showAs": "busy", "sensitivity": "normal", "importance": "normal" },
+      "filterableFields": ["start/dateTime", "end/dateTime", "isAllDay", "isCancelled", "subject", "showAs"],
+      "sortableFields": ["start/dateTime", "end/dateTime", "createdDateTime"],
+      "defaultOrderBy": "start/dateTime asc",
+      "calendarViewRequiredParams": ["startDateTime", "endDateTime"]
+    },
+
+    "chat": {
+      "description": "Teams chat (1:1 or group)",
+      "idField": "id",
+      "idFormat": "string",
+      "odataType": "#microsoft.graph.chat",
+      "pathTemplates": [
+        { "path": "/v1.0/me/chats",        "methods": ["GET"],         "relation": "collection", "ownerEntity": "me" },
+        { "path": "/v1.0/chats/{chatId}",  "methods": ["GET", "PATCH"],"relation": "single" }
+      ],
+      "navigationProperties": {
+        "members": { "path": "/v1.0/chats/{chatId}/members", "entity": "conversationMember", "cardinality": "collection" }
+      },
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id":               { "type": "string", "readOnly": true },
+          "topic":            { "type": ["string","null"] },
+          "chatType":         { "type": "string", "enum": ["oneOnOne","group","meeting","unknownFutureValue"] },
+          "createdDateTime":  { "type": "string", "format": "date-time", "readOnly": true },
+          "lastUpdatedDateTime": { "type": "string", "format": "date-time", "readOnly": true },
+          "webUrl":           { "type": "string", "readOnly": true },
+          "members":          { "type": "array", "readOnly": true }
+        }
+      },
+      "filterableFields": ["chatType"],
+      "sortableFields": ["lastUpdatedDateTime", "createdDateTime"],
+      "defaultOrderBy": "lastUpdatedDateTime desc"
+    },
+
+    "chatMessage": {
+      "description": "Message in a Teams chat or channel",
+      "idField": "id",
+      "idFormat": "string",
+      "odataType": "#microsoft.graph.chatMessage",
+      "pathTemplates": [
+        { "path": "/v1.0/chats/{chatId}/messages",               "methods": ["GET", "POST"],          "relation": "collection" },
+        { "path": "/v1.0/chats/{chatId}/messages/{messageId}",   "methods": ["GET", "PATCH", "DELETE"],"relation": "single" },
+        { "path": "/v1.0/teams/{teamId}/channels/{channelId}/messages",              "methods": ["GET", "POST"], "relation": "collection" },
+        { "path": "/v1.0/teams/{teamId}/channels/{channelId}/messages/{messageId}", "methods": ["GET"],         "relation": "single" }
+      ],
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id":              { "type": "string", "readOnly": true },
+          "body":            { "type": "object", "properties": { "contentType": { "type": "string", "enum": ["text","html"] }, "content": { "type": "string" } } },
+          "from":            { "type": "object", "readOnly": true },
+          "createdDateTime": { "type": "string", "format": "date-time", "readOnly": true },
+          "lastModifiedDateTime": { "type": "string", "format": "date-time", "readOnly": true },
+          "deletedDateTime": { "type": ["string","null"], "format": "date-time" },
+          "importance":      { "type": "string", "enum": ["normal","high","urgent"] },
+          "mentions":        { "type": "array" },
+          "attachments":     { "type": "array" },
+          "reactions":       { "type": "array" },
+          "messageType":     { "type": "string", "enum": ["message","chatEvent","typing","unknownFutureValue","systemEventMessage"] },
+          "subject":         { "type": ["string","null"] },
+          "summary":         { "type": ["string","null"] },
+          "webUrl":          { "type": "string", "readOnly": true },
+          "etag":            { "type": "string", "readOnly": true }
+        }
+      },
+      "createRequired": ["body"],
+      "createDefaults": { "importance": "normal", "messageType": "message", "mentions": [], "attachments": [], "reactions": [] },
+      "filterableFields": ["createdDateTime", "importance", "messageType"],
+      "sortableFields": ["createdDateTime"],
+      "defaultOrderBy": "createdDateTime asc"
+    },
+
+    "team": {
+      "description": "Microsoft Teams team",
+      "idField": "id",
+      "idFormat": "guid",
+      "odataType": "#microsoft.graph.team",
+      "pathTemplates": [
+        { "path": "/v1.0/teams",         "methods": ["GET", "POST"],  "relation": "collection" },
+        { "path": "/v1.0/teams/{teamId}","methods": ["GET", "PATCH"], "relation": "single" }
+      ],
+      "navigationProperties": {
+        "channels": { "path": "/v1.0/teams/{teamId}/channels", "entity": "channel", "cardinality": "collection" },
+        "members":  { "path": "/v1.0/teams/{teamId}/members",  "entity": "conversationMember", "cardinality": "collection" }
+      },
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id":                { "type": "string", "format": "uuid", "readOnly": true },
+          "displayName":       { "type": "string" },
+          "description":       { "type": ["string","null"] },
+          "isArchived":        { "type": "boolean" },
+          "createdDateTime":   { "type": "string", "format": "date-time", "readOnly": true },
+          "webUrl":            { "type": "string", "readOnly": true },
+          "visibility":        { "type": "string", "enum": ["private","public","hiddenMembership","unknownFutureValue"] }
+        }
+      },
+      "createRequired": ["displayName"],
+      "createDefaults": { "isArchived": false, "visibility": "private" },
+      "filterableFields": ["displayName", "isArchived"],
+      "sortableFields": ["displayName", "createdDateTime"]
+    },
+
+    "channel": {
+      "description": "Channel within a Teams team",
+      "idField": "id",
+      "idFormat": "string",
+      "odataType": "#microsoft.graph.channel",
+      "pathTemplates": [
+        { "path": "/v1.0/teams/{teamId}/channels",               "methods": ["GET", "POST"],           "relation": "collection", "parentParam": "teamId", "parentEntity": "team" },
+        { "path": "/v1.0/teams/{teamId}/channels/{channelId}",   "methods": ["GET", "PATCH", "DELETE"], "relation": "single",     "parentParam": "teamId", "parentEntity": "team" }
+      ],
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id":              { "type": "string", "readOnly": true },
+          "displayName":     { "type": "string" },
+          "description":     { "type": ["string","null"] },
+          "membershipType":  { "type": "string", "enum": ["standard","private","unknownFutureValue","shared"] },
+          "isArchived":      { "type": "boolean" },
+          "createdDateTime": { "type": "string", "format": "date-time", "readOnly": true },
+          "webUrl":          { "type": "string", "readOnly": true },
+          "email":           { "type": "string", "readOnly": true }
+        }
+      },
+      "createRequired": ["displayName"],
+      "createDefaults": { "membershipType": "standard", "isArchived": false },
+      "filterableFields": ["displayName", "membershipType"],
+      "sortableFields": ["displayName", "createdDateTime"]
+    },
+
+    "group": {
+      "description": "Azure AD / Microsoft 365 group",
+      "idField": "id",
+      "idFormat": "guid",
+      "odataType": "#microsoft.graph.group",
+      "pathTemplates": [
+        { "path": "/v1.0/groups",          "methods": ["GET", "POST"],          "relation": "collection" },
+        { "path": "/v1.0/groups/{groupId}","methods": ["GET", "PATCH", "DELETE"],"relation": "single" }
+      ],
+      "navigationProperties": {
+        "members": { "path": "/v1.0/groups/{groupId}/members", "entity": "user", "cardinality": "collection" },
+        "owners":  { "path": "/v1.0/groups/{groupId}/owners",  "entity": "user", "cardinality": "collection" }
+      },
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id":              { "type": "string", "format": "uuid", "readOnly": true },
+          "displayName":     { "type": "string" },
+          "description":     { "type": ["string","null"] },
+          "mail":            { "type": "string", "readOnly": true },
+          "mailNickname":    { "type": "string" },
+          "mailEnabled":     { "type": "boolean" },
+          "securityEnabled": { "type": "boolean" },
+          "groupTypes":      { "type": "array", "items": { "type": "string" } },
+          "visibility":      { "type": ["string","null"], "enum": ["Private","Public","HiddenMembership",null] },
+          "createdDateTime": { "type": "string", "format": "date-time", "readOnly": true },
+          "proxyAddresses":  { "type": "array", "readOnly": true }
+        }
+      },
+      "createRequired": ["displayName", "mailNickname", "mailEnabled", "securityEnabled", "groupTypes"],
+      "createDefaults": { "groupTypes": [], "proxyAddresses": [] },
+      "filterableFields": ["displayName", "mailEnabled", "securityEnabled", "visibility"],
+      "sortableFields": ["displayName", "createdDateTime"]
+    },
+
+    "presence": {
+      "description": "User availability and activity",
+      "idField": "id",
+      "idFormat": "guid",
+      "odataType": "#microsoft.graph.presence",
+      "pathTemplates": [
+        { "path": "/v1.0/communications/presences", "methods": ["GET"], "relation": "collection" },
+        { "path": "/v1.0/me/presence",          "methods": ["GET"], "relation": "me" },
+        { "path": "/v1.0/users/{userId}/presence","methods": ["GET"],"relation": "single" }
+      ],
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id":           { "type": "string", "format": "uuid", "readOnly": true },
+          "availability": { "type": "string", "enum": ["Available","AvailableIdle","Away","BeRightBack","Busy","BusyIdle","DoNotDisturb","Offline","PresenceUnknown"] },
+          "activity":     { "type": "string", "enum": ["Available","Away","BeRightBack","Busy","DoNotDisturb","InACall","InAConferenceCall","Inactive","InAMeeting","Offline","OffWork","OutOfOffice","PresenceUnknown","Presenting","UrgentInterruptionsOnly"] }
+        }
+      },
+      "createRequired": [],
+      "filterableFields": ["availability", "activity"]
+    },
+
+    "mailFolder": {
+      "description": "Mail folder in a user mailbox",
+      "idField": "id",
+      "idFormat": "string",
+      "odataType": "#microsoft.graph.mailFolder",
+      "pathTemplates": [
+        { "path": "/v1.0/me/mailFolders",                    "methods": ["GET", "POST"],          "relation": "collection", "ownerEntity": "me" },
+        { "path": "/v1.0/me/mailFolders/{folderId}",         "methods": ["GET", "PATCH", "DELETE"],"relation": "single",     "ownerEntity": "me" },
+        { "path": "/v1.0/users/{userId}/mailFolders",        "methods": ["GET"],                  "relation": "collection", "ownerEntity": "user" },
+        { "path": "/v1.0/me/mailFolders/{folderId}/messages","methods": ["GET"],                  "relation": "collection", "ownerEntity": "me" }
+      ],
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id":               { "type": "string", "readOnly": true },
+          "displayName":      { "type": "string" },
+          "parentFolderId":   { "type": "string" },
+          "childFolderCount": { "type": "integer", "readOnly": true },
+          "unreadItemCount":  { "type": "integer", "readOnly": true },
+          "totalItemCount":   { "type": "integer", "readOnly": true },
+          "isHidden":         { "type": "boolean" }
+        }
+      },
+      "createRequired": ["displayName"],
+      "filterableFields": ["displayName"],
+      "sortableFields": ["displayName"]
+    }
+  },
+
+  "standaloneActions": [
+    { "path": "/v1.0/me/sendMail",   "method": "POST", "handler": "send-mail",    "description": "Send an email message" },
+    { "path": "/v1.0/users/{userId}/sendMail", "method": "POST", "handler": "send-mail", "description": "Send mail as a user" }
+  ]
+}

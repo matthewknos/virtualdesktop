@@ -6,6 +6,8 @@
     { "source": "/r-and-r/technical", "destination": "/r-and-r/delivery-plan", "permanent": true }
   ],
   "rewrites": [
-    { "source": "/api/sandbox/:path*", "destination": "/api/sandbox" }
+    { "source": "/api/sandbox/:path*",      "destination": "/api/sandbox" },
+    { "source": "/api/mock/graph/:path*",   "destination": "/api/mock/graph" },
+    { "source": "/api/mock/workday/:path*", "destination": "/api/mock/workday" }
   ]
 }

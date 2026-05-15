@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CoE Virtual Desktop</title>
+  <link rel="stylesheet" href="/sandbox/desktop/desktop.css" />
+</head>
+<body>
+  <!-- Top Menu Bar -->
+  <header id="menu-bar">
+    <div class="menu-left">
+      <span class="apple-logo">&#63743;</span>
+      <span class="app-name">Finder</span>
+      <nav class="menu-nav">
+        <span>File</span>
+        <span>Edit</span>
+        <span>View</span>
+        <span>Window</span>
+        <span>Help</span>
+      </nav>
+    </div>
+    <div class="menu-right">
+      <span id="menu-tenant">dev</span>
+      <span id="menu-clock">--:--</span>
+    </div>
+  </header>
+
+  <!-- Desktop -->
+  <main id="desktop">
+    <!-- Desktop Icons -->
+    <div class="desktop-icons">
+      <div class="desktop-icon" data-app="finder">
+        <div class="icon-bg finder-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2z"/><path d="M3 7l9 6 9-6"/></svg>
+        </div>
+        <span>Finder</span>
+      </div>
+      <div class="desktop-icon" data-app="teams">
+        <div class="icon-bg teams-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+        </div>
+        <span>Teams</span>
+      </div>
+      <div class="desktop-icon" data-app="outlook">
+        <div class="icon-bg outlook-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 8l10 6 10-6"/></svg>
+        </div>
+        <span>Outlook</span>
+      </div>
+      <div class="desktop-icon" data-app="workday">
+        <div class="icon-bg workday-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        </div>
+        <span>Workday</span>
+      </div>
+    </div>
+
+    <!-- Windows Container -->
+    <div id="windows"></div>
+  </main>
+
+  <!-- Dock -->
+  <footer id="dock">
+    <div class="dock-apps">
+      <div class="dock-app active" data-app="finder" title="Finder">
+        <div class="app-icon finder-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2z"/><path d="M3 7l9 6 9-6"/></svg>
+        </div>
+      </div>
+      <div class="dock-app" data-app="teams" title="Teams">
+        <div class="app-icon teams-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+        </div>
+      </div>
+      <div class="dock-app" data-app="outlook" title="Outlook">
+        <div class="app-icon outlook-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 8l10 6 10-6"/></svg>
+        </div>
+      </div>
+      <div class="dock-app" data-app="workday" title="Workday">
+        <div class="app-icon workday-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Tenant Selector Modal -->
+  <div id="tenant-modal" class="modal hidden">
+    <div class="modal-content">
+      <h2>Select Tenant</h2>
+      <input type="text" id="tenant-input" placeholder="tenant-name" value="dev" />
+      <div class="modal-actions">
+        <button id="tenant-save">Load</button>
+        <button id="tenant-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/sandbox/desktop/desktop.js"></script>
+</body>
+</html>

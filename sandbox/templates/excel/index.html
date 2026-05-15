@@ -84,6 +84,30 @@
     position: absolute; inset: 0; display: flex; flex-direction: column;
     align-items: center; justify-content: center; color: var(--muted); gap: 12px;
   }
+
+  /* Error Toast */
+  #errorToast {
+    position: fixed;
+    top: 52px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #c92a2a;
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 300;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+    display: none;
+    align-items: center;
+    gap: 10px;
+    max-width: 560px;
+    width: max-content;
+  }
+  #errorToast.visible { display: flex; }
+  #errorToast .close { cursor: pointer; opacity: 0.8; font-size: 16px; line-height: 1; }
+  #errorToast .close:hover { opacity: 1; }
 </style>
 </head>
 <body style="display:flex;flex-direction:column;height:100vh;">
@@ -208,7 +232,20 @@ class ExcelApp {
   }
 
   showError(msg) {
-    document.getElementById('grid').innerHTML = `<div class="empty-state"><div style="font-size:48px">⚠️</div><div>${msg}</div></div>`;
+    const text = String(msg);
+    document.getElementById('grid').innerHTML = `<div class="empty-state"><div style="font-size:48px">⚠️</div><div>${text}</div></div>`;
+    let toast = document.getElementById('errorToast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'errorToast';
+      toast.innerHTML = '<span class="msg"></span><span class="close" aria-label="Dismiss">&times;</span>';
+      document.body.appendChild(toast);
+      toast.querySelector('.close').addEventListener('click', () => toast.classList.remove('visible'));
+    }
+    toast.querySelector('.msg').textContent = text;
+    toast.classList.add('visible');
+    clearTimeout(this._errorToastTimer);
+    this._errorToastTimer = setTimeout(() => toast.classList.remove('visible'), 6000);
   }
 }
 

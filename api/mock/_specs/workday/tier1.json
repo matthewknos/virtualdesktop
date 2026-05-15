@@ -1,0 +1,362 @@
+{
+  "system": "workday",
+  "version": "v1",
+  "specDate": "2026-05",
+  "basePathPrefix": "/ccx/api/v1",
+  "services": {
+    "staffing": {
+      "basePath": "/ccx/api/v1/staffing",
+      "entities": ["worker", "supervisoryOrganization", "position"]
+    },
+    "absenceManagement": {
+      "basePath": "/ccx/api/v1/absenceManagement",
+      "entities": ["absenceRequest", "timeOffBalance"]
+    },
+    "timeTracking": {
+      "basePath": "/ccx/api/v1/timeTracking",
+      "entities": ["timeEntry", "timesheet"]
+    },
+    "compensation": {
+      "basePath": "/ccx/api/v1/compensation",
+      "entities": ["compensation"]
+    }
+  },
+  "entities": {
+    "worker": {
+      "description": "Employee or contingent worker",
+      "idField": "id",
+      "idFormat": "wid",
+      "service": "staffing",
+      "pathTemplates": [
+        { "path": "/ccx/api/v1/workers",            "methods": ["GET"],        "relation": "collection" },
+        { "path": "/ccx/api/v1/workers/{workerId}", "methods": ["GET", "PATCH"],"relation": "single" }
+      ],
+      "navigationProperties": {
+        "directReports":          { "path": "/ccx/api/v1/workers/{workerId}/directReports",         "entity": "worker",               "cardinality": "collection" },
+        "positions":              { "path": "/ccx/api/v1/workers/{workerId}/positions",             "entity": "position",             "cardinality": "collection" },
+        "timeEntries":            { "path": "/ccx/api/v1/workers/{workerId}/timeEntries",           "entity": "timeEntry",            "cardinality": "collection" },
+        "absenceRequests":        { "path": "/ccx/api/v1/workers/{workerId}/absenceRequests",       "entity": "absenceRequest",       "cardinality": "collection" },
+        "timeOffBalances":        { "path": "/ccx/api/v1/workers/{workerId}/timeOffBalances",       "entity": "timeOffBalance",       "cardinality": "collection" },
+        "compensation":           { "path": "/ccx/api/v1/workers/{workerId}/compensation",          "entity": "compensation",         "cardinality": "single" },
+        "compensationHistory":    { "path": "/ccx/api/v1/workers/{workerId}/compensationHistory",   "entity": "compensation",         "cardinality": "collection" }
+      },
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id":                    { "type": "string", "description": "Workday ID (WID)" },
+          "descriptor":            { "type": "string", "description": "Display name (Workday convention)" },
+          "href":                  { "type": "string", "readOnly": true },
+          "workerType":            { "type": "object", "properties": { "id": { "type": "string" }, "descriptor": { "type": "string" } } },
+          "workerStatus":          { "type": "object", "properties": { "id": { "type": "string" }, "descriptor": { "type": "string" } } },
+          "primaryWorkEmail":      { "type": "string" },
+          "primaryWorkPhone":      { "type": "string" },
+          "managementLevel":       { "type": "object", "properties": { "id": { "type": "string" }, "descriptor": { "type": "string" } } },
+          "businessTitle":         { "type": "string" },
+          "location":              { "type": "object", "properties": { "id": { "type": "string" }, "descriptor": { "type": "string" } } },
+          "supervisoryOrganization": { "type": "object", "properties": { "id": { "type": "string" }, "descriptor": { "type": "string" }, "href": { "type": "string" } } },
+          "manager":               { "type": "object", "properties": { "id": { "type": "string" }, "descriptor": { "type": "string" }, "href": { "type": "string" } } },
+          "hireDate":              { "type": "string", "format": "date" },
+          "continuousServiceDate": { "type": "string", "format": "date" },
+          "endDate":               { "type": ["string","null"], "format": "date" },
+          "primaryPosition":       { "type": "object", "properties": { "id": { "type": "string" }, "descriptor": { "type": "string" } } },
+          "photo":                 { "type": "object", "properties": { "href": { "type": "string" } } }
+        }
+      },
+      "queryParams": {
+        "search":                  { "type": "string", "description": "Text search across name and business title" },
+        "supervisoryOrganization": { "type": "string", "description": "WID of supervisory org to filter by" },
+        "location":                { "type": "string", "description": "WID of location to filter by" },
+        "workerStatus":            { "type": "string", "enum": ["Active","Terminated"], "description": "Active or Terminated" },
+        "includeSubordinateOrgs":  { "type": "boolean" },
+        "limit":                   { "type": "integer", "default": 100, "maximum": 100 },
+        "offset":                  { "type": "integer", "default": 0 }
+      }
+    },
+
+    "supervisoryOrganization": {
+      "description": "Workday supervisory organisation unit",
+      "idField": "id",
+      "idFormat": "wid",
+      "service": "staffing",
+      "pathTemplates": [
+        { "path": "/ccx/api/v1/supervisoryOrganizations",              "methods": ["GET"],         "relation": "collection" },
+        { "path": "/ccx/api/v1/supervisoryOrganizations/{orgId}",      "methods": ["GET", "PATCH"],"relation": "single" },
+        { "path": "/ccx/api/v1/supervisoryOrganizations/{orgId}/workers","methods": ["GET"],       "relation": "collection" }
+      ],
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id":                  { "type": "string" },
+          "descriptor":          { "type": "string" },
+          "href":                { "type": "string", "readOnly": true },
+          "name":                { "type": "string" },
+          "code":                { "type": "string" },
+          "superiorOrganization":{ "type": ["object","null"], "properties": { "id": { "type": "string" }, "descriptor": { "type": "string" } } },
+          "primaryPosition":     { "type": "object", "properties": { "id": { "type": "string" }, "descriptor": { "type": "string" } } },
+          "staffingModel":       { "type": "object" },
+          "inactive":            { "type": "boolean" }
+        }
+      },
+      "queryParams": {
+        "search":  { "type": "string" },
+        "limit":   { "type": "integer", "default": 100 },
+        "offset":  { "type": "integer", "default": 0 }
+      }
+    },
+
+    "position": {
+      "description": "Job position",
+      "idField": "id",
+      "idFormat": "wid",
+      "service": "staffing",
+      "pathTemplates": [
+        { "path": "/ccx/api/v1/workers/{workerId}/positions",              "methods": ["GET"],        "relation": "collection", "parentParam": "workerId" },
+        { "path": "/ccx/api/v1/workers/{workerId}/positions/{positionId}", "methods": ["GET"],        "relation": "single",     "parentParam": "workerId" }
+      ],
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id":              { "type": "string" },
+          "descriptor":      { "type": "string" },
+          "href":            { "type": "string", "readOnly": true },
+          "jobProfile":      { "type": "object", "properties": { "id": { "type": "string" }, "descriptor": { "type": "string" } } },
+          "jobFamily":       { "type": "object", "properties": { "id": { "type": "string" }, "descriptor": { "type": "string" } } },
+          "businessTitle":   { "type": "string" },
+          "location":        { "type": "object", "properties": { "id": { "type": "string" }, "descriptor": { "type": "string" } } },
+          "startDate":       { "type": "string", "format": "date" },
+          "endDate":         { "type": ["string","null"], "format": "date" },
+          "isPrimary":       { "type": "boolean" },
+          "fullTimeEquivalent": { "type": "number" },
+          "supervisoryOrganization": { "type": "object" }
+        }
+      },
+      "queryParams": {
+        "effective": { "type": "string", "format": "date" },
+        "limit": { "type": "integer", "default": 100 },
+        "offset": { "type": "integer", "default": 0 }
+      }
+    },
+
+    "timeEntry": {
+      "description": "Individual time entry (hours logged)",
+      "idField": "id",
+      "idFormat": "wid",
+      "service": "timeTracking",
+      "pathTemplates": [
+        { "path": "/ccx/api/v1/workers/{workerId}/timeEntries",              "methods": ["GET", "POST"],           "relation": "collection", "parentParam": "workerId" },
+        { "path": "/ccx/api/v1/workers/{workerId}/timeEntries/{entryId}",    "methods": ["GET", "PATCH", "DELETE"], "relation": "single",     "parentParam": "workerId" }
+      ],
+      "actions": [
+        { "path": "/ccx/api/v1/workers/{workerId}/timeEntries/{entryId}/submit", "method": "POST", "handler": "time-entry-submit" }
+      ],
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id":              { "type": "string" },
+          "descriptor":      { "type": "string" },
+          "href":            { "type": "string", "readOnly": true },
+          "date":            { "type": "string", "format": "date" },
+          "hours":           { "type": "number", "minimum": 0, "maximum": 24 },
+          "timeType":        { "type": "object", "properties": { "id": { "type": "string" }, "descriptor": { "type": "string" } } },
+          "project":         { "type": ["string","null"] },
+          "projectPhase":    { "type": ["string","null"] },
+          "comment":         { "type": ["string","null"] },
+          "status":          { "type": "string", "enum": ["Draft","Submitted","Approved","Rejected"] },
+          "submittedDateTime":  { "type": ["string","null"], "format": "date-time", "readOnly": true },
+          "approvedDateTime":   { "type": ["string","null"], "format": "date-time", "readOnly": true },
+          "lastModifiedDateTime": { "type": "string", "format": "date-time", "readOnly": true },
+          "worker":          { "type": "object", "properties": { "id": { "type": "string" }, "descriptor": { "type": "string" } }, "readOnly": true }
+        }
+      },
+      "createRequired": ["date", "hours"],
+      "createDefaults": { "status": "Draft", "timeType": { "id": "REGULAR_HOURS", "descriptor": "Regular Hours" } },
+      "queryParams": {
+        "fromDate": { "type": "string", "format": "date" },
+        "toDate":   { "type": "string", "format": "date" },
+        "status":   { "type": "string", "enum": ["Draft","Submitted","Approved","Rejected"] },
+        "limit":    { "type": "integer", "default": 100 },
+        "offset":   { "type": "integer", "default": 0 }
+      }
+    },
+
+    "timesheet": {
+      "description": "Weekly or period timesheet",
+      "idField": "id",
+      "idFormat": "wid",
+      "service": "timeTracking",
+      "pathTemplates": [
+        { "path": "/ccx/api/v1/workers/{workerId}/timesheets",              "methods": ["GET"],  "relation": "collection", "parentParam": "workerId" },
+        { "path": "/ccx/api/v1/workers/{workerId}/timesheets/{sheetId}",    "methods": ["GET"],  "relation": "single",     "parentParam": "workerId" }
+      ],
+      "actions": [
+        { "path": "/ccx/api/v1/workers/{workerId}/timesheets/{sheetId}/submit", "method": "POST", "handler": "timesheet-submit" }
+      ],
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id":           { "type": "string" },
+          "descriptor":   { "type": "string" },
+          "href":         { "type": "string", "readOnly": true },
+          "periodStart":  { "type": "string", "format": "date" },
+          "periodEnd":    { "type": "string", "format": "date" },
+          "totalHours":   { "type": "number", "readOnly": true },
+          "status":       { "type": "string", "enum": ["Open","Submitted","Approved","Rejected"] },
+          "worker":       { "type": "object", "readOnly": true },
+          "entries":      { "type": "array", "readOnly": true }
+        }
+      },
+      "queryParams": {
+        "fromDate": { "type": "string", "format": "date" },
+        "toDate":   { "type": "string", "format": "date" },
+        "status":   { "type": "string" },
+        "limit":    { "type": "integer", "default": 100 },
+        "offset":   { "type": "integer", "default": 0 }
+      }
+    },
+
+    "absenceRequest": {
+      "description": "Leave / absence request",
+      "idField": "id",
+      "idFormat": "wid",
+      "service": "absenceManagement",
+      "pathTemplates": [
+        { "path": "/ccx/api/v1/workers/{workerId}/absenceRequests",              "methods": ["GET", "POST"],           "relation": "collection", "parentParam": "workerId" },
+        { "path": "/ccx/api/v1/workers/{workerId}/absenceRequests/{requestId}",  "methods": ["GET", "PATCH", "DELETE"], "relation": "single",     "parentParam": "workerId" }
+      ],
+      "actions": [
+        { "path": "/ccx/api/v1/absenceRequests/{requestId}/approve", "method": "POST", "handler": "absence-approve" },
+        { "path": "/ccx/api/v1/absenceRequests/{requestId}/deny",    "method": "POST", "handler": "absence-deny" },
+        { "path": "/ccx/api/v1/absenceRequests/{requestId}/cancel",  "method": "POST", "handler": "absence-cancel" }
+      ],
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id":              { "type": "string" },
+          "descriptor":      { "type": "string" },
+          "href":            { "type": "string", "readOnly": true },
+          "type":            { "type": "object", "properties": { "id": { "type": "string" }, "descriptor": { "type": "string" } } },
+          "status":          { "type": "string", "enum": ["Draft","Submitted","Approved","Denied","Cancelled","PendingApproval"] },
+          "startDate":       { "type": "string", "format": "date" },
+          "endDate":         { "type": "string", "format": "date" },
+          "totalDays":       { "type": "number", "readOnly": true },
+          "comment":         { "type": ["string","null"] },
+          "denialReason":    { "type": ["string","null"] },
+          "worker":          { "type": "object", "readOnly": true },
+          "approver":        { "type": ["object","null"], "readOnly": true },
+          "submittedDateTime":  { "type": ["string","null"], "format": "date-time", "readOnly": true },
+          "approvedDateTime":   { "type": ["string","null"], "format": "date-time", "readOnly": true },
+          "createdDateTime":    { "type": "string", "format": "date-time", "readOnly": true },
+          "lastModifiedDateTime": { "type": "string", "format": "date-time", "readOnly": true }
+        }
+      },
+      "createRequired": ["type", "startDate", "endDate"],
+      "createDefaults": { "status": "Draft" },
+      "queryParams": {
+        "status":   { "type": "string" },
+        "fromDate": { "type": "string", "format": "date" },
+        "toDate":   { "type": "string", "format": "date" },
+        "limit":    { "type": "integer", "default": 100 },
+        "offset":   { "type": "integer", "default": 0 }
+      }
+    },
+
+    "timeOffBalance": {
+      "description": "PTO, sick, and other leave balance",
+      "idField": "id",
+      "idFormat": "wid",
+      "service": "absenceManagement",
+      "pathTemplates": [
+        { "path": "/ccx/api/v1/workers/{workerId}/timeOffBalances",              "methods": ["GET"],  "relation": "collection", "parentParam": "workerId" },
+        { "path": "/ccx/api/v1/workers/{workerId}/timeOffBalances/{balanceId}",  "methods": ["GET"],  "relation": "single",     "parentParam": "workerId" }
+      ],
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id":              { "type": "string" },
+          "descriptor":      { "type": "string" },
+          "href":            { "type": "string", "readOnly": true },
+          "type":            { "type": "object", "properties": { "id": { "type": "string" }, "descriptor": { "type": "string" } } },
+          "balance":         { "type": "number" },
+          "unit":            { "type": "string", "enum": ["Days","Hours"] },
+          "asOfDate":        { "type": "string", "format": "date" },
+          "accrued":         { "type": "number" },
+          "taken":           { "type": "number" },
+          "pending":         { "type": "number" },
+          "forfeited":       { "type": "number" }
+        }
+      },
+      "queryParams": {
+        "asOfDate": { "type": "string", "format": "date" },
+        "limit":    { "type": "integer", "default": 100 },
+        "offset":   { "type": "integer", "default": 0 }
+      }
+    },
+
+    "compensation": {
+      "description": "Worker compensation snapshot",
+      "idField": "id",
+      "idFormat": "wid",
+      "service": "compensation",
+      "pathTemplates": [
+        { "path": "/ccx/api/v1/workers/{workerId}/compensation",             "methods": ["GET"],  "relation": "single",     "parentParam": "workerId" },
+        { "path": "/ccx/api/v1/workers/{workerId}/compensationHistory",      "methods": ["GET"],  "relation": "collection", "parentParam": "workerId" }
+      ],
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id":              { "type": "string" },
+          "descriptor":      { "type": "string" },
+          "href":            { "type": "string", "readOnly": true },
+          "effectiveDate":   { "type": "string", "format": "date" },
+          "salary":          { "type": "number" },
+          "currency":        { "type": "object", "properties": { "id": { "type": "string" }, "descriptor": { "type": "string" } } },
+          "frequency":       { "type": "object", "properties": { "id": { "type": "string" }, "descriptor": { "type": "string" } } },
+          "grade":           { "type": "object", "properties": { "id": { "type": "string" }, "descriptor": { "type": "string" } } },
+          "compensationPlan":{ "type": "object" },
+          "worker":          { "type": "object", "readOnly": true }
+        }
+      },
+      "queryParams": {
+        "effective": { "type": "string", "format": "date" },
+        "limit":     { "type": "integer", "default": 100 },
+        "offset":    { "type": "integer", "default": 0 }
+      }
+    }
+  },
+
+  "raasReports": [
+    {
+      "name": "Headcount_By_Department",
+      "description": "Per-org headcount with manager",
+      "params": [
+        { "name": "Effective_Date", "type": "date", "required": false }
+      ],
+      "columns": ["org", "orgId", "manager", "managerId", "headcount"]
+    },
+    {
+      "name": "Timesheet_Compliance",
+      "description": "Workers with missing or late timesheets in a period",
+      "params": [
+        { "name": "Start_Date", "type": "date", "required": true },
+        { "name": "End_Date",   "type": "date", "required": true }
+      ],
+      "columns": ["workerId", "workerName", "manager", "managerId", "daysMissing", "lastSubmitted"]
+    },
+    {
+      "name": "Absence_Liability",
+      "description": "PTO balance liability in days",
+      "params": [
+        { "name": "As_Of_Date", "type": "date", "required": false }
+      ],
+      "columns": ["workerId", "workerName", "balanceDays", "balanceHours", "liabilityUSD"]
+    },
+    {
+      "name": "Probation_Due",
+      "description": "Workers approaching probation end date",
+      "params": [
+        { "name": "Days_Ahead", "type": "integer", "required": false, "default": 30 }
+      ],
+      "columns": ["workerId", "workerName", "manager", "hireDate", "probationEndDate", "daysRemaining"]
+    }
+  ]
+}

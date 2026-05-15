@@ -966,32 +966,6 @@
     }
 
     /* ════════════════════════════════════════════
-       Suggested Replies — #suggestedReplies
-       Hidden by request — users find pre-canned prompts above the compose
-       box noisy. Action buttons attached to agent messages still render.
-       ════════════════════════════════════════════ */
-    #suggestedReplies,
-    #followupRow {
-      display: none !important;
-    }
-
-    .suggested-chip {
-      padding: 6px 14px;
-      border-radius: 16px;
-      border: 1px solid var(--teams-border);
-      background: var(--teams-panel-bg);
-      color: var(--teams-text);
-      font-size: 13px;
-      cursor: pointer;
-      transition: border-color 0.15s ease, background 0.15s ease;
-    }
-
-    .suggested-chip:hover {
-      border-color: var(--teams-accent);
-      background: var(--teams-hover);
-    }
-
-    /* ════════════════════════════════════════════
        Typing Indicator — #typingIndicator
        ════════════════════════════════════════════ */
     #typingIndicator {
@@ -1201,20 +1175,6 @@
       color: var(--teams-text);
     }
 
-    #demoNav { display: none; }
-
-    #demoNav a {
-      font-size: 11px;
-      opacity: 0.55;
-      color: var(--teams-text-muted);
-      text-decoration: none;
-      transition: opacity 0.15s ease;
-    }
-
-    #demoNav a:hover {
-      opacity: 1;
-    }
-
     #sceneCard {
       position: fixed;
       inset: 0;
@@ -1261,23 +1221,7 @@
       font-size: 12px;
     }
 
-    #piiNotice {
-      width: 480px;
-      max-width: calc(100vw - 32px);
-      margin: 0 auto 12px;
-      background: rgba(214, 167, 70, 0.10);
-      border: 1px solid rgba(214, 167, 70, 0.45);
-      border-radius: 6px;
-      padding: 10px 14px;
-      color: #e8c275;
-      font-size: 12px;
-      line-height: 1.5;
-    }
-
-    #piiNotice strong { color: #f3d28a; }
-
-    #startChatBtn,
-    #pollyIntroBtn {
+    #startChatBtn {
       margin-top: 12px;
       background: #5b5fc7;
       color: #ffffff;
@@ -1287,50 +1231,38 @@
       font-weight: 600;
     }
 
-    #startChatBtn:hover,
-    #pollyIntroBtn:hover {
+    #startChatBtn:hover {
       background: #6a6ed1;
     }
 
-    /* First-time popup explaining the Polly chat — reuses scene-card styling. */
-    #pollyIntro {
+    /* Error Toast */
+    #errorToast {
       position: fixed;
-      inset: 0;
-      z-index: 210;
-      background: rgba(15, 15, 20, 0.78);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
+      top: 56px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #c92a2a;
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      z-index: 300;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.35);
       display: none;
       align-items: center;
-      justify-content: center;
-      transition: opacity 200ms ease;
+      gap: 10px;
+      max-width: 560px;
+      width: max-content;
     }
-
-    #pollyIntro.open { display: flex; }
-    #pollyIntro.fading { opacity: 0; }
-
-    #pollyIntro .scene-inner {
-      width: 480px;
-      max-width: calc(100vw - 32px);
-      background: #2d2c2c;
-      border: 1px solid #424242;
-      border-radius: 8px;
-      padding: 32px;
-      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55);
-      color: var(--teams-text);
+    #errorToast.visible { display: flex; }
+    #errorToast .close {
+      cursor: pointer;
+      opacity: 0.8;
+      font-size: 16px;
+      line-height: 1;
     }
-
-    #pollyIntro h2 {
-      font-size: 18px;
-      font-weight: 600;
-      margin-bottom: 14px;
-    }
-
-    #pollyIntro p {
-      font-size: 13px;
-      line-height: 1.55;
-      margin-bottom: 12px;
-    }
+    #errorToast .close:hover { opacity: 1; }
 
     #infoPanel {
       position: fixed;
@@ -2432,14 +2364,6 @@
           <!-- Messages will be injected here -->
         </div>
 
-        <!-- Suggested Replies (first-load chips, per active persona) -->
-        <div id="suggestedReplies">
-          <!-- Reply chips will be injected here -->
-        </div>
-
-        <!-- Follow-up chips (surfaced by keyword matches against the last user message) -->
-        <div id="followupRow" style="display:flex;flex-wrap:wrap;gap:8px;padding:0 20px 6px;"></div>
-
         <!-- Typing Indicator -->
         <div id="typingIndicator">
           <div class="typing-dots">
@@ -2515,7 +2439,7 @@
 
     <div class="mini-cal">
       <div class="mini-cal-header">
-        <span id="miniCalMonth">May 2026</span>
+        <span id="miniCalMonth">Loading…</span>
         <div class="nav-btns">
           <button id="miniCalPrev" aria-label="Previous month">▲</button>
           <button id="miniCalNext" aria-label="Next month">▼</button>
@@ -2566,15 +2490,15 @@
       </button>
 
       <!-- Today -->
-      <button class="toolbar-btn" onclick="goToToday()">
+      <button class="toolbar-btn" onclick="app.goToToday()">
         <svg class="icon-svg" viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg>
         <span>Today</span>
       </button>
 
       <!-- Prev / Next -->
       <div class="toolbar-nav">
-        <button class="nav-arrow" onclick="prevWeek()" aria-label="Previous week">&#10094;</button>
-        <button class="nav-arrow" onclick="nextWeek()" aria-label="Next week">&#10095;</button>
+        <button class="nav-arrow" onclick="app.navigateWeek(-1)" aria-label="Previous week">&#10094;</button>
+        <button class="nav-arrow" onclick="app.navigateWeek(1)" aria-label="Next week">&#10095;</button>
       </div>
 
       <!-- Date range -->
@@ -2877,7 +2801,8 @@
       window.renderMiniCalendar = renderMiniCalendar;
 
       // Initial render
-      renderMiniCalendar(2026, 4, selectedWeekStart);
+      const now = new Date();
+      renderMiniCalendar(now.getFullYear(), now.getMonth(), selectedWeekStart);
     })();
   
   </script>
@@ -2914,8 +2839,8 @@
   const DAYS = ['Mon','Tue','Wed','Thu','Fri'];
   const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-  // Default week start: Mon 11 May 2026 (as in screenshot)
-  let currentWeekStart = new Date(2026, 4, 11);
+  // Default week start: current week's Monday
+  let currentWeekStart = getMonday(new Date());
 
   /* ─── Helpers ─── */
 
@@ -3121,18 +3046,27 @@
 
   window.fitCalendarToPane = fitGridToContainer;
 
+  window._getCalEvents = function() { return lastEvents; };
+  window._getCurrentWeekStart = function() { return currentWeekStart; };
+  window._setCurrentWeekStart = function(d) { currentWeekStart = getMonday(d); };
+
   window.goToToday = function() {
-    window.renderWeekView(new Date(), []);
+    window._setCurrentWeekStart(new Date());
+    window.renderWeekView(currentWeekStart, lastEvents);
   };
 
   window.prevWeek = function() {
-    currentWeekStart.setDate(currentWeekStart.getDate() - 7);
-    window.renderWeekView(currentWeekStart, []);
+    const d = new Date(currentWeekStart);
+    d.setDate(d.getDate() - 7);
+    window._setCurrentWeekStart(d);
+    window.renderWeekView(currentWeekStart, lastEvents);
   };
 
   window.nextWeek = function() {
-    currentWeekStart.setDate(currentWeekStart.getDate() + 7);
-    window.renderWeekView(currentWeekStart, []);
+    const d = new Date(currentWeekStart);
+    d.setDate(d.getDate() + 7);
+    window._setCurrentWeekStart(d);
+    window.renderWeekView(currentWeekStart, lastEvents);
   };
 
   /* ─── Init ─── */
@@ -3168,8 +3102,7 @@
  *   • SandboxClient (from sandbox-client.js)
  *   • Teams dark-theme HTML template with:
  *       #app, #topBar, #rail, #chatList, #conversationPane,
- *       #messagesContainer, #suggestedReplies, #followupRow,
- *       #typingIndicator, #composeInput, #sendBtn,
+ *       #messagesContainer, #typingIndicator, #composeInput, #sendBtn,
  *       #infoBtn, #infoPanel, #infoPanelClose,
  *       #restartBtn, #sceneCard, #startChatBtn,
  *       #demoBadge, #userAvatar
@@ -3187,8 +3120,6 @@ class ChatView {
   constructor(options = {}) {
     this.app = options.app;
     this.container = document.getElementById('messagesContainer');
-    this.suggestedReplies = document.getElementById('suggestedReplies');
-    this.followupRow = document.getElementById('followupRow');
     this.typingIndicator = document.getElementById('typingIndicator');
     this.convSubtitle = document.getElementById('convSubtitle');
   }
@@ -3198,61 +3129,11 @@ class ChatView {
     if (this.convSubtitle && persona) {
       this.convSubtitle.textContent = persona.role || '';
     }
-    this._renderSuggestedChips(persona);
   }
 
-  _renderSuggestedChips(persona) {
-    if (!this.suggestedReplies || !this.app.scenario) return;
-    const pid = persona?.id;
-    const perPersona = this.app.scenario.personaChips || {};
-    const fallback = this.app.scenario.suggestedReplies || [];
-    const chips = (pid && Array.isArray(perPersona[pid]) && perPersona[pid].length)
-      ? perPersona[pid]
-      : fallback;
-    this.suggestedReplies.innerHTML = '';
-    if (!chips.length) return;
-    chips.forEach((c) => {
-      const btn = document.createElement('button');
-      btn.className = 'suggested-chip';
-      btn.type = 'button';
-      btn.textContent = c;
-      btn.addEventListener('click', () => this.app.sendMessage(c));
-      this.suggestedReplies.appendChild(btn);
-    });
-  }
-
-  _renderFollowupChips(userText) {
-    if (!this.followupRow || !this.app.scenario) return;
-    const rules = this.app.scenario.followupMap || [];
-    const pid = this.app.currentPersona?.id;
-    if (!rules.length || !pid || !userText) { this.followupRow.innerHTML = ''; return; }
-    const matched = [];
-    for (const r of rules) {
-      try {
-        const re = new RegExp(r.match, 'i');
-        if (re.test(userText)) {
-          const chips = (r.chips && r.chips[pid]) || [];
-          chips.forEach((c) => { if (!matched.includes(c)) matched.push(c); });
-        }
-      } catch { /* bad regex — skip */ }
-      if (matched.length >= 3) break;
-    }
-    this.followupRow.innerHTML = '';
-    matched.slice(0, 3).forEach((c) => {
-      const btn = document.createElement('button');
-      btn.className = 'suggested-chip';
-      btn.type = 'button';
-      btn.textContent = c;
-      btn.addEventListener('click', () => this.app.sendMessage(c));
-      this.followupRow.appendChild(btn);
-    });
-  }
-
-  /** Clear all rendered messages and suggestion chips. */
+  /** Clear all rendered messages. */
   clear() {
     if (this.container) this.container.innerHTML = '';
-    if (this.suggestedReplies) this.suggestedReplies.innerHTML = '';
-    if (this.followupRow) this.followupRow.innerHTML = '';
   }
 
   /** Render a full array of messages (used on first load). */
@@ -3625,7 +3506,7 @@ class SandboxTeamsApp {
       // 12. Start polling
       this.pollTimer = setInterval(() => this.poll(), 2000);
     } catch (err) {
-      console.error('SandboxTeamsApp init failed:', err);
+      this._showError('Failed to load scenario: ' + (err && err.message ? err.message : String(err)));
     }
   }
 
@@ -3729,15 +3610,10 @@ class SandboxTeamsApp {
         text: t,
       });
 
-      // Refresh followup chips against the user's last message
-      if (this.chatView && !this.agentMode) {
-        this.chatView._renderFollowupChips(t);
-      }
-
       // Immediate poll so the user's own message + agent reply appear quickly
       await this.poll();
     } catch (err) {
-      console.error('sendMessage failed:', err);
+      this._showError('Send failed: ' + (err && err.message ? err.message : String(err)));
     } finally {
       this._showTyping(false);
       this._setSendInFlight(false);
@@ -3802,7 +3678,7 @@ class SandboxTeamsApp {
       const latest = this.messages.length ? this.messages[this.messages.length - 1].timestamp : Date.now();
       this.lastPollTime = Math.max(this.lastPollTime, latest);
     } catch (err) {
-      console.error('poll failed:', err);
+      this._showError('Sync failed: ' + (err && err.message ? err.message : String(err)));
     } finally {
       this.pollInFlight = false;
     }
@@ -3819,7 +3695,7 @@ class SandboxTeamsApp {
         this._flashCalendarRail();
       }
     } catch (err) {
-      console.error('state refresh failed:', err);
+      this._showError('State refresh failed: ' + (err && err.message ? err.message : String(err)));
     }
   }
 
@@ -3841,12 +3717,24 @@ class SandboxTeamsApp {
   /* ── Calendar ── */
 
   renderCalendar() {
-    const events = this.state?.calendar || [];
+    const allEvents = this.state?.calendar || [];
+    const weekStart = (typeof window._getCurrentWeekStart === 'function')
+      ? window._getCurrentWeekStart()
+      : new Date();
+
+    // Compute weekOffset relative to current week for the label
     const today = new Date();
     const dow = today.getDay();
     const offsetToMon = dow === 0 ? -6 : 1 - dow;
-    const weekStart = new Date(today);
-    weekStart.setDate(today.getDate() + offsetToMon + (this.calendarState.weekOffset || 0) * 7);
+    const currentWeekStart = new Date(today);
+    currentWeekStart.setDate(today.getDate() + offsetToMon);
+    currentWeekStart.setHours(0, 0, 0, 0);
+    const diffMs = weekStart.getTime() - currentWeekStart.getTime();
+    const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+    this.calendarState.weekOffset = Math.round(diffDays / 7);
+
+    const events = allEvents;
+
     if (typeof window.renderMiniCalendar === 'function') {
       window.renderMiniCalendar(weekStart.getFullYear(), weekStart.getMonth(), weekStart);
     }
@@ -3916,12 +3804,22 @@ class SandboxTeamsApp {
   _initCalendarView() {
     const prev = document.getElementById('calPrevWeek');
     const next = document.getElementById('calNextWeek');
-    if (prev) prev.addEventListener('click', () => this._navigateWeek(-1));
-    if (next) next.addEventListener('click', () => this._navigateWeek(1));
+    if (prev) prev.addEventListener('click', () => this.navigateWeek(-1));
+    if (next) next.addEventListener('click', () => this.navigateWeek(1));
   }
 
-  _navigateWeek(delta) {
-    this.calendarState.weekOffset += delta;
+  navigateWeek(delta) {
+    if (typeof window.prevWeek === 'function' && delta < 0) {
+      for (let i = 0; i < Math.abs(delta); i++) window.prevWeek();
+    } else if (typeof window.nextWeek === 'function' && delta > 0) {
+      for (let i = 0; i < delta; i++) window.nextWeek();
+    }
+    this.renderCalendar();
+  }
+
+  goToToday() {
+    if (typeof window.goToToday === 'function') window.goToToday();
+    this.calendarState.weekOffset = 0;
     this.renderCalendar();
   }
 
@@ -4107,17 +4005,31 @@ class SandboxTeamsApp {
           if (this.chatView) this.chatView.renderMessages(this.messages);
           this.renderCalendar();
         } catch (err) {
-          console.error('Restart failed:', err);
+          this._showError('Restart failed: ' + (err && err.message ? err.message : String(err)));
         }
       });
     }
 
-    // Scene-card + Polly intro handlers are wired unconditionally on
-    // DOMContentLoaded (see bottom of file) so they work even when scenario
-    // bootstrap hasn't run yet or fails.
+    // Scene-card handler is wired unconditionally on DOMContentLoaded
+    // (see bottom of file) so it works even when scenario bootstrap fails.
   }
 
   /* ── Utilities ── */
+
+  _showError(msg) {
+    let toast = document.getElementById('errorToast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'errorToast';
+      toast.innerHTML = '<span class="msg"></span><span class="close" aria-label="Dismiss">&times;</span>';
+      document.body.appendChild(toast);
+      toast.querySelector('.close').addEventListener('click', () => toast.classList.remove('visible'));
+    }
+    toast.querySelector('.msg').textContent = String(msg);
+    toast.classList.add('visible');
+    clearTimeout(this._errorToastTimer);
+    this._errorToastTimer = setTimeout(() => toast.classList.remove('visible'), 6000);
+  }
 
   _personaColor(id) {
     const colors = [
@@ -4170,15 +4082,6 @@ document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => { sceneCard.style.display = 'none'; }, 200);
     });
   }
-  const pollyIntro = document.getElementById('pollyIntro');
-  const pollyIntroBtn = document.getElementById('pollyIntroBtn');
-  if (pollyIntroBtn && pollyIntro) {
-    pollyIntroBtn.addEventListener('click', () => {
-      pollyIntro.classList.add('fading');
-      setTimeout(() => { pollyIntro.style.display = 'none'; }, 200);
-    });
-  }
-
   // Set the rail-icon shim FIRST. The body has <div id="app"> which creates
   // an implicit named-element reference at window.app; overriding that
   // before constructing the SandboxTeamsApp ensures the rail icons work
@@ -4192,6 +4095,22 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn('app.switchView called before SandboxTeamsApp ready:', view);
       }
     },
+    navigateWeek: (delta) => {
+      if (_sandboxApp && typeof _sandboxApp.navigateWeek === 'function') {
+        _sandboxApp.navigateWeek(delta);
+      } else if (typeof window.prevWeek === 'function' && delta < 0) {
+        for (let i = 0; i < Math.abs(delta); i++) window.prevWeek();
+      } else if (typeof window.nextWeek === 'function' && delta > 0) {
+        for (let i = 0; i < delta; i++) window.nextWeek();
+      }
+    },
+    goToToday: () => {
+      if (_sandboxApp && typeof _sandboxApp.goToToday === 'function') {
+        _sandboxApp.goToToday();
+      } else if (typeof window.goToToday === 'function') {
+        window.goToToday();
+      }
+    },
   };
 
   try {
@@ -4201,7 +4120,12 @@ document.addEventListener('DOMContentLoaded', () => {
       _sandboxApp.init();
     }
   } catch (err) {
-    console.error('SandboxTeamsApp setup failed:', err);
+    const msg = 'SandboxTeamsApp setup failed: ' + (err && err.message ? err.message : String(err));
+    console.error(msg);
+    const toast = document.createElement('div');
+    toast.style.cssText = 'position:fixed;top:56px;left:50%;transform:translateX(-50%);background:#c92a2a;color:#fff;padding:10px 18px;border-radius:6px;font-size:13px;font-weight:500;z-index:300;box-shadow:0 4px 16px rgba(0,0,0,0.35);max-width:90vw;';
+    toast.textContent = msg;
+    document.body.appendChild(toast);
   }
 });
 
