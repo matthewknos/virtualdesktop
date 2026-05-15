@@ -1199,6 +1199,7 @@
       line-height: 1;
     }
     #errorToast .close:hover { opacity: 1; }
+    #errorToast.success { background: #2b8a3e; }
 
     #infoPanel {
       position: fixed;
@@ -3278,11 +3279,26 @@ class MockSandboxClient {
     this.me = null;
     this.scenario = null;
     this.messages = [];
+    this.events = [];
+    this.teamId = null;
+    this.channelId = null;
   }
 
   async init() {
     const meRes = await fetch(`${this.API}/api/mock/graph/v1.0/me`, { headers: this.headers });
     this.me = await meRes.json();
+
+    // Fetch calendar events
+    const eventsRes = await fetch(`${this.API}/api/mock/graph/v1.0/me/events`, { headers: this.headers });
+    const graphEvents = (await eventsRes.json()).value || [];
+    this.events = graphEvents.map(e => ({
+      id: e.id,
+      title: e.subject || 'Untitled',
+      start: e.start?.dateTime,
+      end: e.end?.dateTime,
+      location: e.location?.displayName || '',
+      isAllDay: e.isAllDay || false,
+    }));
 
     const teamsRes = await fetch(`${this.API}/api/mock/graph/v1.0/teams`, { headers: this.headers });
     const teams = (await teamsRes.json()).value || [];
@@ -3290,9 +3306,11 @@ class MockSandboxClient {
     let channels = [];
     let graphMsgs = [];
     if (teams[0]) {
+      this.teamId = teams[0].id;
       const chRes = await fetch(`${this.API}/api/mock/graph/v1.0/teams/${teams[0].id}/channels`, { headers: this.headers });
       channels = (await chRes.json()).value || [];
       if (channels[0]) {
+        this.channelId = channels[0].id;
         const msgRes = await fetch(`${this.API}/api/mock/graph/v1.0/teams/${teams[0].id}/channels/${channels[0].id}/messages?$top=50&$orderby=createdDateTime asc`, { headers: this.headers });
         graphMsgs = (await msgRes.json()).value || [];
       }
@@ -3323,16 +3341,59 @@ class MockSandboxClient {
   }
 
   async getScenario() { return this.scenario; }
-  async getState() { return { state: {} }; }
+  async getState() { return { state: { calendar: this.events } }; }
   async getMessages(id, since = null) {
+    // Re-fetch from API to get any new messages (including those posted by other sessions)
+    if (this.teamId && this.channelId) {
+      try {
+        const msgRes = await fetch(`${this.API}/api/mock/graph/v1.0/teams/${this.teamId}/channels/${this.channelId}/messages?$top=50&$orderby=createdDateTime asc`, { headers: this.headers });
+        const graphMsgs = (await msgRes.json()).value || [];
+        this.messages = graphMsgs.map(m => ({
+          id: m.id,
+          from: m.from?.user?.id === this.me.id ? 'me' : 'agent',
+          text: m.body?.content || '',
+          html: m.body?.content || '',
+          timestamp: new Date(m.createdDateTime).getTime()
+        }));
+      } catch (e) { /* fallback to local cache */ }
+    }
     let msgs = this.messages;
     if (since) msgs = msgs.filter(m => m.timestamp > since);
     return { messages: msgs };
   }
   async postMessage(id, { from, to, text, actions }) {
+    // Post to the real API so messages persist and are visible across sessions
+    if (this.teamId && this.channelId) {
+      try {
+        await fetch(`${this.API}/api/mock/graph/v1.0/teams/${this.teamId}/channels/${this.channelId}/messages`, {
+          method: 'POST',
+          headers: { ...this.headers, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ body: { content: text } })
+        });
+      } catch (e) {
+        console.warn('API post failed, falling back to local:', e);
+      }
+    }
     const newMsg = { id: 'msg-' + Date.now(), from: from === 'me' ? 'me' : 'agent', text, html: text, timestamp: Date.now() };
     this.messages.push(newMsg);
     return { success: true };
+  }
+  async postEvent({ subject, start, end, isAllDay }) {
+    const res = await fetch(`${this.API}/api/mock/graph/v1.0/me/events`, {
+      method: 'POST',
+      headers: { ...this.headers, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subject, start, end, isAllDay })
+    });
+    const data = await res.json();
+    this.events.push({
+      id: data.id,
+      title: data.subject || 'Untitled',
+      start: data.start?.dateTime,
+      end: data.end?.dateTime,
+      location: data.location?.displayName || '',
+      isAllDay: data.isAllDay || false,
+    });
+    return data;
   }
   async updateState() { return {}; }
   async resetState() { return {}; }
@@ -4016,9 +4077,12 @@ class SandboxTeamsApp {
         'overflow:hidden;background:var(--teams-pane-bg);';
       cal.innerHTML = `
         <div id="calendarHeader" style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--teams-border);flex-shrink:0;">
-          <button id="calPrevWeek" class="top-btn" style="color:var(--teams-text-muted);">&lt;</button>
-          <span id="calWeekLabel" style="font-size:14px;font-weight:600;">This week</span>
-          <button id="calNextWeek" class="top-btn" style="color:var(--teams-text-muted);">&gt;</button>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <button id="calPrevWeek" class="top-btn" style="color:var(--teams-text-muted);">&lt;</button>
+            <span id="calWeekLabel" style="font-size:14px;font-weight:600;">This week</span>
+            <button id="calNextWeek" class="top-btn" style="color:var(--teams-text-muted);">&gt;</button>
+          </div>
+          <button id="calNewEvent" class="ac-btn primary" style="font-size:12px;padding:6px 14px;">New event</button>
         </div>
         <div id="calendarBody" style="display:flex;flex:1;overflow:hidden;">
           <div id="calSidebar" style="width:80px;flex-shrink:0;border-right:1px solid var(--teams-border);overflow-y:auto;padding:8px 0;"></div>
@@ -4063,8 +4127,35 @@ class SandboxTeamsApp {
   _initCalendarView() {
     const prev = document.getElementById('calPrevWeek');
     const next = document.getElementById('calNextWeek');
+    const newEventBtn = document.getElementById('calNewEvent');
     if (prev) prev.addEventListener('click', () => this.navigateWeek(-1));
     if (next) next.addEventListener('click', () => this.navigateWeek(1));
+    if (newEventBtn) {
+      newEventBtn.addEventListener('click', () => {
+        const title = prompt('Event title:');
+        if (!title) return;
+        const date = prompt('Date (YYYY-MM-DD):', new Date().toISOString().slice(0, 10));
+        if (!date) return;
+        const startTime = prompt('Start time (HH:MM):', '09:00');
+        const endTime = prompt('End time (HH:MM):', '10:00');
+        const event = {
+          subject: title,
+          start: { dateTime: `${date}T${startTime}:00`, timeZone: 'Europe/London' },
+          end: { dateTime: `${date}T${endTime}:00`, timeZone: 'Europe/London' },
+          isAllDay: false,
+        };
+        if (this.client && typeof this.client.postEvent === 'function') {
+          this.client.postEvent(event).then(() => {
+            this._refreshState();
+            this._showToast('Event created');
+          }).catch((err) => {
+            this._showError('Failed to create event: ' + (err?.message || String(err)));
+          });
+        } else {
+          this._showError('Calendar not connected');
+        }
+      });
+    }
   }
 
   _initActivityView() {
@@ -4448,6 +4539,23 @@ class SandboxTeamsApp {
       document.body.appendChild(toast);
       toast.querySelector('.close').addEventListener('click', () => toast.classList.remove('visible'));
     }
+    toast.classList.remove('success');
+    toast.querySelector('.msg').textContent = String(msg);
+    toast.classList.add('visible');
+    clearTimeout(this._errorToastTimer);
+    this._errorToastTimer = setTimeout(() => toast.classList.remove('visible'), 6000);
+  }
+
+  _showToast(msg) {
+    let toast = document.getElementById('errorToast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'errorToast';
+      toast.innerHTML = '<span class="msg"></span><span class="close" aria-label="Dismiss">&times;</span>';
+      document.body.appendChild(toast);
+      toast.querySelector('.close').addEventListener('click', () => toast.classList.remove('visible'));
+    }
+    toast.classList.add('success');
     toast.querySelector('.msg').textContent = String(msg);
     toast.classList.add('visible');
     clearTimeout(this._errorToastTimer);
