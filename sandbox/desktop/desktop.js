@@ -104,10 +104,12 @@ function launchApp(appKey) {
 
 /* ── Window Controls ────────────────────────────────────────────────────── */
 function focusWindow(id) {
-  windows.forEach((w) => { w.style.zIndex = 10; });
+  windows.forEach((w) => {
+    if (w.dataset.maximized !== 'true') w.style.zIndex = 10;
+  });
   const win = windows.get(id);
   if (win) {
-    win.style.zIndex = 100;
+    win.style.zIndex = win.dataset.maximized === 'true' ? 20000 : 100;
     activeWindow = id;
     document.querySelector('.app-name').textContent = APPS[win.dataset.app]?.title || 'Finder';
     updateDockIndicator(win.dataset.app, true);
@@ -143,7 +145,9 @@ function maximizeWindow(id) {
     win.dataset.prevTop = win.style.top;
     win.dataset.prevWidth = win.style.width;
     win.dataset.prevHeight = win.style.height;
+    win.dataset.prevPosition = win.style.position;
     win.dataset.prevZIndex = win.style.zIndex;
+    win.style.position = 'fixed';
     win.style.left = '0';
     win.style.top = '28px';
     win.style.width = '100%';
@@ -152,6 +156,7 @@ function maximizeWindow(id) {
     win.style.zIndex = '20000';
     win.dataset.maximized = 'true';
   } else {
+    win.style.position = win.dataset.prevPosition || 'absolute';
     win.style.left = win.dataset.prevLeft || '120px';
     win.style.top = win.dataset.prevTop || '80px';
     win.style.width = win.dataset.prevWidth || '900px';
