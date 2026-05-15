@@ -128,12 +128,18 @@ function closeWindow(id) {
     const appKey = win.dataset.app;
     const hasOpen = [...windows.values()].some(w => w.dataset.app === appKey);
     if (!hasOpen) updateDockIndicator(appKey, false);
+    updateDockVisibility();
   }, 180);
 }
 
 function minimizeWindow(id) {
   const win = windows.get(id);
   if (win) win.classList.add('minimized');
+}
+
+function updateDockVisibility() {
+  const anyMaximized = [...windows.values()].some(w => w.dataset.maximized === 'true');
+  document.getElementById('dock').classList.toggle('dock-hidden', anyMaximized);
 }
 
 function maximizeWindow(id) {
@@ -165,6 +171,7 @@ function maximizeWindow(id) {
     win.style.zIndex = win.dataset.prevZIndex || '100';
     win.dataset.maximized = 'false';
   }
+  updateDockVisibility();
 }
 
 function setupWindowControls(win, id) {
