@@ -115,19 +115,6 @@
       fill: currentColor;
     }
 
-    /* Demo-active controls — info + restart — get a green tint so the user can spot them as the live affordances among the static Teams chrome. */
-    #infoBtn,
-    #restartBtn {
-      color: var(--teams-status-green);
-      background: rgba(110, 194, 101, 0.12);
-    }
-
-    #infoBtn:hover,
-    #restartBtn:hover {
-      background: rgba(110, 194, 101, 0.22);
-      color: var(--teams-status-green);
-    }
-
     #topSearchWrap {
       flex: 1;
       display: flex;
@@ -1124,57 +1111,6 @@
       color: var(--teams-accent-light);
     }
 
-    /* ════════════════════════════════════════════
-       Demo chrome — badge, nav, scene modal, info panel
-       ════════════════════════════════════════════ */
-    #demoBadge {
-      position: fixed;
-      top: 12px;
-      right: 220px;
-      z-index: 60;
-      background: rgba(45, 44, 44, 0.92);
-      border: 1px solid rgba(127, 133, 245, 0.35);
-      padding: 5px 12px;
-      border-radius: 14px;
-      font-size: 11px;
-      letter-spacing: 0.4px;
-      color: var(--teams-accent-light);
-      user-select: none;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-    }
-
-    #demoBadge .badge-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--teams-accent-light);
-      box-shadow: 0 0 6px rgba(127, 133, 245, 0.6);
-    }
-
-    #demoBadge .badge-sep {
-      width: 1px;
-      height: 12px;
-      background: var(--teams-border);
-    }
-
-    #demoBadge a {
-      color: var(--teams-text-muted);
-      text-decoration: none;
-      font-size: 11px;
-      font-weight: 400;
-      letter-spacing: 0;
-      transition: color 0.15s ease;
-    }
-
-    #demoBadge a:hover {
-      color: var(--teams-text);
-    }
-
     #sceneCard {
       position: fixed;
       inset: 0;
@@ -2112,12 +2048,6 @@
 </head>
 <body>
 
-  <!-- ═══════ Demo chrome — badge ═══════ -->
-  <div id="demoBadge">
-    <span class="badge-dot" aria-hidden="true"></span>
-    <span>DEMO · CoE Sandbox</span>
-  </div>
-
   <!-- ═══════ Root App Container ═══════ -->
   <div id="app">
 
@@ -2139,18 +2069,6 @@
         </svg>
         <input type="text" id="topSearch" placeholder="Search" autocomplete="off" />
       </div>
-      <button class="top-btn" id="infoBtn" title="Info" aria-label="Info" onclick="document.getElementById('infoPanel').classList.add('open')">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-          <circle cx="8" cy="8" r="6.25"/>
-          <path d="M8 7.25v4" stroke-linecap="round"/>
-          <circle cx="8" cy="4.9" r="0.6" fill="currentColor" stroke="none"/>
-        </svg>
-      </button>
-      <button class="top-btn" id="restartBtn" title="Restart" aria-label="Restart">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-          <path d="M3 8a5 5 0 0 1 8.66-3.39L13 6V3h-1v2.5a4 4 0 1 0 1.31 4.16l.94.34A5 5 0 1 1 3 8z" fill="currentColor" stroke="none"/>
-        </svg>
-      </button>
       <button class="top-btn" aria-label="More options">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
