@@ -101,7 +101,7 @@ body {
 /* Desktop Icons */
 .desktop-icons {
   position: absolute;
-  top: 16px; right: 16px;
+  top: 16px; left: 16px;
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -115,13 +115,17 @@ body {
   width: 72px;
   cursor: pointer;
   text-align: center;
-  transition: transform 0.15s ease;
+  transition: transform 0.15s ease, background 0.15s ease;
   border-radius: 8px;
   padding: 4px;
+  touch-action: manipulation;
 }
-.desktop-icon:hover { transform: scale(1.05); }
+.desktop-icon:hover { transform: scale(1.05); background: rgba(255,255,255,0.08); }
+.desktop-icon:active { transform: scale(0.96); }
 .desktop-icon:focus-visible {
-  background: rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.12);
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
 }
 .desktop-icon .icon-bg {
   width: 56px; height: 56px;
@@ -161,6 +165,10 @@ body {
   min-width: 320px; min-height: 200px;
   animation: windowOpen 0.2s ease;
   z-index: 11;
+}
+.window:focus {
+  outline: none;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 0 2px rgba(59, 130, 246, 0.4);
 }
 @keyframes windowOpen {
   from { opacity: 0; transform: scale(0.96) translateY(10px); }
@@ -223,6 +231,26 @@ body {
   background: #fff;
 }
 
+.iframe-loader {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(30,30,30,0.95);
+  z-index: 2;
+  transition: opacity 0.3s;
+}
+.iframe-loader.hidden { opacity: 0; pointer-events: none; }
+.iframe-loader .spinner {
+  width: 32px; height: 32px;
+  border: 3px solid rgba(255,255,255,0.15);
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
 /* ── Dock ──────────────────────────────────────────────────────────────── */
 #dock {
   position: fixed;
@@ -257,8 +285,10 @@ body {
   background: none;
   border: none;
   padding: 0;
+  touch-action: manipulation;
 }
 .dock-app:hover { transform: scale(1.2) translateY(-8px); }
+.dock-app:active { transform: scale(1.1) translateY(-4px); }
 .dock-app::after {
   content: '';
   position: absolute;
@@ -345,7 +375,33 @@ body {
   font-weight: 500;
 }
 #tenant-save { background: #3b82f6; color: #fff; }
+#tenant-save:hover { background: #2563eb; }
 #tenant-cancel { background: rgba(255,255,255,0.1); color: #fff; }
+#tenant-cancel:hover { background: rgba(255,255,255,0.2); }
+
+/* Toast notification */
+.toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(0,0,0,0.85);
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 30000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s, transform 0.3s;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
 
 /* ── App Stub ──────────────────────────────────────────────────────────── */
 .app-stub {

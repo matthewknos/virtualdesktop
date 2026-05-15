@@ -39,13 +39,27 @@ function updateClock() {
 setInterval(updateClock, 1000);
 updateClock();
 
+/* ── Toast ──────────────────────────────────────────────────────────────── */
+function showToast(message, duration = 3000) {
+  let toast = document.getElementById('vd-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'vd-toast';
+    toast.className = 'toast';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = message;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), duration);
+}
+
 /* ── Tenant ─────────────────────────────────────────────────────────────── */
 function setTenant(name) {
   tenant = name.replace(/[^a-z0-9-_]/gi, '').toLowerCase() || 'dev';
   localStorage.setItem('coe-tenant', tenant);
   const el = document.getElementById('menu-tenant');
   if (el) el.textContent = tenant;
-  // Reload all open app iframes so they pick up the new tenant
+  let crossOriginCount = 0;
   windows.forEach((win) => {
     const iframe = win.querySelector('iframe');
     if (iframe) {
@@ -54,15 +68,21 @@ function setTenant(name) {
         url.searchParams.set('tenant', tenant);
         iframe.src = url.toString();
       } catch {
-        // Cross-origin iframe may block URL read; fallback to src reload
+        // Cross-origin iframe: can't read src, attempt reload
         iframe.src = iframe.src;
+        crossOriginCount++;
       }
     }
   });
+  if (crossOriginCount > 0) {
+    showToast(`Tenant set to "${tenant}". Cross-origin apps may need a manual refresh.`, 4000);
+  }
 }
 setTenant(tenant);
 
-document.getElementById('menu-tenant')?.addEventListener('click', () => {
+let tenantTrigger = null;
+document.getElementById('menu-tenant')?.addEventListener('click', (e) => {
+  tenantTrigger = e.currentTarget;
   const input = document.getElementById('tenant-input');
   const modal = document.getElementById('tenant-modal');
   if (input) input.value = tenant;
@@ -75,11 +95,25 @@ document.getElementById('menu-tenant')?.addEventListener('click', () => {
 document.getElementById('tenant-save')?.addEventListener('click', () => {
   const input = document.getElementById('tenant-input');
   if (input) setTenant(input.value);
-  document.getElementById('tenant-modal')?.classList.add('hidden');
+  closeModal();
 });
 
 document.getElementById('tenant-cancel')?.addEventListener('click', () => {
-  document.getElementById('tenant-modal')?.classList.add('hidden');
+  closeModal();
+});
+
+function closeModal() {
+  const modal = document.getElementById('tenant-modal');
+  if (modal) modal.classList.add('hidden');
+  if (tenantTrigger) {
+    tenantTrigger.focus();
+    tenantTrigger = null;
+  }
+}
+
+// Close modal on backdrop click
+document.getElementById('tenant-modal')?.addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) closeModal();
 });
 
 /* ── Launch App ─────────────────────────────────────────────────────────── */
@@ -126,6 +160,9 @@ function launchApp(appKey) {
 
   const iframeSrc = app.src ? `${app.src}?tenant=${tenant}` : null;
   const stubContent = appStubHtml(app);
+  const loaderHtml = iframeSrc
+    ? `<div class="iframe-loader" id="loader-${id}"><div class="spinner"></div></div>`
+    : '';
 
   win.innerHTML = `
     <div class="window-titlebar">
@@ -137,12 +174,24 @@ function launchApp(appKey) {
       <div class="window-title">${app.title}</div>
     </div>
     <div class="window-body">
+      ${loaderHtml}
       ${iframeSrc
-        ? `<iframe src="${iframeSrc}" allow="fullscreen" loading="lazy" title="${app.title} app"></iframe>`
+        ? `<iframe src="${iframeSrc}" allow="fullscreen" loading="lazy" title="${app.title} app" id="frame-${id}"></iframe>`
         : stubContent
       }
     </div>
   `;
+
+  // Hide loader when iframe loads
+  if (iframeSrc) {
+    const frame = win.querySelector(`#frame-${id}`);
+    const loader = win.querySelector(`#loader-${id}`);
+    if (frame && loader) {
+      frame.addEventListener('load', () => loader.classList.add('hidden'), { once: true });
+      // Fallback: hide loader after 8s regardless
+      setTimeout(() => loader.classList.add('hidden'), 8000);
+    }
+  }
 
   document.getElementById('windows')?.appendChild(win);
   windows.set(id, win);
@@ -354,6 +403,15 @@ function setupDock() {
         activate();
       }
     });
+    // Touch support
+    let touchStartTime = 0;
+    el.addEventListener('touchstart', () => { touchStartTime = Date.now(); }, { passive: true });
+    el.addEventListener('touchend', (e) => {
+      if (Date.now() - touchStartTime < 300) {
+        e.preventDefault();
+        activate();
+      }
+    });
   });
 }
 
@@ -364,6 +422,15 @@ function setupDesktopIcons() {
     el.addEventListener('dblclick', activate);
     el.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        activate();
+      }
+    });
+    // Touch support
+    let touchStartTime = 0;
+    el.addEventListener('touchstart', () => { touchStartTime = Date.now(); }, { passive: true });
+    el.addEventListener('touchend', (e) => {
+      if (Date.now() - touchStartTime < 300) {
         e.preventDefault();
         activate();
       }
