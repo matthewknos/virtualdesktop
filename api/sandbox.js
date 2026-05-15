@@ -194,10 +194,10 @@ function stripModelArtefacts(raw) {
 // the model dropping the <<END>> sentinel and using a stop-token instead.
 function parseActions(raw) {
   raw = stripModelArtefacts(raw);
-  let m = raw.match(/<<ACTIONS>>([\s\S]*?)<<END>>/);
+  let m = raw.match(/<<\s*ACTIONS\s*>>([\s\S]*?)<<\s*END\s*>>/i);
   // Fallback: <<ACTIONS>>[...]  with no <<END>> — grab the first JSON array.
   if (!m) {
-    const fallback = raw.match(/<<ACTIONS>>\s*(\[[\s\S]*?\])/);
+    const fallback = raw.match(/<<\s*ACTIONS\s*>>\s*(\[[\s\S]*?\])/i);
     if (fallback) m = [fallback[0], fallback[1]];
   }
   if (!m) return { text: raw.trim(), actions: null };
@@ -236,9 +236,9 @@ function parseActions(raw) {
 const VALID_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 function parseCalendar(raw) {
   raw = stripModelArtefacts(raw);
-  let m = raw.match(/<<CALENDAR>>([\s\S]*?)<<END>>/);
+  let m = raw.match(/<<\s*CALENDAR\s*>>([\s\S]*?)<<\s*END\s*>>/i);
   if (!m) {
-    const fallback = raw.match(/<<CALENDAR>>\s*(\[[\s\S]*?\])/);
+    const fallback = raw.match(/<<\s*CALENDAR\s*>>\s*(\[[\s\S]*?\])/i);
     if (fallback) m = [fallback[0], fallback[1]];
   }
   if (!m) return { text: raw, events: null };
@@ -267,9 +267,9 @@ function parseCalendar(raw) {
     if (events.length === 0) events = null;
   } catch { /* malformed — ignore */ }
   const cleaned = raw
-    .replace(/<<CALENDAR>>[\s\S]*?<<END>>/, '')
-    .replace(/<<CALENDAR>>\s*\[[\s\S]*?\]\s*/, '')
-    .replace(/<<CALENDAR>>[\s\S]*$/, '')
+    .replace(/<<\s*CALENDAR\s*>>[\s\S]*?<<\s*END\s*>>/gi, '')
+    .replace(/<<\s*CALENDAR\s*>>\s*\[[\s\S]*?\]\s*/gi, '')
+    .replace(/<<\s*CALENDAR\s*>>[\s\S]*$/gi, '')
     .trim();
   return { text: cleaned, events };
 }
@@ -557,6 +557,7 @@ async function readBody(req) {
     req.on('end', () => {
       try { resolve(raw ? JSON.parse(raw) : {}); } catch { resolve({}); }
     });
+    req.on('error', () => resolve({}));
   });
 }
 
@@ -565,7 +566,7 @@ async function readBody(req) {
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Dev-Password');
 
   if (req.method === 'OPTIONS') {
     return res.status(204).end();

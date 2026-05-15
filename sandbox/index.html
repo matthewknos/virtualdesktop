@@ -391,6 +391,14 @@
           <td class="desc">Post a message into the scenario chat from a persona.</td>
         </tr>
         <tr>
+          <td><span class="method">POST</span> <span class="path">/api/sandbox/scenarios/:id/configure</span></td>
+          <td class="desc">AI-assisted scenario configuration. Body: <code>context</code>. Returns suggested system prompt, opening message, and persona config. Requires <code>X-Dev-Password</code>.</td>
+        </tr>
+        <tr>
+          <td><span class="method">POST</span> <span class="path">/api/sandbox/scenarios/:id/analyse</span></td>
+          <td class="desc">Analyse scenario performance and suggest improvements. Requires <code>X-Dev-Password</code>.</td>
+        </tr>
+        <tr>
           <td><span class="method">POST</span> <span class="path">/api/sandbox/webhook</span></td>
           <td class="desc">External agent → sandbox. Posts a message and optionally mutates state in one call.</td>
         </tr>
