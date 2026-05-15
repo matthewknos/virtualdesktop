@@ -100,6 +100,7 @@ function launchApp(appKey) {
   setupWindowDrag(win);
   setupWindowControls(win, id);
   updateDockIndicator(appKey, true);
+  maximizeWindow(id);
 }
 
 /* ── Window Controls ────────────────────────────────────────────────────── */
