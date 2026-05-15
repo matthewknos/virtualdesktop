@@ -1,7 +1,7 @@
 /**
  * CoE Virtual Desktop — Window Manager & App Launcher
  * v2: Fullscreen apps, working minimize, always-visible dock,
- *     window resize, context menu, menu dropdowns, Finder stub.
+ *     window resize, context menu, menu dropdowns.
  */
 
 /* ── Configuration ──────────────────────────────────────────────────────── */
@@ -9,7 +9,7 @@ const CONFIG = {
   appBaseUrl: 'https://coe-prototypes.vercel.app',
   zIndex: { base: 10, focused: 100, maximized: 20000, modal: 20000, menubar: 10000 },
   minWindow: { w: 320, h: 200 },
-  finderWindow: { w: 640, h: 420 },
+
   dragOffset: 24,
   dragMaxOffset: 8,
 };
@@ -23,10 +23,9 @@ let tenantTrigger = null;
 
 /* ── App Registry ───────────────────────────────────────────────────────── */
 const APPS = {
-  finder:  { title: 'Finder',  icon: 'finder-icon',  src: null },
   teams:   { title: 'Teams',   icon: 'teams-icon',   src: `${CONFIG.appBaseUrl}/sandbox/apps/teams` },
   outlook: { title: 'Outlook', icon: 'outlook-icon', src: `${CONFIG.appBaseUrl}/sandbox/apps/outlook` },
-  workday: { title: 'Workday', icon: 'workday-icon', src: `${CONFIG.appBaseUrl}/sandbox/apps/workday` },
+  workday: { title: 'Workday', icon: 'workday-icon', src: '/workday' },
 };
 
 /* ── Clock ──────────────────────────────────────────────────────────────── */
@@ -117,13 +116,11 @@ function launchApp(appKey) {
   const app = APPS[appKey];
   if (!app) return;
 
-  // If non-Finder app already open, focus it
-  if (appKey !== 'finder') {
-    for (const [id, win] of windows) {
-      if (win.dataset.app === appKey && !win.classList.contains('minimized')) {
-        focusWindow(id);
-        return;
-      }
+  // If app already open, focus it
+  for (const [id, win] of windows) {
+    if (win.dataset.app === appKey && !win.classList.contains('minimized')) {
+      focusWindow(id);
+      return;
     }
   }
 
@@ -162,7 +159,7 @@ function launchApp(appKey) {
       ${loaderHtml}
       ${iframeSrc
         ? `<iframe src="${iframeSrc}" allow="fullscreen" loading="lazy" title="${app.title} app" id="frame-${id}"></iframe>`
-        : finderStubHtml()
+        : `<div style="padding:40px;text-align:center;opacity:0.6;font-size:14px;">${app.title}</div>`
       }
     </div>
     <div class="resize-handle resize-n" aria-hidden="true"></div>
@@ -192,41 +189,16 @@ function launchApp(appKey) {
       setTimeout(() => loader.classList.add('hidden'), 8000);
     }
   }
+  updateDockVisibility();
 }
 
-function finderStubHtml() {
-  return `
-    <div class="finder-stub">
-      <div class="finder-sidebar">
-        <div class="finder-section">
-          <h4>Favorites</h4>
-          <div class="finder-item active"><span>🏠</span> Desktop</div>
-          <div class="finder-item"><span>📄</span> Documents</div>
-          <div class="finder-item"><span>⬇️</span> Downloads</div>
-        </div>
-        <div class="finder-section">
-          <h4>Locations</h4>
-          <div class="finder-item"><span>💻</span> Macintosh HD</div>
-          <div class="finder-item"><span>☁️</span> iCloud Drive</div>
-        </div>
-      </div>
-      <div class="finder-main">
-        <div class="finder-toolbar">
-          <span>Desktop</span>
-          <span class="finder-count">4 items</span>
-        </div>
-        <div class="finder-grid">
-          <div class="finder-file"><span class="file-icon">📁</span><span class="file-name">Projects</span></div>
-          <div class="finder-file"><span class="file-icon">📁</span><span class="file-name">Designs</span></div>
-          <div class="finder-file"><span class="file-icon">📄</span><span class="file-name">README.md</span></div>
-          <div class="finder-file"><span class="file-icon">🖼️</span><span class="file-name">background.jpg</span></div>
-        </div>
-      </div>
-    </div>
-  `;
-}
 
 /* ── Window Controls ────────────────────────────────────────────────────── */
+function updateDockVisibility() {
+  const anyVisible = [...windows.values()].some(w => !w.classList.contains('minimized'));
+  document.getElementById('dock')?.classList.toggle('dock-hidden', anyVisible);
+}
+
 function focusWindow(id) {
   windows.forEach((w) => {
     if (w.dataset.maximized !== 'true') w.style.zIndex = CONFIG.zIndex.base;
@@ -235,10 +207,11 @@ function focusWindow(id) {
   if (win) {
     win.style.zIndex = win.dataset.maximized === 'true' ? CONFIG.zIndex.maximized : CONFIG.zIndex.focused;
     activeWindow = id;
-    const appTitle = APPS[win.dataset.app]?.title || 'Finder';
+    const appTitle = APPS[win.dataset.app]?.title || '';
     updateMenuAppName(appTitle);
     updateDockIndicator(win.dataset.app, true);
     win.focus();
+    updateDockVisibility();
   }
 }
 
@@ -259,8 +232,9 @@ function closeWindow(id) {
     const appKey = win.dataset.app;
     const hasOpen = [...windows.values()].some(w => w.dataset.app === appKey);
     if (!hasOpen) updateDockIndicator(appKey, false);
-    if (windows.size === 0) updateMenuAppName('Finder');
+    if (windows.size === 0) updateMenuAppName('');
     activeWindow = null;
+    updateDockVisibility();
   }, 180);
 }
 
@@ -274,7 +248,7 @@ function minimizeWindow(id) {
     focusWindow(remaining[0][0]);
   } else {
     activeWindow = null;
-    updateMenuAppName('Finder');
+    updateMenuAppName('');
   }
 }
 
@@ -510,7 +484,7 @@ function setupContextMenu() {
     menu.id = 'desktop-context-menu';
     menu.className = 'context-menu';
     menu.innerHTML = `
-      <div class="context-item" data-action="new-finder">New Finder Window</div>
+      <div class="context-item" data-action="new-teams">New Teams Window</div>
       <div class="context-item" data-action="change-tenant">Change Tenant</div>
       <div class="context-divider"></div>
       <div class="context-item" data-action="refresh">Refresh Desktop</div>
@@ -519,7 +493,7 @@ function setupContextMenu() {
     menu.querySelectorAll('.context-item').forEach(item => {
       item.addEventListener('click', () => {
         const action = item.dataset.action;
-        if (action === 'new-finder') launchApp('finder');
+        if (action === 'new-teams') launchApp('teams');
         if (action === 'change-tenant') { tenantTrigger = document.getElementById('menu-tenant'); openModal(); }
         if (action === 'refresh') location.reload();
         menu.classList.remove('show');
@@ -571,11 +545,11 @@ function setupMenuDropdowns() {
           div.className = 'menu-dropdown-item';
           div.textContent = item;
           div.addEventListener('click', () => {
-            if (item === 'New Window') launchApp('finder');
+            if (item === 'New Window') launchApp('teams');
             if (item === 'Close Window' && activeWindow) closeWindow(activeWindow);
             if (item === 'Minimize' && activeWindow) minimizeWindow(activeWindow);
             if (item === 'Zoom' && activeWindow) maximizeWindow(activeWindow);
-            if (item === 'Keyboard Shortcuts') showToast('Esc: close, Cmd+W: close win, Cmd+M: minimize, Cmd+N: new Finder', 5000);
+            if (item === 'Keyboard Shortcuts') showToast('Esc: close, Cmd+W: close win, Cmd+M: minimize, Cmd+N: new Teams', 5000);
             dropdown.remove();
           });
           dropdown.appendChild(div);
@@ -617,7 +591,7 @@ document.addEventListener('keydown', (e) => {
   }
   if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
     e.preventDefault();
-    launchApp('finder');
+    launchApp('teams');
   }
 });
 
