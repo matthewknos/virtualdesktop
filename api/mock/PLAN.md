@@ -117,7 +117,7 @@ Two catch-all routes (one per system) keep Vercel function count low. Everything
 
 **Goal:** The `/sandbox` surface becomes a windowed "computer" with switchable apps, each a pure reader of mock state.
 
-17. **Desktop shell.** `/sandbox/desktop/` — window manager, app launcher, tenant selector, scenario loader, throttling toggle, reset button. State persisted to localStorage.
+17. **Desktop shell.** `/VirtualDesktop/` — window manager, app launcher, tenant selector, scenario loader, throttling toggle, reset button. State persisted to localStorage.
 18. **Outlook app.** `/sandbox/apps/outlook/` — inbox, folders, compose, reply, calendar view, event detail. Reads from `/api/mock/graph` only.
 19. **Teams app.** `/sandbox/apps/teams/` — channels, chats, message composer, mentions, reactions. Reads from `/api/mock/graph` only.
 20. **Workday app.** `/sandbox/apps/workday/` — worker profile, org chart, timesheet entry, absence request, PTO balance, manager approvals queue. Reads from `/api/mock/workday` only.
